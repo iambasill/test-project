@@ -1,12 +1,12 @@
 import express from "express";
-import { authController } from "../controller/authController";
+import { authRoute } from "./authRouth";
 
 
 export const rootRoute = express()
 
 // rootRoute.use('/')
 
-rootRoute.use('/api/auth/',authController)
+rootRoute.use('/api/auth/',authRoute)
 
 
 

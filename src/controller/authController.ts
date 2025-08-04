@@ -6,10 +6,6 @@ import { AUTH_JWT_TOKEN } from "../../secrets"
 import bcrypt from 'bcrypt'
 import jwt  from "jsonwebtoken"
 
-export const authController = ()=> {
-    
-}
-
 
 export const registerController = async (req:Request,res:Response,next:NextFunction) => {
     const validatedData = signUpSchema.parse(req.body)
