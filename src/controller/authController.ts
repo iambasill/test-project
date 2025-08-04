@@ -31,6 +31,11 @@ export const registerController = async (req:Request,res:Response,next:NextFunct
             lastName
         }
     })
+        res.status(201).send({
+        success: true,
+        message: "user created succesfully"
+        })
+    
 }
 
 export const loginController = async (req: Request, res: Response) => {
