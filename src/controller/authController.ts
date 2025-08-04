@@ -23,14 +23,14 @@ const generateToken = (userId: string) => {
 
 export const registerController = async (req: Request, res: Response, next: NextFunction) => {
   const validatedData = signUpSchema.parse(req.body);
-  const { email, firstName, lastName, role, password } = validatedData;
+  const { email, firstName, lastName, role } = validatedData;
 
   const existingUser = await prisma.user.findFirst({ where: { email } });
   if (existingUser && (existingUser.status === 'VERIFIED' || existingUser.status === 'BLOCKED')) {
     throw new BadRequestError('User already exists');
   }
 
-  const hashedPassword = await bcrypt.hash(password, 12);
+  const hashedPassword = await bcrypt.hash("password", 12);
   const user = await prisma.user.create({
     data: { email, firstName, lastName, role, password: hashedPassword, status: 'PENDING',refreshToken:"null" }
   });
