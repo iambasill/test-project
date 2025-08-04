@@ -19,4 +19,7 @@ model User {
   email     String @unique
   firstName String
   lastName  String
+  role      String @default("pending")
+  status    String @default("pending")
+  password  String @default("password")
 }

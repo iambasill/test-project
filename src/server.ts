@@ -3,7 +3,7 @@ import { rootRoute } from './routes/rootRoute';
 import { errorHandler } from './utils/errorHandler';
 import cors from 'cors'
 import { morganMiddleware } from './utils/logger';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from './generated/prisma';
 
 export const prisma = new PrismaClient()
 const app = express()

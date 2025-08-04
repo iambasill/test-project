@@ -1,8 +1,8 @@
 import * as z from "zod";
 
-export const paymentPlanSchema = z.object({
-    plan: z.string(),
-    description: z.string(),
-    price: z.number()
+export const signUpSchema = z.object({
+    firstName: z.string(),
+    lastName: z.string(),
+    emailAddress:z.email()
 })
 
