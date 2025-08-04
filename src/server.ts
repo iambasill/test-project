@@ -2,8 +2,8 @@ import express from 'express';
 import { rootRoute } from './routes/rootRoute';
 import { errorHandler } from './utils/errorHandler';
 import cors from 'cors'
-import { PrismaClient } from './generated/prisma';
 import { morganMiddleware } from './utils/logger';
+import { PrismaClient } from '@prisma/client';
 
 export const prisma = new PrismaClient()
 const app = express()

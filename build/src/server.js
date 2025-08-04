@@ -8,9 +8,9 @@ const express_1 = __importDefault(require("express"));
 const rootRoute_1 = require("./routes/rootRoute");
 const errorHandler_1 = require("./utils/errorHandler");
 const cors_1 = __importDefault(require("cors"));
-const prisma_1 = require("./generated/prisma");
 const logger_1 = require("./utils/logger");
-exports.prisma = new prisma_1.PrismaClient();
+const client_1 = require("@prisma/client");
+exports.prisma = new client_1.PrismaClient();
 const app = (0, express_1.default)();
 app.use(logger_1.morganMiddleware);
 app.use((0, cors_1.default)({
