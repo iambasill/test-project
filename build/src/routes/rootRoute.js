@@ -8,4 +8,4 @@ const express_1 = __importDefault(require("express"));
 const authController_1 = require("../controller/authController");
 exports.rootRoute = (0, express_1.default)();
 // rootRoute.use('/')
-exports.rootRoute.get('/', authController_1.authController);
+exports.rootRoute.get('/api/auth/', authController_1.authController);

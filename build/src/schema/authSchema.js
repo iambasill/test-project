@@ -33,10 +33,10 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.paymentPlanSchema = void 0;
+exports.signUpSchema = void 0;
 const z = __importStar(require("zod"));
-exports.paymentPlanSchema = z.object({
-    plan: z.string(),
-    description: z.string(),
-    price: z.number()
+exports.signUpSchema = z.object({
+    firstName: z.string(),
+    lastName: z.string(),
+    emailAddress: z.email()
 });
