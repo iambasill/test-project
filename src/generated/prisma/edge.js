@@ -107,7 +107,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "/home/basil/Desktop/defence-backend/src/generated/prisma",
+      "value": "/home/basil/Desktop/divm-backend/src/generated/prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -121,11 +121,11 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "/home/basil/Desktop/defence-backend/prisma/schema.prisma",
+    "sourceFilePath": "/home/basil/Desktop/divm-backend/prisma/schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
-    "rootEnvPath": "../../../.env",
+    "rootEnvPath": null,
     "schemaEnvPath": "../../../.env"
   },
   "relativePath": "../../../prisma",
