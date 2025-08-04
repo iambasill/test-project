@@ -26,7 +26,9 @@ export const registerController = async (req: Request, res: Response, next: Next
   const { email, firstName, lastName, role } = validatedData;
 
   const existingUser = await prisma.user.findFirst({ where: { email } });
-  if (existingUser && (existingUser.status === 'VERIFIED' || existingUser.status === 'BLOCKED')) {
+//   if (existingUser && (existingUser.status === 'VERIFIED' || existingUser.status === 'BLOCKED')) {
+    if (existingUser ){
+        
     throw new BadRequestError('User already exists');
   }
 
