@@ -2,3 +2,5 @@ node_modules
 build
 readme
 logs
+.env
+/src/generated/prisma
