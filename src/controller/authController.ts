@@ -13,11 +13,11 @@ export const authController = ()=> {
 
 export const registerController = async (req:Request,res:Response,next:NextFunction) => {
     const validatedData = signUpSchema.parse(req.body)
-    const {email, firstName,lastName} = req.body
+    const {email, firstName,lastName} = validatedData
 
     const existingUser = await prisma.user.findFirst({
         where:{
-            email:validatedData.emailAddress
+            email
         }
     })
     if(existingUser && (existingUser.status === 'verified' || existingUser.status === 'blocked')) {
