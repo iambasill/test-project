@@ -6,7 +6,7 @@ export const rootRoute = express()
 
 // rootRoute.use('/')
 
-rootRoute.use('/api/auth/',authRoute)
+rootRoute.use('/api/auth',authRoute)
 
 
 

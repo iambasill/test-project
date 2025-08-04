@@ -3,7 +3,7 @@ import { loginController, registerController} from '../controller/authController
 
 export const authRoute = express()
 
-authRoute.get('/test',()=>{
+authRoute.get('/',()=>{
     return "hello"
 })
 authRoute.post('/login',loginController)
