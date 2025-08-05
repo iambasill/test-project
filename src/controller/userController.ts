@@ -60,7 +60,7 @@ export const getUserById = async (req: Request, res: Response) => {
 // Update user
 export const updateUser = async (req: Request, res: Response) => {
     const { id } = req.params;
-    let user = checkUser(id)
+    let user = await checkUser(id)
     if (!user) throw new BadRequestError("User not found")
 
     const { email, firstName, lastName, role, status, password } = req.body;
@@ -98,7 +98,7 @@ export const updateUser = async (req: Request, res: Response) => {
 // Delete user
 export const deleteUser = async (req: Request, res: Response) => {
     const { id } = req.params;
-      let user = checkUser(id)
+      let user = await checkUser(id)
     if (!user) throw new BadRequestError("User not found")
 
     await prisma.user.delete({
@@ -115,7 +115,7 @@ export const deleteUser = async (req: Request, res: Response) => {
 // Update user status
 export const updateUserStatus = async (req: Request, res: Response) => {
     const { id } = req.params;
-    let user:any = checkUser(id)
+    let user:any = await checkUser(id)
     const { status} = req.body;
 
     const updatedUser = await prisma.user.update({

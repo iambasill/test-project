@@ -1,9 +1,9 @@
 import { prisma } from './../server';
 
 
-export function checkUser(email:string){
+export function checkUser(id:string){
     const user = prisma.user.findUnique({
-        where:{email},
+        where:{id},
     })
 return user
 }
