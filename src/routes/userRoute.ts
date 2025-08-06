@@ -7,20 +7,19 @@ import {
   updateUserStatus,
 } from '../controller/userController';
 import { adminMiddleware } from '../middlewares/adminMiddleware';
-import { authMiddleware } from '../middlewares/authMiddleware';
 
 
 
 export const userRoute = express()
 
-userRoute.get('/', authMiddleware,getAllUsers);
+userRoute.get('/', getAllUsers);
 
-userRoute.post('/', authMiddleware,getUserById);
+userRoute.post('/', getUserById);
 
-userRoute.put('/:id', authMiddleware,updateUser);
+userRoute.put('/:id', updateUser);
 
-userRoute.delete('/:id', authMiddleware,deleteUser);
+userRoute.delete('/:id', deleteUser);
 
-userRoute.patch('/status/:id', authMiddleware,updateUserStatus);
+userRoute.patch('/status/:id',updateUserStatus);
 
 export default userRoute;
