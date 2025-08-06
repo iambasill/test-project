@@ -1,3 +1,4 @@
+import { authMiddleware } from './../middlewares/authMiddleware';
 import express from 'express'
 import {
   getAllUsers,
@@ -12,14 +13,14 @@ import { adminMiddleware } from '../middlewares/adminMiddleware';
 
 export const userRoute = express()
 
-userRoute.get('/', getAllUsers);
+userRoute.get('/', authMiddleware,getAllUsers);
 
-userRoute.post('/', getUserById);
+userRoute.post('/', authMiddleware,getUserById);
 
-userRoute.put('/:id', updateUser);
+userRoute.put('/:id', authMiddleware,updateUser);
 
-userRoute.delete('/:id', deleteUser);
+userRoute.delete('/:id', authMiddleware,deleteUser);
 
-userRoute.patch('/status/:id',updateUserStatus);
+userRoute.patch('/status/:id',authMiddleware,updateUserStatus);
 
 export default userRoute;

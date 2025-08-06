@@ -23,7 +23,6 @@ export const authMiddleware = (req: Request, _res: Response, next: NextFunction)
         throw new unAuthorizedError("INVALID TOKEN PAYLOAD");
     }
     
-    // Use req.user instead of req.body
     req.body = { userID: (decoded as any).id };
     next();
 }
