@@ -21,6 +21,6 @@ userRoute.put('/:id', authMiddleware,updateUser);
 
 userRoute.delete('/:id', authMiddleware,deleteUser);
 
-userRoute.patch('/status/:id',authMiddleware,updateUserStatus);
+userRoute.put('/status/:id',authMiddleware,updateUserStatus);
 
 export default userRoute;

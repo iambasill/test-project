@@ -19,6 +19,7 @@ model User {
   email            String     @unique
   firstName        String
   lastName         String
+  serviceNumber    String?
   rank             String?
   unit             String?
   role             Role       @default(OFFICER)

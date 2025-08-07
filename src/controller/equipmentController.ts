@@ -3,7 +3,6 @@ import { prisma } from '../server';
 import { BadRequestError, notFoundError } from '../httpClass/exceptions';
 
 
-// Get all equipment with advanced filtering
 export const getAllEquipment = async (req: Request, res: Response) => {
     
     const equipment = await prisma.equipment.findMany({
