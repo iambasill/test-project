@@ -320,10 +320,11 @@ model EquipmentDocument {
 
 // Enums
 enum Role {
+  PLATADMIN
   ADMIN
   OFFICER
-  TECHNICIAN
-  INSPECTOR
+  MANAGER
+  OPERATOR
   COMMANDER
 }
 
