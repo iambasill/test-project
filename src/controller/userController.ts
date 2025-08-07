@@ -115,12 +115,13 @@ export const deleteUser = async (req: Request, res: Response) => {
 // Update user status
 export const updateUserStatus = async (req: Request, res: Response) => {
     const { id } = req.params;
-    let user:any = await checkUser(id)
-    const { status} = req.body;
+    const {status} = req.body;
+    let user = await checkUser(id)
+    if (!user) throw new BadRequestError("User not found")
 
     const updatedUser = await prisma.user.update({
       where: { id },
-      data: { status },
+      data: {status},
       select: {
         id: true,
         email: true,
@@ -134,6 +135,7 @@ export const updateUserStatus = async (req: Request, res: Response) => {
     res.status(200).json({
       success: true,
       message: 'User status updated successfully',
+      updateUser:updatedUser
      
     });
   }
