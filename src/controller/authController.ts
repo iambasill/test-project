@@ -8,7 +8,9 @@ import jwt from "jsonwebtoken";
 // import { sendPasswordResetEmail } from "../utils/emailService";
 
 const generateToken = (userId: string) => {
-  return jwt.sign({ id: userId }, AUTH_JWT_TOKEN as string, { expiresIn: '6h' });
+  // return jwt.sign({ id: userId }, AUTH_JWT_TOKEN as string, { expiresIn: '6h' });
+  return jwt.sign({ id: userId }, AUTH_JWT_TOKEN as string);
+
 };
 
 // const generateRefreshToken = (userId: string) => {
@@ -51,7 +53,10 @@ export const loginController = async (req: Request, res: Response) => {
   const { email, password } = loginSchema.parse(req.body);
 
   const user = await prisma.user.findFirst({ where: { email } });
-  if (!user || user.status === 'BLOCKED') throw new BadRequestError("Invalid Credentials");
+  if (!user) throw new BadRequestError("Invalid Credentials"); 
+  if (user.status === 'SUSPENDED') throw new BadRequestError("Account Suspended"); 
+
+  
 
   const isPasswordValid = await bcrypt.compare(password, user.password);
   if (!isPasswordValid) throw new BadRequestError("Invalid Credentials");

@@ -19,6 +19,8 @@ model User {
   email            String     @unique
   firstName        String
   lastName         String
+  rank             String?
+  unit             String?
   role             Role       @default(OFFICER)
   status           UserStatus @default(PENDING)
   password         String
@@ -29,19 +31,421 @@ model User {
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
 
+  // Relations
+  registeredEquipment  Equipment[]           @relation("RegisteredBy")
+  approvedEquipment    Equipment[]           @relation("ApprovedBy")
+  authorizedEquipment  Equipment[]           @relation("AuthorizedBy")
+  assignedEquipment    EquipmentAssignment[]
+  maintenanceRecords   MaintenanceRecord[]
+  inspectionRecords    InspectionRecord[]
+  transfersInitiated   EquipmentTransfer[]   @relation("TransferInitiatedBy")
+  transfersApproved    EquipmentTransfer[]   @relation("TransferApprovedBy")
+  authorizedAccessList EquipmentAccess[]
+
   @@map("users")
 }
 
+// Core Equipment Model
+model Equipment {
+  id String @id @default(uuid())
+
+  // Section A: Equipment Identification
+  chasisNumber      String        @unique
+  equipmentName     String
+  model             String
+  equipmentType     EquipmentType
+  equipmentCategory String?
+  manufacturer      String
+  modelNumber       String?
+  yearOfManufacture Int
+  countryOfOrigin   String
+
+  // Section B: Acquisition Details
+  dateOfAcquisition   DateTime
+  acquisitionMethod   AcquisitionMethod
+  supplierInfo        String?
+  purchaseOrderNumber String?
+  contractReference   String?
+  costValue           Decimal?          @db.Decimal(15, 2)
+  currency            String            @default("NGN")
+  fundingSource       String?
+
+  // Section C: Technical Specifications
+  weight                  Decimal? @db.Decimal(10, 2)
+  length                  Decimal? @db.Decimal(8, 2)
+  width                   Decimal? @db.Decimal(8, 2)
+  height                  Decimal? @db.Decimal(8, 2)
+  powerRequirements       String?
+  fuelType                String?
+  maximumRange            String?
+  operationalSpecs        String?  @db.Text
+  requiredCertifications  String?  @db.Text
+  environmentalConditions String?  @db.Text
+
+  // Section D: Assignment & Location
+  currentLocation        String
+  currentBase            String?
+  assignedUnit           MilitaryUnit
+  commandingOfficer      String?
+  securityClassification SecurityLevel @default(UNCLASSIFIED)
+
+  // Section E: Operational Status
+  currentStatus          OperationalStatus @default(ACTIVE)
+  operationalHours       Decimal?          @db.Decimal(10, 2)
+  mileage                Decimal?          @db.Decimal(12, 2)
+  lastInspectionDate     DateTime?
+  nextMaintenanceDate    DateTime?
+  availabilityPercentage Decimal?          @db.Decimal(5, 2)
+
+  // Section G: Documentation & Compliance
+  hasOperatingManual   Boolean @default(false)
+  trainingRequirements String? @db.Text
+  safetyNotes          String? @db.Text
+  insuranceInfo        String? @db.Text
+
+  // Section J: Additional Information
+  specialHandling    String? @db.Text
+  environmentalNotes String? @db.Text
+  relatedEquipment   String? @db.Text
+  backupSystems      String? @db.Text
+  technicalSupport   String? @db.Text
+  notes              String? @db.Text
+
+  // Section L: Approval & Authorization
+  registeredById    String
+  approvedById      String?
+  authorizedById    String?
+  registrationDate  DateTime  @default(now())
+  approvalDate      DateTime?
+  authorizationDate DateTime?
+  referenceNumber   String?   @unique
+
+  // System fields
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  registeredBy       User                  @relation("RegisteredBy", fields: [registeredById], references: [id])
+  approvedBy         User?                 @relation("ApprovedBy", fields: [approvedById], references: [id])
+  authorizedBy       User?                 @relation("AuthorizedBy", fields: [authorizedById], references: [id])
+  warrantyInfo       WarrantyInfo?
+  assignments        EquipmentAssignment[]
+  maintenanceRecords MaintenanceRecord[]
+  inspectionRecords  InspectionRecord[]
+  transferHistory    EquipmentTransfer[]
+  accessControl      EquipmentAccess[]
+  documents          EquipmentDocument[]
+  disposalRecord     DisposalRecord?
+
+  @@map("equipment")
+}
+
+// Section B: Warranty Information
+model WarrantyInfo {
+  id               String   @id @default(uuid())
+  equipmentId      String   @unique
+  startDate        DateTime
+  endDate          DateTime
+  coverageDetails  String?  @db.Text
+  warrantyProvider String?
+  contactInfo      String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+
+  @@map("warranty_info")
+}
+
+// Section D: Equipment Assignment
+model EquipmentAssignment {
+  id             String    @id @default(uuid())
+  equipmentId    String
+  userId         String
+  assignmentType String // "custodian", "operator", "maintenance"
+  startDate      DateTime  @default(now())
+  endDate        DateTime?
+  isActive       Boolean   @default(true)
+  notes          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // Relations
+  equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id])
+
+  @@map("equipment_assignments")
+}
+
+// Section F: Maintenance History
+model MaintenanceRecord {
+  id              String            @id @default(uuid())
+  equipmentId     String
+  maintenanceType MaintenanceType
+  serviceProvider ServiceProvider
+  scheduledDate   DateTime
+  completedDate   DateTime?
+  description     String            @db.Text
+  partsReplaced   String?           @db.Text
+  cost            Decimal?          @db.Decimal(12, 2)
+  technicianId    String?
+  status          MaintenanceStatus @default(SCHEDULED)
+  nextServiceDate DateTime?
+  notes           String?           @db.Text
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  // Relations
+  equipment  Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  technician User?     @relation(fields: [technicianId], references: [id])
+
+  @@map("maintenance_records")
+}
+
+// Inspection Records
+model InspectionRecord {
+  id                 String           @id @default(uuid())
+  equipmentId        String
+  inspectorId        String
+  inspectionDate     DateTime         @default(now())
+  inspectionType     String // "routine", "safety", "compliance"
+  result             InspectionResult
+  findings           String?          @db.Text
+  recommendations    String?          @db.Text
+  nextInspectionDate DateTime?
+  certificateNumber  String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  // Relations
+  equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  inspector User      @relation(fields: [inspectorId], references: [id])
+
+  @@map("inspection_records")
+}
+
+// Section H: Transfer & Disposal History
+model EquipmentTransfer {
+  id            String         @id @default(uuid())
+  equipmentId   String
+  fromUnit      MilitaryUnit
+  toUnit        MilitaryUnit
+  fromLocation  String
+  toLocation    String
+  transferDate  DateTime
+  reason        String
+  initiatedById String
+  approvedById  String?
+  status        TransferStatus @default(PENDING)
+  notes         String?        @db.Text
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  // Relations
+  equipment   Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  initiatedBy User      @relation("TransferInitiatedBy", fields: [initiatedById], references: [id])
+  approvedBy  User?     @relation("TransferApprovedBy", fields: [approvedById], references: [id])
+
+  @@map("equipment_transfers")
+}
+
+// Disposal Records
+model DisposalRecord {
+  id              String         @id @default(uuid())
+  equipmentId     String         @unique
+  disposalMethod  DisposalMethod
+  disposalDate    DateTime
+  reason          String         @db.Text
+  approvedBy      String
+  cost            Decimal?       @db.Decimal(12, 2)
+  recycleValue    Decimal?       @db.Decimal(12, 2)
+  disposalCompany String?
+  certificateNo   String?
+  notes           String?        @db.Text
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  // Relations
+  equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+
+  @@map("disposal_records")
+}
+
+// Section I: Security & Access Control
+model EquipmentAccess {
+  id          String      @id @default(uuid())
+  equipmentId String
+  userId      String
+  accessLevel AccessLevel
+  grantedDate DateTime    @default(now())
+  expiryDate  DateTime?
+  grantedBy   String
+  isActive    Boolean     @default(true)
+  purpose     String?
+  notes       String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Relations
+  equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id])
+
+  @@map("equipment_access")
+}
+
+// Section K: Digital Attachments
+model EquipmentDocument {
+  id           String           @id @default(uuid())
+  equipmentId  String
+  fileName     String
+  originalName String
+  fileUrl      String
+  fileType     String
+  category     DocumentCategory
+  fileSize     Int
+  uploadedBy   String
+  description  String?
+  isPublic     Boolean          @default(false)
+  version      String?          @default("1.0")
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  // Relations
+  equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+
+  @@map("equipment_documents")
+}
+
+// Enums
 enum Role {
-  OFFICER
   ADMIN
-  AUDITOR
+  OFFICER
+  TECHNICIAN
   INSPECTOR
+  COMMANDER
 }
 
 enum UserStatus {
   PENDING
-  VERIFIED
-  BLOCKED
-  DELETED
+  ACTIVE
+  SUSPENDED
+  INACTIVE
+}
+
+enum EquipmentType {
+  VEHICLE
+  AIRCRAFT
+  NAVAL_VESSEL
+  COMMUNICATION_EQUIPMENT
+  WEAPONS_SYSTEM
+  SUPPORT_EQUIPMENT
+  OTHER
+}
+
+enum AcquisitionMethod {
+  PURCHASE
+  DONATION
+  GRANT
+  TRANSFER
+  CAPTURED
+  SEIZED
+  LEASE
+}
+
+enum MilitaryUnit {
+  NIGERIAN_ARMY
+  NIGERIAN_NAVY
+  NIGERIAN_AIR_FORCE
+  DEFENCE_INTELLIGENCE_AGENCY
+  OTHER
+}
+
+enum SecurityLevel {
+  UNCLASSIFIED
+  RESTRICTED
+  CONFIDENTIAL
+  SECRET
+  TOP_SECRET
+}
+
+enum OperationalStatus {
+  ACTIVE
+  OPERATIONAL
+  UNDER_MAINTENANCE
+  AWAITING_REPAIR
+  IN_STORAGE
+  DECOMMISSIONED
+  LOST
+  MISSING
+}
+
+enum MaintenanceType {
+  PREVENTIVE
+  CORRECTIVE
+  EMERGENCY
+  OVERHAUL
+}
+
+enum ServiceProvider {
+  IN_HOUSE
+  CONTRACTED
+  MANUFACTURER
+  THIRD_PARTY
+}
+
+enum MaintenanceStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  OVERDUE
+}
+
+enum InspectionResult {
+  PASS
+  FAIL
+  CONDITIONAL
+  NEEDS_REPAIR
+}
+
+enum TransferStatus {
+  PENDING
+  APPROVED
+  IN_TRANSIT
+  COMPLETED
+  CANCELLED
+}
+
+enum DisposalMethod {
+  SALE
+  DONATION
+  SCRAP
+  DESTRUCTION
+  RETURN_TO_MANUFACTURER
+  RECYCLING
+}
+
+enum AccessLevel {
+  VIEW_ONLY
+  OPERATE
+  MAINTAIN
+  FULL_ACCESS
+  ADMINISTRATIVE
+}
+
+enum DocumentCategory {
+  PHOTO
+  TECHNICAL_DRAWING
+  SCHEMATIC
+  USER_MANUAL
+  MAINTENANCE_LOG
+  INSPECTION_REPORT
+  CERTIFICATE
+  LICENSE
+  PURCHASE_DOCUMENT
+  WARRANTY
+  TRAINING_MATERIAL
+  OTHER
 }
