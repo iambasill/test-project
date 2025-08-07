@@ -119,7 +119,7 @@ export const updateUserStatus = async (req: Request, res: Response) => {
     const { status} = req.body;
 
     const updatedUser = await prisma.user.update({
-      where: { email:user.email },
+      where: { id },
       data: { status },
       select: {
         id: true,
