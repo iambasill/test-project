@@ -1,35 +1,24 @@
-import express from 'express'
+import { createEquipment, getAllEquipment } from './../controller/equipmentController';
+import  express  from "express";
+
+export const equipmentRouter = express.Router();
 
 
-import {
-    getAllEquipment,
-  getEquipmentById,
-  createEquipment,
-  updateEquipment,
-  deleteEquipment,
-  approveEquipment,
-  authorizeEquipment,
-  updateEquipmentStatus
-
-} from '../controller/equipmentController';
-
-export const equipmentRouter = express.Router()
-
-
-// Basic CRUD operations
+// Base routes
 equipmentRouter.get('/', getAllEquipment);
-equipmentRouter.get('/:id', getEquipmentById);
 equipmentRouter.post('/', createEquipment);
-equipmentRouter.put('/:id', updateEquipment);
-equipmentRouter.delete('/:id', deleteEquipment);
 
-// Workflow operations
-equipmentRouter.patch('/:id/approve', approveEquipment);
-equipmentRouter.patch('/:id/authorize', authorizeEquipment);
-equipmentRouter.patch('/:id/status', updateEquipmentStatus);
+// // Specific equipment routes
+// equipmentRouter.get('/:id', getEquipmentById);
+// equipmentRouter.put('/:id', updateEquipment);
+// equipmentRouter.delete('/:id', deleteEquipment);
 
-export default equipmentRouter;
+// // Equipment by chassis number
 
-// Example usage in app.ts:
-// app.use('/api/equipment', equipmentRoutes);
+// // Equipment by type
 
+// // Condition management
+// equipmentRouter.get('/:id/conditions', getEquipmentConditionHistory);
+// equipmentRouter.post('/:id/conditions', updateEquipmentCondition);
+
+// // Inspection management

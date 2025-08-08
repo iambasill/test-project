@@ -1,547 +1,368 @@
-import { Request, Response } from 'express';
+import {Request,Response} from 'express'
+import { BadRequestError } from '../httpClass/exceptions';
 import { prisma } from '../server';
-import { BadRequestError, notFoundError } from '../httpClass/exceptions';
 
 
-export const getAllEquipment = async (req: Request, res: Response) => {
-    
-    const equipment = await prisma.equipment.findMany({
-      include: {
-        registeredBy: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            rank: true,
-            unit: true,
-          },
-        },
-        approvedBy: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            rank: true,
-          },
-        },
-        warrantyInfo: true,
-        assignments: {
-          where: { isActive: true },
-          include: {
-            user: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                rank: true,
-              },
-            },
-          },
-        },
-        _count: {
-          select: {
-            maintenanceRecords: true,
-            inspectionRecords: true,
-            transferHistory: true,
-            documents: true,
-          },
-        },
-      },
-    });
-
-
-    res.status(200).json({
-      success: true,
-      data: equipment,
-    });
-}
-
-// Get equipment by ID with full details
-export const getEquipmentById = async (req: Request, res: Response) => {
-    const { id } = req.params;
-    const { includeHistory = 'false' } = req.query;
-
-    const includeOptions: any = {
-      registeredBy: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          rank: true,
-          unit: true,
-          email: true,
-        },
-      },
-      approvedBy: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          rank: true,
-        },
-      },
-      authorizedBy: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          rank: true,
-        },
-      },
-      warrantyInfo: true,
-      assignments: {
+// Get all equipment
+export const getAllEquipment = async (req:Request, res:Response) => {
+  const equipment = await prisma.equipment.findMany({
+    include: {
+      ownerships: {
+        where: { isCurrent: true },
         include: {
-          user: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              rank: true,
-              email: true,
-            },
-          },
-        },
-        orderBy: { startDate: 'desc' },
+          operator: true
+        }
       },
-      documents: {
-        select: {
-          id: true,
-          fileName: true,
-          originalName: true,
-          category: true,
-          fileSize: true,
-          description: true,
-          createdAt: true,
-        },
+      conditionHistory: {
+        orderBy: { date: 'desc' },
       },
-    };
-
-    // Include history if requested
-    if (includeHistory === 'true') {
-      includeOptions.maintenanceRecords = {
-        include: {
-          technician: {
-            select: {
-              firstName: true,
-              lastName: true,
-              rank: true,
-            },
-          },
-        },
-        orderBy: { scheduledDate: 'desc' },
-        take: 10,
-      };
-      includeOptions.inspectionRecords = {
-        include: {
-          inspector: {
-            select: {
-              firstName: true,
-              lastName: true,
-              rank: true,
-            },
-          },
-        },
-        orderBy: { inspectionDate: 'desc' },
-        take: 10,
-      };
-      includeOptions.transferHistory = {
-        include: {
-          initiatedBy: {
-            select: {
-              firstName: true,
-              lastName: true,
-              rank: true,
-            },
-          },
-          approvedBy: {
-            select: {
-              firstName: true,
-              lastName: true,
-              rank: true,
-            },
-          },
-        },
-        orderBy: { transferDate: 'desc' },
-      };
+      inspections: {
+        orderBy: { datePerformed: 'desc' },
+      },
+      documents: true
     }
-
-    const equipment = await prisma.equipment.findUnique({
-      where: { id },
-      include: includeOptions,
-    });
-
-    if (!equipment) throw new notFoundError('Equipment not found')
-     
-    res.status(200).json({
-      success: true,
-      data: equipment,
-    });
-
-};
-
-// Register new equipment
-export const createEquipment = async (req: Request, res: Response) => {
-    const {
-      // Section A: Equipment Identification
-      chasisNumber,
-      equipmentName,
-      model,
-      equipmentType,
-      equipmentCategory,
-      manufacturer,
-      modelNumber,
-      yearOfManufacture,
-      countryOfOrigin,
-      
-      // Section B: Acquisition Details
-      dateOfAcquisition,
-      acquisitionMethod,
-      supplierInfo,
-      purchaseOrderNumber,
-      contractReference,
-      costValue,
-      currency = 'NGN',
-      fundingSource,
-      
-      // Section C: Technical Specifications
-      weight,
-      length,
-      width,
-      height,
-      powerRequirements,
-      fuelType,
-      maximumRange,
-      operationalSpecs,
-      requiredCertifications,
-      environmentalConditions,
-      
-      // Section D: Assignment & Location
-      currentLocation,
-      currentBase,
-      assignedUnit,
-      commandingOfficer,
-      securityClassification = 'UNCLASSIFIED',
-      
-      // Section E: Operational Status
-      currentStatus = 'ACTIVE',
-      operationalHours,
-      mileage,
-      lastInspectionDate,
-      nextMaintenanceDate,
-      availabilityPercentage,
-      
-      // Section G: Documentation & Compliance
-      hasOperatingManual = false,
-      trainingRequirements,
-      safetyNotes,
-      insuranceInfo,
-      
-      // Section J: Additional Information
-      specialHandling,
-      environmentalNotes,
-      relatedEquipment,
-      backupSystems,
-      technicalSupport,
-      notes,
-      
-      // Section L: Registration info
-      registeredById,
-      
-      // Warranty Information
-      warrantyInfo,
-    } = req.body;
-
-
-    const existingEquipment = await prisma.equipment.findUnique({
-      where: { chasisNumber },
-    });
-
-    if (existingEquipment) throw new BadRequestError('Equipment with this serial number already exists')
-
-    // Create equipment with warranty info if provided
-    const equipment = await prisma.equipment.create({
-      data: {
-        chasisNumber,
-        equipmentName,
-        model,
-        equipmentType,
-        equipmentCategory,
-        manufacturer,
-        modelNumber,
-        yearOfManufacture,
-        countryOfOrigin,
-        dateOfAcquisition: new Date(dateOfAcquisition),
-        acquisitionMethod,
-        supplierInfo,
-        purchaseOrderNumber,
-        contractReference,
-        costValue,
-        currency,
-        fundingSource,
-        weight,
-        length,
-        width,
-        height,
-        powerRequirements,
-        fuelType,
-        maximumRange,
-        operationalSpecs,
-        requiredCertifications,
-        environmentalConditions,
-        currentLocation,
-        currentBase,
-        assignedUnit,
-        commandingOfficer,
-        securityClassification,
-        currentStatus,
-        operationalHours,
-        mileage,
-        lastInspectionDate: lastInspectionDate ? new Date(lastInspectionDate) : null,
-        nextMaintenanceDate: nextMaintenanceDate ? new Date(nextMaintenanceDate) : null,
-        availabilityPercentage,
-        hasOperatingManual,
-        trainingRequirements,
-        safetyNotes,
-        insuranceInfo,
-        specialHandling,
-        environmentalNotes,
-        relatedEquipment,
-        backupSystems,
-        technicalSupport,
-        notes,
-        registeredById,
-        ...(warrantyInfo && {
-          warrantyInfo: {
-            create: {
-              startDate: new Date(warrantyInfo.startDate),
-              endDate: new Date(warrantyInfo.endDate),
-              coverageDetails: warrantyInfo.coverageDetails,
-              warrantyProvider: warrantyInfo.warrantyProvider,
-              contactInfo: warrantyInfo.contactInfo,
-            },
-          },
-        }),
-      },
-      include: {
-        registeredBy: {
-          select: {
-            firstName: true,
-            lastName: true,
-            rank: true,
-            unit: true,
-          },
-        },
-        warrantyInfo: true,
-      },
-    });
-
-    res.status(201).json({
-      success: true,
-      message: 'Equipment registered successfully',
-      data: equipment,
-    });
- 
+  });
   
+  res.status(200).json({
+    success: true,
+    data: equipment
+  });
 };
 
-export const updateEquipment = async (req: Request, res: Response) => {
-// check equipment function
-    const { id } = req.params;
-    const updateData = req.body;
-
-    // Remove fields that shouldn't be updated directly
-    delete updateData.id;
-    delete updateData.createdAt;
-    delete updateData.registrationDate;
-
-    // Handle date fields
-    if (updateData.dateOfAcquisition) {
-      updateData.dateOfAcquisition = new Date(updateData.dateOfAcquisition);
+// Get equipment by ID
+export const getEquipmentById = async (req:Request, res:Response) => {
+  const { id } = req.params;
+  const equipment = await prisma.equipment.findUnique({
+    where: { id },
+    include: {
+      ownerships: {
+        include: {
+          operator: true,
+          documents: true
+        }
+      },
+      conditionHistory: {
+        include: {
+          recordedBy: true
+        },
+        orderBy: { date: 'desc' }
+      },
+      inspections: {
+        include: {
+          inspector: true,
+          exteriorInspections: true,
+          interiorInspections: true,
+          mechanicalInspections: true,
+          functionalInspections: true,
+          documentLegalInspections: true
+        },
+        orderBy: { datePerformed: 'desc' }
+      },
+      documents: true,
+      operators: true
     }
-    if (updateData.lastInspectionDate) {
-      updateData.lastInspectionDate = new Date(updateData.lastInspectionDate);
-    }
-    if (updateData.nextMaintenanceDate) {
-      updateData.nextMaintenanceDate = new Date(updateData.nextMaintenanceDate);
-    }
-
-    const equipment = await prisma.equipment.update({
-      where: { id },
-      data: updateData,
-      include: {
-        registeredBy: {
-          select: {
-            firstName: true,
-            lastName: true,
-            rank: true,
-          },
-        },
-        approvedBy: {
-          select: {
-            firstName: true,
-            lastName: true,
-            rank: true,
-          },
-        },
-      },
-    });
-
-    res.status(200).json({
-      success: true,
-      message: 'Equipment updated successfully',
-      data: equipment,
-    });
-}
-
-export const approveEquipment = async (req: Request, res: Response) => {
-  //check equipment
-    const { id } = req.params;
-    const { approvedById, referenceNumber } = req.body;
-
-    const equipment = await prisma.equipment.update({
-      where: { id },
-      data: {
-        approvedById,
-        approvalDate: new Date(),
-        referenceNumber,
-      },
-      include: {
-        registeredBy: {
-          select: {
-            firstName: true,
-            lastName: true,
-            rank: true,
-          },
-        },
-        approvedBy: {
-          select: {
-            firstName: true,
-            lastName: true,
-            rank: true,
-          },
-        },
-      },
-    });
-
-    res.status(200).json({
-      success: true,
-      message: 'Equipment approved successfully',
-      data: equipment,
-    });
- 
-};
-
-
-export const authorizeEquipment = async (req: Request, res: Response) => {
-  //check equipment
-    const { id } = req.params;
-    const { authorizedById } = req.body;
-
-    const equipment = await prisma.equipment.update({
-      where: { id },
-      data: {
-        authorizedById,
-        authorizationDate: new Date(),
-      },
-      include: {
-        registeredBy: {
-          select: {
-            firstName: true,
-            lastName: true,
-            rank: true,
-          },
-        },
-        approvedBy: {
-          select: {
-            firstName: true,
-            lastName: true,
-            rank: true,
-          },
-        },
-        authorizedBy: {
-          select: {
-            firstName: true,
-            lastName: true,
-            rank: true,
-          },
-        },
-      },
-    });
-
-    res.status(200).json({
-      success: true,
-      message: 'Equipment authorized successfully',
-      data: equipment,
-    });
-};
-
-// Update equipment status
-export const updateEquipmentStatus = async (req: Request, res: Response) => {
-  //check equipment
+  });
   
-    const { id } = req.params;
-    const { currentStatus, notes } = req.body;
-
-    const equipment = await prisma.equipment.update({
-      where: { id },
-      data: {
-        currentStatus,
-        ...(notes && { notes }),
-      },
-      select: {
-        id: true,
-        chasisNumber: true,
-        equipmentName: true,
-        currentStatus: true,
-        updatedAt: true,
-      },
-    });
-
-    res.json({
-      success: true,
-      message: 'Equipment status updated successfully',
-      data: equipment,
-    });
+  if (!equipment)  throw new BadRequestError('Equipment not found')
+  
+  res.status(200).json({
+    success: true,
+  });
 };
 
-// Soft delete equipment (mark as inactive)
-export const deleteEquipment = async (req: Request, res: Response) => {
-    const { id } = req.params;
-
-    // Check if equipment has active assignments or pending maintenance
-    const equipmentWithRelations = await prisma.equipment.findUnique({
-      where: { id },
-      include: {
-        assignments: {
-          where: { isActive: true },
-        },
-        maintenanceRecords: {
-          where: {
-            status: {
-              in: ['SCHEDULED', 'IN_PROGRESS'],
-            },
-          },
-        },
-      },
-    });
-
-    if (!equipmentWithRelations) throw new BadRequestError('Equipment not found')
-    
-    if (equipmentWithRelations.assignments.length > 0) throw new BadRequestError('Cannot delete equipment with active assignments')
-     
-
-    if (equipmentWithRelations.maintenanceRecords.length > 0) throw new BadRequestError('Cannot delete equipment with pending maintenance')
-
-    await prisma.equipment.update({
-      where: { id },
-      data: {
-        isActive: false,
-        currentStatus: 'DECOMMISSIONED',
-      },
-    });
-
-    res.status(200).json({
-      success: true,
-      message: 'Equipment decommissioned successfully',
-    });
+// Create new equipment
+export const createEquipment = async (req:Request, res:Response) => {
+  const equipmentData = req.body;
+  
+  const equipment = await prisma.equipment.create({
+    data: {
+      ...equipmentData,
+      costValue: equipmentData.costValue ? parseFloat(equipmentData.costValue) : null,
+      weight: equipmentData.weight ? parseFloat(equipmentData.weight) : null,
+      yearOfManufacture: parseInt(equipmentData.yearOfManufacture)
+    },
+    include: {
+      ownerships: true,
+      documents: true,
+      conditionHistory: true
+    }
+  });
+  
+  res.status(201).json({
+    success: true,
+    message: 'Equipment created successfully',
+  });
 };
+
+// // Update equipment
+// const updateEquipment = async (req, res) => {
+//   const { id } = req.params;
+//   const updateData = req.body;
+  
+//   const equipment = await prisma.equipment.update({
+//     where: { id },
+//     data: {
+//       ...updateData,
+//       costValue: updateData.costValue ? parseFloat(updateData.costValue) : undefined,
+//       weight: updateData.weight ? parseFloat(updateData.weight) : undefined,
+//       yearOfManufacture: updateData.yearOfManufacture ? parseInt(updateData.yearOfManufacture) : undefined
+//     },
+//     include: {
+//       ownerships: {
+//         where: { isCurrent: true },
+//         include: { operator: true }
+//       },
+//       conditionHistory: {
+//         orderBy: { date: 'desc' },
+//         take: 5
+//       }
+//     }
+//   });
+  
+//   res.status(200).json({
+//     success: true,
+//     message: 'Equipment updated successfully',
+//     data: equipment
+//   });
+// };
+
+// // Delete equipment
+// const deleteEquipment = async (req, res) => {
+//   const { id } = req.params;
+  
+//   await prisma.equipment.delete({
+//     where: { id }
+//   });
+  
+//   res.status(200).json({
+//     success: true,
+//     message: 'Equipment deleted successfully'
+//   });
+// };
+
+// // Get equipment by chassis number
+// const getEquipmentByChassisNumber = async (req, res) => {
+//   const { chasisNumber } = req.params;
+  
+//   const equipment = await prisma.equipment.findUnique({
+//     where: { chasisNumber },
+//     include: {
+//       ownerships: {
+//         where: { isCurrent: true },
+//         include: { operator: true }
+//       },
+//       conditionHistory: {
+//         orderBy: { date: 'desc' },
+//         take: 1
+//       }
+//     }
+//   });
+  
+//   if (!equipment) {
+//     return res.status(404).json({
+//       success: false,
+//       message: 'Equipment not found'
+//     });
+//   }
+  
+//   res.status(200).json({
+//     success: true,
+//     data: equipment
+//   });
+// };
+
+// // Get equipment by type/category
+// const getEquipmentByType = async (req, res) => {
+//   const { type } = req.params;
+  
+//   const equipment = await prisma.equipment.findMany({
+//     where: {
+//       OR: [
+//         { equipmentType: { contains: type, mode: 'insensitive' } },
+//         { equipmentCategory: { contains: type, mode: 'insensitive' } }
+//       ]
+//     },
+//     include: {
+//       ownerships: {
+//         where: { isCurrent: true },
+//         include: { operator: true }
+//       }
+//     }
+//   });
+  
+//   res.status(200).json({
+//     success: true,
+//     count: equipment.length,
+//     data: equipment
+//   });
+// };
+
+// // Get equipment condition history
+// const getEquipmentConditionHistory = async (req, res) => {
+//   const { id } = req.params;
+  
+//   const conditionHistory = await prisma.equipmentCondition.findMany({
+//     where: { equipmentId: id },
+//     include: {
+//       recordedBy: {
+//         select: { firstName: true, lastName: true, email: true }
+//       },
+//       documents: true
+//     },
+//     orderBy: { date: 'desc' }
+//   });
+  
+//   res.status(200).json({
+//     success: true,
+//     count: conditionHistory.length,
+//     data: conditionHistory
+//   });
+// };
+
+// // Update equipment condition
+// const updateEquipmentCondition = async (req, res) => {
+//   const { id } = req.params;
+//   const { condition, notes, recordedById } = req.body;
+  
+//   // Create new condition record
+//   const conditionRecord = await prisma.equipmentCondition.create({
+//     data: {
+//       equipmentId: id,
+//       condition,
+//       notes,
+//       recordedById
+//     }
+//   });
+  
+//   // Update equipment current condition
+//   const equipment = await prisma.equipment.update({
+//     where: { id },
+//     data: {
+//       currentCondition: condition,
+//       lastConditionCheck: new Date()
+//     }
+//   });
+  
+//   res.status(200).json({
+//     success: true,
+//     message: 'Equipment condition updated successfully',
+//     data: {
+//       equipment,
+//       conditionRecord
+//     }
+//   });
+// };
+
+// // Get equipment inspections
+// const getEquipmentInspections = async (req, res) => {
+//   const { id } = req.params;
+  
+//   const inspections = await prisma.inspection.findMany({
+//     where: { equipmentId: id },
+//     include: {
+//       inspector: {
+//         select: { firstName: true, lastName: true, email: true }
+//       },
+//       exteriorInspections: true,
+//       interiorInspections: true,
+//       mechanicalInspections: true,
+//       functionalInspections: true,
+//       documentLegalInspections: true,
+//       documents: true
+//     },
+//     orderBy: { datePerformed: 'desc' }
+//   });
+  
+//   res.status(200).json({
+//     success: true,
+//     count: inspections.length,
+//     data: inspections
+//   });
+// };
+
+// // Search equipment
+// const searchEquipment = async (req, res) => {
+//   const { q, manufacturer, type, condition, year } = req.query;
+  
+//   const where = {};
+  
+//   if (q) {
+//     where.OR = [
+//       { equipmentName: { contains: q, mode: 'insensitive' } },
+//       { model: { contains: q, mode: 'insensitive' } },
+//       { chasisNumber: { contains: q, mode: 'insensitive' } },
+//       { manufacturer: { contains: q, mode: 'insensitive' } }
+//     ];
+//   }
+  
+//   if (manufacturer) {
+//     where.manufacturer = { contains: manufacturer, mode: 'insensitive' };
+//   }
+  
+//   if (type) {
+//     where.equipmentType = { contains: type, mode: 'insensitive' };
+//   }
+  
+//   if (condition) {
+//     where.currentCondition = condition;
+//   }
+  
+//   if (year) {
+//     where.yearOfManufacture = parseInt(year);
+//   }
+  
+//   const equipment = await prisma.equipment.findMany({
+//     where,
+//     include: {
+//       ownerships: {
+//         where: { isCurrent: true },
+//         include: { operator: true }
+//       }
+//     }
+//   });
+  
+//   res.status(200).json({
+//     success: true,
+//     count: equipment.length,
+//     data: equipment
+//   });
+// };
+
+// // Get equipment statistics
+// const getEquipmentStats = async (req, res) => {
+//   const totalEquipment = await prisma.equipment.count();
+  
+//   const conditionStats = await prisma.equipment.groupBy({
+//     by: ['currentCondition'],
+//     _count: { currentCondition: true }
+//   });
+  
+//   const typeStats = await prisma.equipment.groupBy({
+//     by: ['equipmentType'],
+//     _count: { equipmentType: true }
+//   });
+  
+//   const manufacturerStats = await prisma.equipment.groupBy({
+//     by: ['manufacturer'],
+//     _count: { manufacturer: true }
+//   });
+  
+//   const yearStats = await prisma.equipment.groupBy({
+//     by: ['yearOfManufacture'],
+//     _count: { yearOfManufacture: true },
+//     orderBy: { yearOfManufacture: 'desc' }
+//   });
+  
+//   res.status(200).json({
+//     success: true,
+//     data: {
+//       total: totalEquipment,
+//       byCondition: conditionStats,
+//       byType: typeStats,
+//       byManufacturer: manufacturerStats,
+//       byYear: yearStats
+//     }
+//   });
+// };
+
+
