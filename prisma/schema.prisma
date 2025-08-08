@@ -20,9 +20,10 @@ enum UserStatus {
 
 enum UserRole {
     ADMIN
-    INSPECTOR
+    MANAGER
     OPERATOR
-    VIEWER
+    OFFICER
+    COMMANDER
 }
 
 enum ConditionStatus {
