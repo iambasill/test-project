@@ -58,7 +58,10 @@ export const getEquipmentById = async (req:Request, res:Response) => {
         },
         orderBy: { datePerformed: 'desc' }
       },
-      documents: true,
+      documents: {select:{
+        fileName:true,
+        url:true
+      }},
       operators: true
     }
   });
