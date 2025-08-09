@@ -72,7 +72,7 @@ export const getEquipmentById = async (req:Request, res:Response) => {
 
 // Create new equipment
 export const createEquipment = async (req:Request, res:Response) => {
-   const equipmentData = {
+   const  {
       chasisNumber,
       equipmentName,
       model,
