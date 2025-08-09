@@ -59,11 +59,19 @@ export const getUserById = async (req: Request, res: Response) => {
 
 // Update user
 export const updateUser = async (req: Request, res: Response) => {
+
     const { id } = req.params;
     let user = await checkUser(id)
     if (!user) throw new BadRequestError("User not found")
 
     const { email, firstName, lastName, role, status, password } = req.body;
+    const existingUser = await prisma.user.findFirst({
+     where: { email }
+    });
+
+    if (existingUser && existingUser.id !== req.user?.userID) {
+    throw new BadRequestError('Email already in use by another account');
+    }
 
     const updateData: any = {};
     if (email) updateData.email = email;

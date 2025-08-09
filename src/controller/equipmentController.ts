@@ -85,6 +85,12 @@ export const createEquipment = async (req:Request, res:Response) => {
       currency,
     } = req.body
  
+    const existingEquipment = await prisma.equipment.findFirst({
+  where: { chasisNumber }
+});
+
+if (existingEquipment) throw new BadRequestError('Equipment with this chassis number already exists');
+
   
   const equipment = await prisma.equipment.create({
     data: {
