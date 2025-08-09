@@ -1,6 +1,6 @@
-// import { BadRequestError } from "../httpClass/exceptions";
-// import { prisma } from "../server";
-// import {Request, Response} from 'express'
+import { BadRequestError } from "../httpClass/exceptions";
+import { prisma } from "../server";
+import {(Request, Response)} from 'express'
 
 
 // // Get all inspections
@@ -774,23 +774,23 @@
 // //   }
 // // };
 
-// // module.exports = {
-// //   getAllInspections,
-// //   getInspectionById,
-// //   createInspection,
-// //   updateInspection,
-// //   deleteInspection,
-// //   getInspectionsByEquipmentChasisNumber, // Updated function name
-// //   getInspectionsByInspector,
-// //   getOverdueInspections,
-// //   getUpcomingInspections,
-// //   addExteriorInspection,
-// //   addInteriorInspection,
-// //   addMechanicalInspection,
-// //   addFunctionalInspection,
-// //   addDocumentLegalInspection,
-// //   updateInspectionItem,
-// //   deleteInspectionItem,
-// //   getInspectionStats,
-// //   searchInspections
-// // };
+// module.exports = {
+//   getAllInspections,
+//   getInspectionById,
+//   createInspection,
+//   updateInspection,
+//   deleteInspection,
+//   getInspectionsByEquipmentChasisNumber, // Updated function name
+//   getInspectionsByInspector,
+//   getOverdueInspections,
+//   getUpcomingInspections,
+//   addExteriorInspection,
+//   addInteriorInspection,
+//   addMechanicalInspection,
+//   addFunctionalInspection,
+//   addDocumentLegalInspection,
+//   updateInspectionItem,
+//   deleteInspectionItem,
+//   getInspectionStats,
+//   searchInspections
+// };
