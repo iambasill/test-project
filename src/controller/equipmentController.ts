@@ -88,10 +88,19 @@ export const createEquipment = async (req:Request, res:Response) => {
   
   const equipment = await prisma.equipment.create({
     data: {
-      ...equipmentData,
-      costValue: equipmentData.costValue ? parseFloat(equipmentData.costValue) : null,
-      weight: equipmentData.weight ? parseFloat(equipmentData.weight) : null,
-      yearOfManufacture: parseInt(equipmentData.yearOfManufacture)
+       chasisNumber,
+      equipmentName,
+      model,
+      equipmentType,
+      manufacturer,
+      yearOfManufacture,
+      countryOfOrigin,
+      dateOfAcquisition,
+      acquisitionMethod,
+      currency,
+      costValue:costValue ? parseFloat(costValue) : null,
+      weight:weight ? parseFloat(weight) : null,
+      yearOfManufacture: parseInt(yearOfManufacture)
     },
     include: {
       ownerships: true,
