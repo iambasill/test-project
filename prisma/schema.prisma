@@ -67,8 +67,8 @@ model User {
 }
 
 model Equipment {
-    id String  @id @default(uuid())
-    chasisNumber String  @unique // Now using chasisNumber as primary key
+    id           String @id @default(uuid())
+    chasisNumber String @unique // Now using chasisNumber as primary key
 
     // Section A: Equipment Identification
     equipmentName     String
@@ -111,6 +111,9 @@ model Equipment {
     operators        Operator[]
     conditionHistory EquipmentCondition[]
 
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
     @@map("equipments")
 }
 
@@ -130,9 +133,9 @@ model Operator {
     alternatePhoneNumbers Json? // Stored as JSON array
 
     // Relations
-    documents   Document[]
-    ownerships  EquipmentOwnership[]
-    equipment   Equipment?           @relation(fields: [equipmentChasisNumber], references: [chasisNumber])
+    documents             Document[]
+    ownerships            EquipmentOwnership[]
+    equipment             Equipment?           @relation(fields: [equipmentChasisNumber], references: [chasisNumber])
     equipmentChasisNumber String? // Changed from equipmentId to equipmentChasisNumber
 
     createdAt DateTime @default(now())
@@ -142,16 +145,16 @@ model Operator {
 }
 
 model EquipmentOwnership {
-    id                        String    @id @default(uuid())
-    equipment                 Equipment @relation(fields: [equipmentChasisNumber], references: [chasisNumber])
-    equipmentChasisNumber     String    // Changed from equipmentId
-    operator                  Operator  @relation(fields: [operatorId], references: [id])
-    operatorId                String
-    startDate                 DateTime  @default(now())
-    endDate                   DateTime?
-    isCurrent                 Boolean   @default(true)
-    primaryDuties             String?
-    driverLicenseId           String?
+    id                    String    @id @default(uuid())
+    equipment             Equipment @relation(fields: [equipmentChasisNumber], references: [chasisNumber])
+    equipmentChasisNumber String // Changed from equipmentId
+    operator              Operator  @relation(fields: [operatorId], references: [id])
+    operatorId            String
+    startDate             DateTime  @default(now())
+    endDate               DateTime?
+    isCurrent             Boolean   @default(true)
+    primaryDuties         String?
+    driverLicenseId       String?
 
     // Co-operator information
     coFirstName   String?
@@ -172,16 +175,16 @@ model EquipmentOwnership {
 }
 
 model EquipmentCondition {
-    id                        String          @id @default(uuid())
-    equipment                 Equipment       @relation(fields: [equipmentChasisNumber], references: [chasisNumber])
-    equipmentChasisNumber     String          // Changed from equipmentId
-    condition                 ConditionStatus
-    date                      DateTime        @default(now())
-    notes                     String?
-    recordedBy                User?           @relation(fields: [recordedById], references: [id])
-    recordedById              String?
-    inspectionId              String?
-    documents                 Document[]
+    id                    String          @id @default(uuid())
+    equipment             Equipment       @relation(fields: [equipmentChasisNumber], references: [chasisNumber])
+    equipmentChasisNumber String // Changed from equipmentId
+    condition             ConditionStatus
+    date                  DateTime        @default(now())
+    notes                 String?
+    recordedBy            User?           @relation(fields: [recordedById], references: [id])
+    recordedById          String?
+    inspectionId          String?
+    documents             Document[]
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -191,12 +194,12 @@ model EquipmentCondition {
 
 // Main Inspection Model - One comprehensive inspection per session
 model Inspection {
-    id                        String    @id @default(uuid())
-    equipmentChasisNumber     String    // Changed from chasisNumber to be clearer
-    inspectorId               String?
-    datePerformed             DateTime  @default(now())
-    nextDueDate               DateTime?
-    overallNotes              String?   @db.Text
+    id                    String    @id @default(uuid())
+    equipmentChasisNumber String // Changed from chasisNumber to be clearer
+    inspectorId           String?
+    datePerformed         DateTime  @default(now())
+    nextDueDate           DateTime?
+    overallNotes          String?   @db.Text
 
     // Relations
     equipment Equipment @relation(fields: [equipmentChasisNumber], references: [chasisNumber])
@@ -309,16 +312,16 @@ model Document {
     mimeType    String?
 
     // Relations - A document can belong to multiple entities
-    equipment                 Equipment?          @relation(fields: [equipmentChasisNumber], references: [chasisNumber])
-    equipmentChasisNumber     String?             // Changed from equipmentId
-    operator                  Operator?           @relation(fields: [operatorId], references: [id])
-    operatorId                String?
-    inspection                Inspection?         @relation(fields: [inspectionId], references: [id])
-    inspectionId              String?
-    ownership                 EquipmentOwnership? @relation(fields: [ownershipId], references: [id])
-    ownershipId               String?
-    condition                 EquipmentCondition? @relation(fields: [conditionId], references: [id])
-    conditionId               String?
+    equipment             Equipment?          @relation(fields: [equipmentChasisNumber], references: [chasisNumber])
+    equipmentChasisNumber String? // Changed from equipmentId
+    operator              Operator?           @relation(fields: [operatorId], references: [id])
+    operatorId            String?
+    inspection            Inspection?         @relation(fields: [inspectionId], references: [id])
+    inspectionId          String?
+    ownership             EquipmentOwnership? @relation(fields: [ownershipId], references: [id])
+    ownershipId           String?
+    condition             EquipmentCondition? @relation(fields: [conditionId], references: [id])
+    conditionId           String?
 
     // Relations to specific inspection categories
     exteriorInspectionId      String?

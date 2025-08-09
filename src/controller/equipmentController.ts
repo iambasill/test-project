@@ -83,6 +83,7 @@ export const createEquipment = async (req:Request, res:Response) => {
       dateOfAcquisition,
       acquisitionMethod,
       currency,
+      currentCondition
     } = req.body
  
     const existingEquipment = await prisma.equipment.findFirst({
@@ -103,7 +104,8 @@ if (existingEquipment) throw new BadRequestError('Equipment with this chassis nu
       countryOfOrigin,
       dateOfAcquisition,
       acquisitionMethod,
-      currency
+      currency,
+      currentCondition
     
     },
     include: {
@@ -116,6 +118,7 @@ if (existingEquipment) throw new BadRequestError('Equipment with this chassis nu
   res.status(201).json({
     success: true,
     message: 'Equipment created successfully',
+    data:equipment
   });
 };
 
