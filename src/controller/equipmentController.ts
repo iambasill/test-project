@@ -207,8 +207,7 @@ export const updateEquipment = async (req:Request, res:Response) => {
   
   res.status(200).json({
     success: true,
-    message: 'Equipment updated successfully',
-    data: equipment
+    message: 'Equipment updated successfully'
   });
 };
 
