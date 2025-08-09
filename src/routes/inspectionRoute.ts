@@ -3,7 +3,7 @@ import { createInspection, getAllInspections } from "../controller/inspectionCon
 
 export const inspectionRouter = express.Router();
 
-inspectionRouter.get('/', getAllInspections);
-inspectionRouter.post('/', createInspection);
+// inspectionRouter.get('/', getAllInspections);
+// inspectionRouter.post('/', createInspection);
 
 
