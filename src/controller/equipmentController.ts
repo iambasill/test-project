@@ -100,7 +100,7 @@ if (existingEquipment) throw new BadRequestError('Equipment with this chassis nu
   
   const equipment = await prisma.equipment.create({
     data: {
-       chasisNumber,
+      chasisNumber,
       equipmentName,
       model,
       equipmentType,
@@ -128,9 +128,11 @@ if (existingEquipment) throw new BadRequestError('Equipment with this chassis nu
       equipmentId: equipment.chasisNumber
     }));
 
-       await prisma.document.createMany({
+    await prisma.document.createMany({
       data: fileData
     });
+
+
   }
   
   res.status(201).json({
@@ -142,7 +144,22 @@ if (existingEquipment) throw new BadRequestError('Equipment with this chassis nu
 // Update equipment
 export const updateEquipment = async (req:Request, res:Response) => {
   const { id } = req.params;
-  const updateData = req.body;
+  
+   const  {
+      chasisNumber,
+      equipmentName,
+      model,
+      equipmentType,
+      manufacturer,
+      yearOfManufacture,
+      countryOfOrigin,
+      dateOfAcquisition,
+      acquisitionMethod,
+      currency,
+      currentCondition
+    } = req.body;
+
+
   const equipment = await prisma.equipment.findFirst({
     where:{id}
   })
@@ -151,10 +168,17 @@ export const updateEquipment = async (req:Request, res:Response) => {
   const updatedEquipment = await prisma.equipment.update({
     where: { id },
     data: {
-      ...updateData,
-      costValue: updateData.costValue ? parseFloat(updateData.costValue) : undefined,
-      weight: updateData.weight ? parseFloat(updateData.weight) : undefined,
-      yearOfManufacture: updateData.yearOfManufacture ? parseInt(updateData.yearOfManufacture) : undefined
+      chasisNumber,
+      equipmentName,
+      model,
+      equipmentType,
+      manufacturer,
+      yearOfManufacture,
+      countryOfOrigin,
+      dateOfAcquisition,
+      acquisitionMethod,
+      currency,
+      currentCondition
     },
     include: {
       ownerships: {
