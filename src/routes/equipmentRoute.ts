@@ -1,24 +1,18 @@
-import { createEquipment, getAllEquipment, getEquipmentById } from './../controller/equipmentController';
+import { upload } from '../config/fileUpload';
+import { authMiddleware } from '../middlewares/authMiddleware';
+import { UPLOAD_FIELDS } from '../schema/uploadsSchema';
+import { createEquipment, deleteEquipment, getAllEquipment, getEquipmentById, updateEquipment } from './../controller/equipmentController';
 import  express  from "express";
 
 export const equipmentRouter = express.Router();
 
 
 // Base routes
-equipmentRouter.get('/', getAllEquipment);
-equipmentRouter.post('/', createEquipment);
+equipmentRouter.get('/', authMiddleware, getAllEquipment);
+equipmentRouter.post('/', authMiddleware, upload.fields(UPLOAD_FIELDS), createEquipment);
 
 // // Specific equipment routes
-equipmentRouter.get('/:id', getEquipmentById);
-// equipmentRouter.put('/:id', updateEquipment);
-// equipmentRouter.delete('/:id', deleteEquipment);
+equipmentRouter.get('/:id', authMiddleware, getEquipmentById);
+equipmentRouter.put('/:id', authMiddleware, upload.fields(UPLOAD_FIELDS), updateEquipment);
+equipmentRouter.delete('/:id', deleteEquipment);
 
-// // Equipment by chassis number
-
-// // Equipment by type
-
-// // Condition management
-// equipmentRouter.get('/:id/conditions', getEquipmentConditionHistory);
-// equipmentRouter.post('/:id/conditions', updateEquipmentCondition);
-
-// // Inspection management

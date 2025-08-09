@@ -303,7 +303,6 @@ model DocumentLegalInspection {
 
 model Document {
     id          String  @id @default(uuid())
-    type        String
     url         String
     description String?
     metadata    Json?
