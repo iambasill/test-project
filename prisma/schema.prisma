@@ -110,8 +110,6 @@ model Equipment {
     operators        Operator[]
     conditionHistory EquipmentCondition[]
 
-    updatedAt DateTime @updatedAt
-
     @@map("equipments")
 }
 
