@@ -1,6 +1,6 @@
 import { BadRequestError } from "../httpClass/exceptions";
 import { prisma } from "../server";
-import {(Request, Response)} from 'express'
+import {Request, Response} from 'express'
 
 
 // Get all inspections
