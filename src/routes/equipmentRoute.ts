@@ -1,4 +1,4 @@
-import { createEquipment, getAllEquipment } from './../controller/equipmentController';
+import { createEquipment, getAllEquipment, getEquipmentById } from './../controller/equipmentController';
 import  express  from "express";
 
 export const equipmentRouter = express.Router();
@@ -9,7 +9,7 @@ equipmentRouter.get('/', getAllEquipment);
 equipmentRouter.post('/', createEquipment);
 
 // // Specific equipment routes
-// equipmentRouter.get('/:id', getEquipmentById);
+equipmentRouter.get('/:id', getEquipmentById);
 // equipmentRouter.put('/:id', updateEquipment);
 // equipmentRouter.delete('/:id', deleteEquipment);
 
