@@ -1,5 +1,5 @@
 import  express  from "express";
-import { createInspection, getAllInspections } from "../controller/inspectionController";
+// import { createInspection, getAllInspections } from "../controller/inspectionController";
 
 export const inspectionRouter = express.Router();
 
