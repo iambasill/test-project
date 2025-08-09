@@ -67,8 +67,8 @@ model User {
 }
 
 model Equipment {
- id                    String  @id @default(uuid())
-    chasisNumber String @id @unique // Now using chasisNumber as primary key
+    id String  @id @default(uuid())
+    chasisNumber String  @unique // Now using chasisNumber as primary key
 
     // Section A: Equipment Identification
     equipmentName     String
