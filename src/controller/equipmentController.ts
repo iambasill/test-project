@@ -72,7 +72,19 @@ export const getEquipmentById = async (req:Request, res:Response) => {
 
 // Create new equipment
 export const createEquipment = async (req:Request, res:Response) => {
-  const equipmentData = req.body;
+   const equipmentData = {
+      chasisNumber,
+      equipmentName,
+      model,
+      equipmentType,
+      manufacturer,
+      yearOfManufacture,
+      countryOfOrigin,
+      dateOfAcquisition,
+      acquisitionMethod,
+      currency,
+    } = req.body
+ 
   
   const equipment = await prisma.equipment.create({
     data: {
