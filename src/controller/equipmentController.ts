@@ -31,9 +31,9 @@ export const getAllEquipment = async (req:Request, res:Response) => {
 
 // Get equipment by ID
 export const getEquipmentById = async (req:Request, res:Response) => {
-  const { id } = req.params;
+  const { chasisNumber } = req.params;
   const equipment = await prisma.equipment.findFirst({
-    where: { id },
+    where: { chasisNumber },
     include: {
       ownerships: {
         include: {
