@@ -97,10 +97,8 @@ export const createEquipment = async (req:Request, res:Response) => {
       countryOfOrigin,
       dateOfAcquisition,
       acquisitionMethod,
-      currency,
-      costValue:costValue ? parseFloat(costValue) : null,
-      weight:weight ? parseFloat(weight) : null,
-      yearOfManufacture: parseInt(yearOfManufacture)
+      currency
+    
     },
     include: {
       ownerships: true,
