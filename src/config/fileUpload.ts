@@ -43,3 +43,14 @@ export const upload = multer({
   }
 });
 
+
+  //  if (req.files) {
+  //   const files = req.files as Record<string, Express.Multer.File[]>;
+  //   const fileData = Object.entries(files).map(([fileName, [file]]) => ({
+  //     fileName,
+  //     url: file.path.toString(),
+  //     equipmentId: equipmentChasisNumber
+  //   }));
+
+  // equipmentRouter.put('/:id', upload.fields(UPLOAD_FIELDS), updateEquipment);
+  
