@@ -77,7 +77,7 @@ model Equipment {
     equipmentCategory String?
     manufacturer      String
     modelNumber       String?
-    yearOfManufacture Int
+    yearOfManufacture String
     countryOfOrigin   String
 
     // Section B: Acquisition Details
