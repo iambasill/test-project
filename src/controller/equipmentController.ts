@@ -127,7 +127,7 @@ const year = parseInt(yearOfManufacture)
     const fileData = Object.entries(files).map(([fileName, [file]]) => ({
       fileName,
       url: file.path.toString(),
-      equipmentId: equipment.chasisNumber
+       equipmentChasisNumber: equipment.chasisNumber
     }));
 
     await prisma.document.createMany({
