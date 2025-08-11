@@ -90,6 +90,7 @@ export const createEquipment = async (req:Request, res:Response) => {
       currentCondition
     } = req.body
     
+    console.log(req.body, "payload")
  
   const existingEquipment = await prisma.equipment.findFirst({
   where: { chasisNumber }
@@ -97,6 +98,7 @@ export const createEquipment = async (req:Request, res:Response) => {
 
 if (existingEquipment) throw new BadRequestError('Equipment with this chassis number already exists');
 
+const year = parseInt(yearOfManufacture)
   
   const equipment = await prisma.equipment.create({
     data: {
@@ -105,7 +107,7 @@ if (existingEquipment) throw new BadRequestError('Equipment with this chassis nu
       model,
       equipmentType,
       manufacturer,
-      yearOfManufacture,
+      yearOfManufacture:year,
       countryOfOrigin,
       dateOfAcquisition,
       acquisitionMethod,
