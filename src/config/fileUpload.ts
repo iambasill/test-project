@@ -9,7 +9,7 @@ const app = express();
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     console.log(file)
-    cb(null, 'uploads/'); 
+    cb(null, '../uploads/'); 
   },
   filename: (req, file, cb) => {
     // Generate unique filename
