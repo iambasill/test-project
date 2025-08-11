@@ -96,7 +96,6 @@ export const createEquipment = async (req:Request, res:Response) => {
 });
 
 if (existingEquipment) throw new BadRequestError('Equipment with this chassis number already exists');
-
   
   const equipment = await prisma.equipment.create({
     data: {

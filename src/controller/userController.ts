@@ -46,7 +46,7 @@ export const getUserById = async (req: Request, res: Response) => {
       },
     });
 
-    if (!user) throw new BadRequestError('User not found')
+    if (!user) throw new BadRequestError('Users not found')
     
 
     res.status(200).json({
