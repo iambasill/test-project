@@ -1,15 +1,26 @@
 import express from 'express';
 import multer from 'multer';
 import path from 'path';
+import * as fs from 'fs'
 import { BadRequestError } from '../httpClass/exceptions';
 
 const app = express();
 
+let upload_path = path.join(__dirname, "../storage/document");
+
+            // If the folder does not exist
+            if (!fs.existsSync(upload_path)) {
+                fs.mkdirSync(upload_path, { recursive: true });
+                fs.chmodSync(upload_path, 0o777);
+            }
+
 // Configure storage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    console.log(file)
-    cb(null, '../uploads/'); 
+    console.log("file ",file)
+    console.log("upload_path", upload_path)
+
+    cb(null, upload_path); 
   },
   filename: (req, file, cb) => {
     // Generate unique filename
