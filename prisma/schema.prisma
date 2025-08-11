@@ -22,9 +22,8 @@ enum UserRole {
     SYSADMIN
     ADMIN
     MANAGER
-    OPERATOR
+    AUDITOR
     OFFICER
-    COMMANDER
 }
 
 enum ConditionStatus {
@@ -180,7 +179,7 @@ model EquipmentOwnership {
 model EquipmentCondition {
     id                    String          @id @default(uuid())
     equipment             Equipment       @relation(fields: [equipmentChasisNumber], references: [chasisNumber])
-    equipmentChasisNumber String // Changed from equipmentId
+    equipmentChasisNumber String
     condition             ConditionStatus
     date                  DateTime        @default(now())
     notes                 String?

@@ -242,7 +242,7 @@ export const updateInspection = async (req:Request, res:Response) => {
 }
 
 // Delete inspection
-const deleteInspection = async (req:Request, res:Response) => {
+export const deleteInspection = async (req:Request, res:Response) => {
     const { id } = req.params;
 
     await prisma.inspection.delete({
