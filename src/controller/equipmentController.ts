@@ -164,14 +164,32 @@ export const updateEquipment = async (req:Request, res:Response) => {
     }))
     
 
-      await prisma.document.deleteMany({
-      where: { equipmentId: equipment.id }
-    });
+ // Only update/replace the documents that were actually uploaded
+    for (const fileInfo of fileData) {
+      // Check if document with this fileName already exists
+      const existingDocument = await prisma.document.findFirst({
+        where: {
+          equipmentId: equipment.id,
+          fileName: fileInfo.fileName
+        }
+      });
 
-      await prisma.document.createMany({
-      data: fileData,
-    });
-    };
+      if (existingDocument) {
+        // Update existing document
+        await prisma.document.update({
+          where: { id: existingDocument.id },
+          data: {
+            url: fileInfo.url
+          }
+        });
+      } else {
+        // Create new document if it doesn't exist
+        await prisma.document.create({
+          data: fileInfo
+        });
+      }
+    }
+  }
 
   
   
