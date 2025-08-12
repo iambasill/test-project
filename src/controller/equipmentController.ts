@@ -83,38 +83,48 @@ export const getEquipmentById = async (req:Request, res:Response) => {
 
 // Create new equipment
 export const createEquipment = async (req:Request, res:Response) => {
-    const data = equipmentData.parse(req.body)
+  const data = equipmentData.parse(req.body);
 
-    
- 
+  // Check for existing equipment before starting transaction
   const existingEquipment = await prisma.equipment.findFirst({
-  where: { chasisNumber:data.chasisNumber}
-});
-
-if (existingEquipment) throw new BadRequestError('Equipment with this chassis number already exists');
-  
-  const equipment = await prisma.equipment.create({
-    data: {
-      ...data
-    },
-    include: {
-      ownerships: true,
-      documents: true,
-      conditionHistory: true
-    }
+    where: { chasisNumber: data.chasisNumber }
   });
 
-    if (req.files) {const fileData =   fileHandler(req.files,equipment.id,equipment.id)
+  if (existingEquipment) {
+    throw new BadRequestError('Equipment with this chassis number already exists');
+  }
 
-
-
-      await prisma.document.createMany({
-      data: fileData,
+  // Use Prisma transaction to ensure atomicity
+  const result = await prisma.$transaction(async (tx) => {
+    // Create equipment
+    const equipment = await tx.equipment.create({
+      data: {
+        ...data
+      },
+      include: {
+        ownerships: true,
+        documents: true,
+        conditionHistory: true
+      }
     });
 
+    // Create documents if files exist
+    if (req.files) {
+      const files = req.files as Record<string, Express.Multer.File[]>;
+      const fileData = Object.entries(files).map(([fileName, [file]]) => ({
+        fileName,
+        url: `${API_BASE_URL}/attachment/${file.filename}`,
+        equipmentId: equipment.id
+      }));
 
-  }
-  
+      await tx.document.createMany({
+        data: fileData,
+      });
+    }
+
+    return equipment;
+  });
+
   res.status(201).json({
     success: true,
     message: 'Equipment created successfully',
@@ -123,68 +133,77 @@ if (existingEquipment) throw new BadRequestError('Equipment with this chassis nu
 
 // Update equipment
 export const updateEquipment = async (req:Request, res:Response) => {
-  const { id } = req.params;
-  
-   const data = equipmentData.parse(req.body)
-
+   const { id } = req.params;
+  const data = equipmentData.parse(req.body);
 
   const equipment = await prisma.equipment.findFirst({
-    where:{id}
-  })
-  if (!equipment) throw new BadRequestError("Equipment Not found")
-
-  const updatedEquipment = await prisma.equipment.update({
-    where: { id },
-    data: {
-      ...data
-    },
-    include: {
-      ownerships: {
-        where: { isCurrent: true },
-        include: { operator: true }
-      },
-      conditionHistory: {
-        orderBy: { date: 'desc' },
-      }
-    }
+    where: { id }
   });
 
-    if (req.files) {const fileData =   fileHandler(req.files,equipment.id,equipment.id)
-   
-   
-    
+  if (!equipment) throw new BadRequestError("Equipment Not found");
 
-    for (const fileInfo of fileData) {
-      // Check if document with this fileName already exists
-      const existingDocument = await prisma.document.findFirst({
-        where: {
-          equipmentId: equipment.id,
-          fileName: fileInfo.fileName
+  // Use Prisma transaction to ensure atomicity
+  const result = await prisma.$transaction(async (tx) => {
+    // Update equipment
+    const updatedEquipment = await tx.equipment.update({
+      where: { id },
+      data: {
+        ...data
+      },
+      include: {
+        ownerships: {
+          where: { isCurrent: true },
+          include: { operator: true }
+        },
+        conditionHistory: {
+          orderBy: { date: 'desc' },
         }
-      });
+      }
+    });
 
-      if (existingDocument) {
-        // Update existing document
-        await prisma.document.update({
-          where: { id: existingDocument.id },
-          data: {
-            url: fileInfo.url
+    // Update documents if files exist
+    if (req.files) {
+      const files = req.files as Record<string, Express.Multer.File[]>;
+      const fileData = Object.entries(files).map(([fileName, [file]]) => ({
+        fileName,
+        url: `${API_BASE_URL}/attachment/${file.filename}`,
+        equipmentId: equipment.id
+      }));
+
+      // Only update/replace the documents that were actually uploaded
+      for (const fileInfo of fileData) {
+        // Check if document with this fileName already exists
+        const existingDocument = await tx.document.findFirst({
+          where: {
+            equipmentId: equipment.id,
+            fileName: fileInfo.fileName
           }
         });
-      } else {
-        // Create new document if it doesn't exist
-        await prisma.document.create({
-          data: fileInfo
-        });
+
+        if (existingDocument) {
+          // Update existing document
+          await tx.document.update({
+            where: { id: existingDocument.id },
+            data: {
+              url: fileInfo.url
+            }
+          });
+        } else {
+          // Create new document if it doesn't exist
+          await tx.document.create({
+            data: fileInfo
+          });
+        }
       }
     }
-  }
 
-  
-  
+    return updatedEquipment;
+  });
+
   res.status(200).json({
     success: true,
-    message: 'Equipment updated successfully'
+    message: 'Equipment updated successfully',
+    data: result
   });
 };
 
