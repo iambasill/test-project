@@ -101,9 +101,14 @@ if (existingEquipment) throw new BadRequestError('Equipment with this chassis nu
   });
 
     if (req.files) {
-    const fileData = fileHandler(req.files)
+         const files = req.files as Record<string, Express.Multer.File[]>;
+          const fileData = Object.entries(files).map(([fileName, [file]]) => ({
+        fileName,
+        url: file.path,
+    }))
 
-    await prisma.document.createMany({
+
+      await prisma.document.createMany({
       data: fileData
     });
 
@@ -145,9 +150,13 @@ export const updateEquipment = async (req:Request, res:Response) => {
   });
 
     if (req.files) {
-    const fileData = fileHandler(req.files)
-
-    await prisma.document.updateMany({
+      const files = req.files as Record<string, Express.Multer.File[]>;
+      const fileData = Object.entries(files).map(([fileName, [file]]) => ({
+      fileName,
+      url: file.path,
+    }))
+    
+      await prisma.document.updateMany({
       where:{equipmentChasisNumber:equipment.chasisNumber},
       data: fileData
     });
