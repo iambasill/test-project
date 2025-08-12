@@ -104,7 +104,8 @@ if (existingEquipment) throw new BadRequestError('Equipment with this chassis nu
     }
   });
 
-    if (req.files) {const fileData =   fileHandler(req.files,equipment.id)
+    if (req.files) {const fileData =   fileHandler(req.files,equipment.id,equipment.id)
+
 
 
       await prisma.document.createMany({
@@ -148,7 +149,7 @@ export const updateEquipment = async (req:Request, res:Response) => {
     }
   });
 
-    if (req.files) {const fileData =   fileHandler(req.files,equipment.id)
+    if (req.files) {const fileData =   fileHandler(req.files,equipment.id,equipment.id)
    
    
     
