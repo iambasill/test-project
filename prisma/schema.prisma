@@ -81,7 +81,7 @@ model Equipment {
     countryOfOrigin   String
 
     // Section B: Acquisition Details
-    dateOfAcquisition   DateTime
+    dateOfAcquisition   String?
     acquisitionMethod   AcquisitionMethod
     supplierInfo        String?
     purchaseOrderNumber String?
