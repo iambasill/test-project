@@ -11,7 +11,9 @@ app.use(morganMiddleware);
 
 app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  // origin: 'http://your-frontend-domain.com',
+  // credentials: true,
 }));
 app.use(express.json())
 app.use('/', rootRoute)

@@ -1,3 +1,4 @@
+import { APP_URL } from './../../secrets';
 import express from 'express';
 import multer from 'multer';
 import path from 'path';
@@ -6,7 +7,7 @@ import { BadRequestError } from '../httpClass/exceptions';
 
 const app = express();
 
-let upload_path = path.join(__dirname, "../storage/document");
+let upload_path = APP_URL ? path.join(APP_URL, __dirname, "../storage/document"): path.join(__dirname, "../storage/document");
 
             // If the folder does not exist
             if (!fs.existsSync(upload_path)) {
