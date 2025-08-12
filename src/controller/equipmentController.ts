@@ -3,6 +3,7 @@ import e, {Request,Response} from 'express'
 import { BadRequestError } from '../httpClass/exceptions';
 import { prisma } from '../server';
 import { fileHandler } from '../utils/filerHandler';
+import { API_BASE_URL } from '../../secrets';
 
 
 // Get all equipment
@@ -107,7 +108,7 @@ if (existingEquipment) throw new BadRequestError('Equipment with this chassis nu
          const files = req.files as Record<string, Express.Multer.File[]>;
           const fileData = Object.entries(files).map(([fileName, [file]]) => ({
         fileName,
-        url: file.path,
+        url: `${API_BASE_URL}/attachment/${file.filename}`,
         equipmentId:equipment.id
         
     }))
@@ -159,12 +160,16 @@ export const updateEquipment = async (req:Request, res:Response) => {
       const files = req.files as Record<string, Express.Multer.File[]>;
       const fileData = Object.entries(files).map(([fileName, [file]]) => ({
       fileName,
-      url: file.path,
+      url: `${API_BASE_URL}/attachment/${file.filename}` ,
     }))
     
-      await prisma.document.updateMany({
-      where:{equipmentId:equipment.id},
-      data: fileData
+
+      await prisma.document.deleteMany({
+      where: { equipmentId: equipment.id }
+    });
+
+      await prisma.document.createMany({
+      data: fileData,
     });
     };
 

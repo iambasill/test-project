@@ -1,4 +1,3 @@
-import { APP_URL } from './../../secrets';
 import express from 'express';
 import multer from 'multer';
 import path from 'path';
