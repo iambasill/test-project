@@ -21,7 +21,10 @@ export const getAllEquipment = async (req:Request, res:Response) => {
       inspections: {
         orderBy: { datePerformed: 'desc' },
       },
-      documents: true
+        documents: {select:{
+        fileName:true,
+        url:true
+      }},
     },
     orderBy:{ createdAt: 'desc' }
   });
