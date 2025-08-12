@@ -108,12 +108,14 @@ if (existingEquipment) throw new BadRequestError('Equipment with this chassis nu
           const fileData = Object.entries(files).map(([fileName, [file]]) => ({
         fileName,
         url: file.path,
+        equipmentId:equipment.id
+        
     }))
 
     
 
       await prisma.document.createMany({
-      data: fileData
+      data: fileData,
     });
 
 
@@ -161,7 +163,7 @@ export const updateEquipment = async (req:Request, res:Response) => {
     }))
     
       await prisma.document.updateMany({
-      where:{equipmentChasisNumber:equipment.chasisNumber},
+      where:{equipmentId:equipment.id},
       data: fileData
     });
     };

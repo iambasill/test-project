@@ -313,16 +313,16 @@ model Document {
     mimeType    String?
 
     // Relations - A document can belong to multiple entities
-    equipment             Equipment?          @relation(fields: [equipmentChasisNumber], references: [chasisNumber])
-    equipmentChasisNumber String? // Changed from equipmentId
-    operator              Operator?           @relation(fields: [operatorId], references: [id])
-    operatorId            String?
-    inspection            Inspection?         @relation(fields: [inspectionId], references: [id])
-    inspectionId          String?
-    ownership             EquipmentOwnership? @relation(fields: [ownershipId], references: [id])
-    ownershipId           String?
-    condition             EquipmentCondition? @relation(fields: [conditionId], references: [id])
-    conditionId           String?
+    equipment    Equipment?          @relation(fields: [equipmentId], references: [id])
+    equipmentId  String?
+    operator     Operator?           @relation(fields: [operatorId], references: [id])
+    operatorId   String?
+    inspection   Inspection?         @relation(fields: [inspectionId], references: [id])
+    inspectionId String?
+    ownership    EquipmentOwnership? @relation(fields: [ownershipId], references: [id])
+    ownershipId  String?
+    condition    EquipmentCondition? @relation(fields: [conditionId], references: [id])
+    conditionId  String?
 
     // Relations to specific inspection categories
     exteriorInspectionId      String?
