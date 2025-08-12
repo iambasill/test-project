@@ -104,16 +104,8 @@ if (existingEquipment) throw new BadRequestError('Equipment with this chassis nu
     }
   });
 
-    if (req.files) {
-         const files = req.files as Record<string, Express.Multer.File[]>;
-          const fileData = Object.entries(files).map(([fileName, [file]]) => ({
-        fileName,
-        url: `${API_BASE_URL}/attachment/${file.filename}`,
-        equipmentId:equipment.id
-        
-    }))
+    if (req.files) {const fileData =   fileHandler(req.files,equipment.id)
 
-    
 
       await prisma.document.createMany({
       data: fileData,
@@ -156,15 +148,11 @@ export const updateEquipment = async (req:Request, res:Response) => {
     }
   });
 
-    if (req.files) {
-      const files = req.files as Record<string, Express.Multer.File[]>;
-      const fileData = Object.entries(files).map(([fileName, [file]]) => ({
-      fileName,
-      url: `${API_BASE_URL}/attachment/${file.filename}` ,
-    }))
+    if (req.files) {const fileData =   fileHandler(req.files,equipment.id)
+   
+   
     
 
- // Only update/replace the documents that were actually uploaded
     for (const fileInfo of fileData) {
       // Check if document with this fileName already exists
       const existingDocument = await prisma.document.findFirst({

@@ -1,15 +1,15 @@
 import { Request, Response } from "express";
+import { API_BASE_URL } from "../../secrets";
 
-export const fileHandler = (request:any) => {}
-//     const files = request.files as Record<string, Express.Multer.File[]>;
-//     const fileData = Object.entries(files).map(([fileName, [file]]) => ({
-//       fileName,
-//       url: file.name,
-//         }));
-    
-//         return fileData
-// }
+export const fileHandler = (uploads:any,id:any) => {
+           const files = uploads as Record<string, Express.Multer.File[]>;
+            const uploadedFile = Object.entries(files).map(([fileName, [file]]) => ({
+          fileName,
+          url: `${API_BASE_URL}/attachment/${file.filename}`,
+          id
+          
+      }))
 
-// export const fileController = (req:Request, res:Response) => {
-
-// }
+      return uploadedFile
+  
+}
