@@ -18,6 +18,9 @@ let upload_path = path.join(__dirname, "../storage/document");
 // Configure storage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
+    console.log("req: ", req)
+    console.log("file: ", file)
+
     cb(null, upload_path); 
   },
   filename: (req, file, cb) => {
