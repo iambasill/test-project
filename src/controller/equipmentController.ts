@@ -1,3 +1,4 @@
+import { equipmentData } from '../schema/schema';
 import e, {Request,Response} from 'express'
 import { BadRequestError } from '../httpClass/exceptions';
 import { prisma } from '../server';
@@ -76,41 +77,19 @@ export const getEquipmentById = async (req:Request, res:Response) => {
 
 // Create new equipment
 export const createEquipment = async (req:Request, res:Response) => {
-   const  {
-      chasisNumber,
-      equipmentName,
-      model,
-      equipmentType,
-      manufacturer,
-      yearOfManufacture,
-      countryOfOrigin,
-      dateOfAcquisition,
-      acquisitionMethod,
-      currency,
-      currentCondition
-    } = req.body
+    const data = equipmentData.parse(req.body)
+
     
  
   const existingEquipment = await prisma.equipment.findFirst({
-  where: { chasisNumber }
+  where: { chasisNumber:data.chasisNumber}
 });
 
 if (existingEquipment) throw new BadRequestError('Equipment with this chassis number already exists');
   
   const equipment = await prisma.equipment.create({
     data: {
-      chasisNumber,
-      equipmentName,
-      model,
-      equipmentType,
-      manufacturer,
-      yearOfManufacture,
-      countryOfOrigin,
-      dateOfAcquisition,
-      acquisitionMethod,
-      currency,
-      currentCondition
-    
+      ...data
     },
     include: {
       ownerships: true,

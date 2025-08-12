@@ -86,19 +86,19 @@ model Equipment {
     supplierInfo        String?
     purchaseOrderNumber String?
     contractReference   String?
-    costValue           Decimal?          @db.Decimal(15, 2)
+    costValue           String?
     currency            String            @default("NGN")
     fundingSource       String?
 
     // Section C: Technical Specifications
-    weight                  Decimal? @db.Decimal(10, 2)
+    weight                  String?
     dimensions              String?
     powerRequirements       String?
     fuelType                String?
     maximumRange            String?
-    operationalSpecs        String?  @db.Text
-    requiredCertifications  String?  @db.Text
-    environmentalConditions String?  @db.Text
+    operationalSpecs        String? @db.Text
+    requiredCertifications  String? @db.Text
+    environmentalConditions String? @db.Text
 
     // Condition Tracking
     currentCondition   ConditionStatus @default(EXCELLENT)

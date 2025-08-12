@@ -1,7 +1,7 @@
 import express, { Request, Response, NextFunction } from "express";
 import { prisma } from "../server";
 import { BadRequestError } from "../httpClass/exceptions";
-import { signUpSchema, loginSchema } from "../schema/authSchema";
+import { signUpSchema, loginSchema } from "../schema/schema";
 import { AUTH_JWT_TOKEN } from "../../secrets";
 import bcrypt from 'bcrypt';
 import jwt from "jsonwebtoken";
