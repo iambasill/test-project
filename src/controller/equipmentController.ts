@@ -107,6 +107,7 @@ if (existingEquipment) throw new BadRequestError('Equipment with this chassis nu
         url: file.path,
     }))
 
+    
 
       await prisma.document.createMany({
       data: fileData

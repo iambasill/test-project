@@ -101,7 +101,7 @@ model Equipment {
     environmentalConditions String? @db.Text
 
     // Condition Tracking
-    currentCondition   ConditionStatus @default(EXCELLENT)
+    currentCondition   String?
     lastConditionCheck String?
 
     // Relations
