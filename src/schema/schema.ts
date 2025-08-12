@@ -39,5 +39,5 @@ export const equipmentData = z.object({
     requiredCertifications : z.string().optional(), 
     environmentalConditions: z.string().optional(), 
     currentCondition:    z.enum(ConditionStatus).optional(),
-    lastConditionCheck: z.date().optional()
+    lastConditionCheck: z.string().optional()
 })

@@ -18,9 +18,6 @@ let upload_path = APP_URL ? path.join(APP_URL, __dirname, "../storage/document")
 // Configure storage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    console.log("file ",file)
-    console.log("upload_path", upload_path)
-
     cb(null, upload_path); 
   },
   filename: (req, file, cb) => {
