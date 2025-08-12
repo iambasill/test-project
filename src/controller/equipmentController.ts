@@ -123,19 +123,7 @@ if (existingEquipment) throw new BadRequestError('Equipment with this chassis nu
 export const updateEquipment = async (req:Request, res:Response) => {
   const { id } = req.params;
   
-   const  {
-      chasisNumber,
-      equipmentName,
-      model,
-      equipmentType,
-      manufacturer,
-      yearOfManufacture,
-      countryOfOrigin,
-      dateOfAcquisition,
-      acquisitionMethod,
-      currency,
-      currentCondition
-    } = req.body;
+   const data = equipmentData.parse(req.body)
 
 
   const equipment = await prisma.equipment.findFirst({
@@ -146,17 +134,7 @@ export const updateEquipment = async (req:Request, res:Response) => {
   const updatedEquipment = await prisma.equipment.update({
     where: { id },
     data: {
-      chasisNumber,
-      equipmentName,
-      model,
-      equipmentType,
-      manufacturer,
-      yearOfManufacture,
-      countryOfOrigin,
-      dateOfAcquisition,
-      acquisitionMethod,
-      currency,
-      currentCondition
+      ...data
     },
     include: {
       ownerships: {
