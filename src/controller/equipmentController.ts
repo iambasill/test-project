@@ -2,6 +2,7 @@ import { equipmentData } from '../schema/schema';
 import e, {Request,Response} from 'express'
 import { BadRequestError } from '../httpClass/exceptions';
 import { prisma } from '../server';
+import { fileHandler } from '../utils/filerHandler';
 
 
 // Get all equipment
@@ -21,7 +22,8 @@ export const getAllEquipment = async (req:Request, res:Response) => {
         orderBy: { datePerformed: 'desc' },
       },
       documents: true
-    }
+    },
+    orderBy:{ createdAt: 'desc' }
   });
   
   res.status(200).json({
@@ -99,12 +101,7 @@ if (existingEquipment) throw new BadRequestError('Equipment with this chassis nu
   });
 
     if (req.files) {
-    const files = req.files as Record<string, Express.Multer.File[]>;
-    const fileData = Object.entries(files).map(([fileName, [file]]) => ({
-      fileName,
-      url: file.path.toString(),
-       equipmentChasisNumber: equipment.chasisNumber
-    }));
+    const fileData = fileHandler(req.files)
 
     await prisma.document.createMany({
       data: fileData
@@ -148,17 +145,14 @@ export const updateEquipment = async (req:Request, res:Response) => {
   });
 
     if (req.files) {
-    const files = req.files as Record<string, Express.Multer.File[]>;
-    const fileData = Object.entries(files).map(([fileName, [file]]) => ({
-      fileName,
-      url: file.path.toString(),
-    }));
+    const fileData = fileHandler(req.files)
 
     await prisma.document.updateMany({
       where:{equipmentChasisNumber:equipment.chasisNumber},
       data: fileData
     });
-  }
+    };
+
   
   
   res.status(200).json({

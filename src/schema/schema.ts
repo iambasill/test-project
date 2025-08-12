@@ -24,7 +24,7 @@ export const equipmentData = z.object({
     countryOfOrigin:   z.string(),
     dateOfAcquisition :  z.string(),
     acquisitionMethod :  z.enum(AcquisitionMethod),
-    // supplierInfo  :      z.string(),
+    supplierInfo  :      z.string(),
     purchaseOrderNumber :z.string().optional(),
     contractReference :  z.string().optional(),
     costValue  :      z.string().optional(),        
