@@ -27,6 +27,5 @@ export const authMiddleware = async(req: Request, _res: Response, next: NextFunc
     console.log(user)
     // if (!user || user.role != "ACTIVE") throw new unAuthorizedError("Access Denied")
     req.user = user
-    console.log(user)
     next();
 }
