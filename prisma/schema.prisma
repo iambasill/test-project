@@ -196,15 +196,15 @@ model EquipmentCondition {
 
 // Main Inspection Model - One comprehensive inspection per session
 model Inspection {
-    id                    String    @id @default(uuid())
-    equipmentChasisNumber String // Changed from chasisNumber to be clearer
-    inspectorId           String?
-    datePerformed         DateTime  @default(now())
-    nextDueDate           DateTime?
-    overallNotes          String?   @db.Text
+    id            String    @id @default(uuid())
+    equipmentId   String // Changed from chasisNumber to be clearer
+    inspectorId   String?
+    datePerformed DateTime  @default(now())
+    nextDueDate   DateTime?
+    overallNotes  String?   @db.Text
 
     // Relations
-    equipment Equipment @relation(fields: [equipmentChasisNumber], references: [chasisNumber])
+    equipment Equipment @relation(fields: [equipmentId], references: [id])
     inspector User?     @relation(fields: [inspectorId], references: [id])
 
     // Inspection Categories - All part of one comprehensive inspection
