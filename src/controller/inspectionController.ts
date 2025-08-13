@@ -16,6 +16,7 @@ export const createInspection = async (req:Request, res:Response) => {
         functionalInspections = [],
         documentLegalInspections = []
     } = req.body;
+
     const user: any = req.user
     const files = req.files || [];
 
