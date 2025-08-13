@@ -9,9 +9,9 @@ import { createVerificationEmailHtml, sendEmail } from "../config/emailService";
 import { checkUser } from "../utils/func";
 // import { sendPasswordResetEmail } from "../utils/emailService";
 
-const generateToken = (userId: string, time:any) => {
+const generateToken = (userId: string) => {
 
-  return jwt.sign({ id: userId }, AUTH_JWT_TOKEN as string, (time ? { expiresIn:time }:undefined));
+  return jwt.sign({ id: userId }, AUTH_JWT_TOKEN as string);
 
 };
 
@@ -40,7 +40,7 @@ export const registerController = async (req: Request, res: Response, next: Next
     data: { email, firstName, lastName, role, password: hashedPassword, status: 'PENDING',refreshToken:"null" }
   });
 
-  const verificationToken = generateToken(user.id,"24h")
+  const verificationToken = generateToken(user.id)
   const verificationLink = `${CLIENT_URL}/verify-email?token=${verificationToken}`;
 
   const emailHtml = createVerificationEmailHtml(verificationLink, `${firstName} + ${lastName}`);
@@ -80,7 +80,7 @@ export const loginController = async (req: Request, res: Response) => {
 
   const { password: _, ...userData } = user; 
 
-  const token = generateToken(user.id,"12");
+  const token = generateToken(user.id);
 
 //   const refreshToken = generateRefreshToken(user.id);
 
