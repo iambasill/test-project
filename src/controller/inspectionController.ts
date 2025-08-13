@@ -18,6 +18,15 @@ export const createInspection = async (req:Request, res:Response) => {
     const user: any = req.user
     const files = req.files || [];
 
+
+const equipment = await prisma.equipment.findUnique({
+  where: { id: equipmentId }
+});
+
+if (!equipment) {
+  throw new Error(`Equipment with ID ${equipmentId} not found`);
+}
+
     const inspection = await prisma.inspection.create({
         data: {
             equipmentId,
@@ -63,18 +72,18 @@ export const createInspection = async (req:Request, res:Response) => {
 
     });
 
-    // Handle document uploads if files exist
-   if (req.files) {
-    const files = req.files as Record<string, Express.Multer.File[]>;
-    const fileData = Object.entries(files).map(([fileName, [file]]) => ({
-      fileName,
-      url: file.path.toString(),
-      inspectionId: inspection.id
-    }));
+//     // Handle document uploads if files exist
+//    if (req.files) {
+//     const files = req.files as Record<string, Express.Multer.File[]>;
+//     const fileData = Object.entries(files).map(([fileName, [file]]) => ({
+//       fileName,
+//       url: file.path.toString(),
+//       inspectionId: inspection.id
+//     }));
 
-    await prisma.document.createMany({
-      data: fileData
-    });
+//     await prisma.document.createMany({
+//       data: fileData
+//     });
 
    
     res.status(201).json({
@@ -82,7 +91,7 @@ export const createInspection = async (req:Request, res:Response) => {
         message: 'Inspection created successfully'
     });
 };
-}
+
 // Get all inspections
 export const getAllInspections = async (req:Request, res:Response) => {
     const user:any = req.user
