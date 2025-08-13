@@ -24,7 +24,9 @@ export const authMiddleware = async(req: Request, _res: Response, next: NextFunc
         throw new unAuthorizedError("INVALID TOKEN PAYLOAD");
     }
     const user:any = await checkUser((decoded as any).id)
+    console.log(user)
     // if (!user || user.role != "ACTIVE") throw new unAuthorizedError("Access Denied")
     req.user = user
+    console.log(user)
     next();
 }

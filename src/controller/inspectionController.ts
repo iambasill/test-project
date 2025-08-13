@@ -110,7 +110,8 @@ export const createInspection = async (req:Request, res:Response) => {
 // Get all inspections
 export const getAllInspections = async (req:Request, res:Response) => {
     const user:any = req.user
-    const where = user.role == "ADMIN" ? {} : user.id
+
+    const where = (user.role == "ADMIN") ? {} : user.id
 
     const inspections = await prisma.inspection.findMany({
         where,
