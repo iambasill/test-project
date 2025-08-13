@@ -39,7 +39,7 @@ const logger = winston.createLogger({
     new winston.transports.DailyRotateFile({
       filename: path.join(logDir, 'app-%DATE%.log'),
       datePattern: 'YYYY-MM-DD',
-      maxFiles: '14d',
+      maxFiles: '7d',
     }),
   ],
 });

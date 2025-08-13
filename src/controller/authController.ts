@@ -1,15 +1,17 @@
 import express, { Request, Response, NextFunction } from "express";
 import { prisma } from "../server";
-import { BadRequestError } from "../httpClass/exceptions";
+import { BadRequestError, unAuthorizedError } from "../httpClass/exceptions";
 import { signUpSchema, loginSchema } from "../schema/schema";
-import { AUTH_JWT_TOKEN } from "../../secrets";
+import { AUTH_JWT_TOKEN, CLIENT_URL } from "../../secrets";
 import bcrypt from 'bcrypt';
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
+import { createVerificationEmailHtml, sendEmail } from "../config/emailService";
+import { checkUser } from "../utils/func";
 // import { sendPasswordResetEmail } from "../utils/emailService";
 
-const generateToken = (userId: string) => {
-  // return jwt.sign({ id: userId }, AUTH_JWT_TOKEN as string, { expiresIn: '6h' });
-  return jwt.sign({ id: userId }, AUTH_JWT_TOKEN as string);
+const generateToken = (userId: string, time:any) => {
+
+  return jwt.sign({ id: userId }, AUTH_JWT_TOKEN as string, (time ? { expiresIn:time }:undefined));
 
 };
 
@@ -38,7 +40,22 @@ export const registerController = async (req: Request, res: Response, next: Next
     data: { email, firstName, lastName, role, password: hashedPassword, status: 'PENDING',refreshToken:"null" }
   });
 
-  // (Optional) Send verification email here.
+  const verificationToken = generateToken(user.id,"24h")
+  const verificationLink = `${CLIENT_URL}/verify-email?token=${verificationToken}`;
+
+  const emailHtml = createVerificationEmailHtml(verificationLink, `${firstName} + ${lastName}`);
+    
+    // Send verification email
+    const emailSent = await sendEmail({
+      to: email,
+      subject: 'Verify Your Email Address',
+      html: emailHtml,
+    });
+
+    await prisma.user.update({
+    where: { id: user.id },
+    data: { resetToken:verificationToken,resetTokenExpiry: new Date(Date.now() + 86400000) }
+  });
 
   res.status(201).send({
     success: true,
@@ -63,7 +80,8 @@ export const loginController = async (req: Request, res: Response) => {
 
   const { password: _, ...userData } = user; 
 
-  const token = generateToken(user.id);
+  const token = generateToken(user.id,"12");
+
 //   const refreshToken = generateRefreshToken(user.id);
 
   // Store refresh token in database (optional)
@@ -142,38 +160,56 @@ export const loginController = async (req: Request, res: Response) => {
 /**
  * Reset password using a valid token.
  */
-// export const resetPasswordController = async (req: Request, res: Response) => {
-//   const { token, newPassword } = resetPasswordSchema.parse(req.body);
+export const resetPasswordController = async (req: Request, res: Response) => {
+  const { token, newPassword } = req.body;
 
-//   const user = await prisma.user.findFirst({
-//     where: {
-//       resetToken: token,
-//       resetTokenExpiry: { gt: new Date() } // Token not expired
-//     }
-//   });
+  const user = await prisma.user.findFirst({
+    where: {
+      resetToken: token,
+      resetTokenExpiry: { gt: new Date() } // Token not expired
+    }
+  });
 
-//   if (!user) throw new BadRequestError("Invalid or expired token");
+  if (!user) throw new BadRequestError("Invalid or expired token");
 
-//   const hashedPassword = await bcrypt.hash(newPassword, 12);
-//   await prisma.user.update({
-//     where: { id: user.id },
-//     data: { password: hashedPassword, resetToken: null, resetTokenExpiry: null }
-//   });
+  const hashedPassword = await bcrypt.hash(newPassword, 12);
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { password: hashedPassword, resetToken: null, resetTokenExpiry: null }
+  });
 
-//   res.status(200).send({ success: true, message: "Password reset successful" });
-// };
+  res.status(200).send({ success: true, message: "Password reset successful" });
+};
 
-/**
- * Logout user (revokes refresh token).
- */
-// export const logoutController = async (req: Request, res: Response) => {
-//   const userId = req.user?.id;
-//   if (!userId) throw new UnauthorizedError("Not authenticated");
+// Email verification endpoint
+export const verifyEmail = async (req: Request, res: Response) => {
+    const { token } = req.query;
 
-//   await prisma.user.update({
-//     where: { id: userId },
-//     data: { refreshToken: null }
-//   });
+    if (!token || typeof token !== 'string') throw new BadRequestError('Verification token is required' )
+ 
 
-//   res.status(200).send({ success: true, message: "Logged out successfully" });
-// };
+    // Verify the token
+      const decoded = jwt.verify(token, AUTH_JWT_TOKEN as string) as JwtPayload;
+    if (!decoded || typeof decoded !== 'object' || !('id' in decoded)) {
+        throw new unAuthorizedError("INVALID TOKEN PAYLOAD");
+    }
+    
+
+    // Find user
+    const user = await checkUser(decoded.userId);
+    if (!user) throw new BadRequestError('User not found')
+    if (user.status == "ACTIVE") throw new BadRequestError('Email is already verified' )
+   
+      await prisma.user.update({
+        where:{id:user.id},
+        data:{
+          status:"ACTIVE"
+        }
+      })
+
+    res.status(200).json({
+      success: true,
+      message: 'Email verified successfully!',
+    });
+
+}
