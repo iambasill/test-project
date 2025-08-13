@@ -1,7 +1,5 @@
 import { Request, Response } from "express";
 import { prisma } from "../server";
-import { checkUser } from "../utils/func";
-import { any } from "zod";
 import { BadRequestError, unAuthorizedError } from "../httpClass/exceptions";
 
 // Create a new inspection
@@ -62,14 +60,7 @@ export const createInspection = async (req:Request, res:Response) => {
                 }))
             }
         },
-        include: {
-            exteriorInspections: true,
-            interiorInspections: true,
-            mechanicalInspections: true,
-            functionalInspections: true,
-            documentLegalInspections: true,
-            documents: true
-        }
+
     });
 
     // Handle document uploads if files exist
@@ -85,25 +76,9 @@ export const createInspection = async (req:Request, res:Response) => {
       data: fileData
     });
 
-    const finalInspection = await prisma.inspection.findUnique({
-        where: { id: inspection.id },
-        include: {
-            exteriorInspections: true,
-            interiorInspections: true,
-            mechanicalInspections: true,
-            functionalInspections: true,
-            documentLegalInspections: true,
-            documents: true,
-            equipment: true,
-            inspector: {
-                select: { id: true, firstName: true,lastName: true, email: true,serviceNumber:true }
-            }
-        }
-    });
-
+   
     res.status(201).json({
         success: true,
-        data: finalInspection,
         message: 'Inspection created successfully'
     });
 };
