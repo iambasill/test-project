@@ -7,7 +7,7 @@ import { BadRequestError, unAuthorizedError } from "../httpClass/exceptions";
 // Create a new inspection
 export const createInspection = async (req:Request, res:Response) => {
     const {
-        equipmentChasisNumber,
+        equipmentId,
         nextDueDate,
         overallNotes,
         exteriorInspections = [],
@@ -21,7 +21,7 @@ export const createInspection = async (req:Request, res:Response) => {
 
     const inspection = await prisma.inspection.create({
         data: {
-            equipmentChasisNumber,
+            equipmentId,
             inspectorId:user.id,
             nextDueDate: nextDueDate ? new Date(nextDueDate) : null,
             overallNotes,
