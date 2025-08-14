@@ -9,6 +9,7 @@ inspectionRouter.get('/', authMiddleware, getAllInspections);
 inspectionRouter.get('/:id', authMiddleware, getInspectionById);
 inspectionRouter.post('/', authMiddleware, createInspection);
 inspectionRouter.put('/:id', authMiddleware, updateInspection);
+inspectionRouter.delete('/:id',authMiddleware,)
 
 
 

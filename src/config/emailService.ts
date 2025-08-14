@@ -9,6 +9,7 @@ import { string } from 'zod'
     to: "okwutebasil01@gmail.com",
     from: "admin@404services.com", 
     subject:"test",
+    text: 'Plain text content',
     html: ""
 }
  export const sendEmail = (msg:any) =>{
