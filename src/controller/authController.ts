@@ -181,7 +181,7 @@ export const resetPasswordController = async (req: Request, res: Response) => {
 };
 
 // Email verification endpoint
-export const verifyEmail = async (req: Request, res: Response) => {
+export const verifyToken = async (req: Request, res: Response) => {
     const { token } = req.query;
 
     if (!token || typeof token !== 'string') throw new BadRequestError('Verification token is required' )

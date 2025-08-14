@@ -1,7 +1,6 @@
 import  express  from "express";
 import { createInspection, getAllInspections, getInspectionById, updateInspection } from "../controller/inspectionController";
 import { authMiddleware } from "../middlewares/authMiddleware";
-// import { createInspection, getAllInspections } from "../controller/inspectionController";
 
 export const inspectionRouter = express.Router();
 

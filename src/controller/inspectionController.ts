@@ -17,7 +17,7 @@ export const createInspection = async (req:Request, res:Response) => {
     const user: any = req.user
     const files = req.files || [];
 
-
+console.log(req.body)
 const equipment = await prisma.equipment.findUnique({
   where: { id: equipmentId }
 });
