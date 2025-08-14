@@ -127,8 +127,8 @@ export const getAllInspections = async (req:Request, res:Response) => {
 // Get single inspection by ID
 export const getInspectionById = async (req:Request, res:Response) => {
     const { id } = req.params;
-    const inspection = await prisma.inspection.findUnique({
-        where: { id },
+    const inspection = await prisma.inspection.findMany({
+        where: { equipmentId:id },
         include: {
             exteriorInspections: true,
             interiorInspections: true,

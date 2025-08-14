@@ -5,13 +5,13 @@ import { string } from 'zod'
 
  sgMail.setApiKey(SENDGRID_API_KEY||"")
 
-    interface msg  {
-    to: string
-    from: string 
-    subject:string
-    html: string
+    const msg =  {
+    to: "okwutebasil01@gmail.com",
+    from: "admin@404services.com", 
+    subject:"test",
+    html: ""
 }
- export const sendEmail = (msg:msg) =>{
+ export const sendEmail = (msg:any) =>{
   sgMail
     .send(msg)
   .then(() => {
