@@ -5,6 +5,7 @@ import { BadRequestError, unAuthorizedError } from "../httpClass/exceptions";
 // Create a new inspection
 export const createInspection = async (req:Request, res:Response) => {
     const {
+        equipmentId,
         nextDueDate,
         overallNotes,
         exteriorInspections = [],
@@ -13,7 +14,6 @@ export const createInspection = async (req:Request, res:Response) => {
         functionalInspections = [],
         documentLegalInspections = []
     } = req.body;
-    const equipmentId = "f988cb60-42fb-42e5-885b-b10cda7dac69"
     const user: any = req.user
     const files = req.files || [];
 
