@@ -5,8 +5,8 @@ import { signUpSchema, loginSchema } from "../schema/schema";
 import { AUTH_JWT_TOKEN, CLIENT_URL } from "../../secrets";
 import bcrypt from 'bcrypt';
 import jwt, { JwtPayload } from "jsonwebtoken";
-import { createVerificationEmailHtml, sendEmail } from "../config/emailService";
 import { checkUser } from "../utils/func";
+import { sendVerificationEmail } from "../config/emailService";
 // import { sendPasswordResetEmail } from "../utils/emailService";
 
 const generateToken = (userId: string) => {
@@ -43,15 +43,13 @@ export const registerController = async (req: Request, res: Response, next: Next
   const verificationToken = generateToken(user.id)
   const verificationLink = `${CLIENT_URL}/verify-email?token=${verificationToken}`;
 
-  const emailHtml = createVerificationEmailHtml(verificationLink, `${firstName} + ${lastName}`);
-    
+
     // Send verification email
-    const emailSent = await sendEmail({
-      to: email,
-      from:"",
-      subject: 'Verify Your Email Address',
-      html: emailHtml,
-    });
+    const emailSent = await sendVerificationEmail (
+       email,
+      verificationLink,
+      `${firstName} + ${lastName}`
+    );
 
     await prisma.user.update({
     where: { id: user.id },

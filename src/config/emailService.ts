@@ -1,32 +1,14 @@
- import sgMail from '@sendgrid/mail'
-import { SENDGRID_API_KEY } from '../../secrets'
-import { string } from 'zod'
+import sgMail from '@sendgrid/mail'
+// import { SENDGRID_API_KEY } from '../../secrets'
+import { BadRequestError } from '../httpClass/exceptions'
+
+// if(!SENDGRID_API_KEY) throw new BadRequestError("Email token key is not provided")
+const SENDGRID_API_KEY="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"
+
+sgMail.setApiKey(SENDGRID_API_KEY)
 
 
- sgMail.setApiKey(SENDGRID_API_KEY||"")
-
-    const msg =  {
-    to: "okwutebasil01@gmail.com",
-    from: "admin@404services.com", 
-    subject:"test",
-    text: 'Plain text content',
-    html: ""
-}
- export const sendEmail = (msg:any) =>{
-  sgMail
-    .send(msg)
-  .then(() => {
-    console.log('Email sent')
-  })
-  .catch((error) => {
-    console.error(error)
-  })
- }
-
-
-
-
-export const createVerificationEmailHtml = (verificationLink: string, userName?: string): string => {
+export const createVerificationEmailHtml = (verificationLink: string, userName?: string) => {
   return `
     <!DOCTYPE html>
     <html>
@@ -57,3 +39,18 @@ export const createVerificationEmailHtml = (verificationLink: string, userName?:
       </body>
     </html>`;
 };
+
+export const sendVerificationEmail = async (to: string, verificationLink: string, userName?: string) => {
+  const html = createVerificationEmailHtml(verificationLink, userName)
+  
+  const verificationMsg = {
+    to,
+    from: "admin@404services.com", // Make sure this is verified
+    subject: "Verify Your Email Address",
+    text: `Welcome${userName ? ` ${userName}` : ''}! Please verify your email by visiting: ${verificationLink}`,
+    html
+  }
+  
+    await sgMail.send(verificationMsg)    
+
+}
