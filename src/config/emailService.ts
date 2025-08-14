@@ -1,40 +1,30 @@
-import { SMTP_HOST, SMTP_PASS, SMTP_PORT, SMTP_USER } from './../../secrets';
-import nodemailer from 'nodemailer';
+ import sgMail from '@sendgrid/mail'
+import { SENDGRID_API_KEY } from '../../secrets'
+import { string } from 'zod'
 
-interface EmailConfig {
-  to: string;
-  subject: string;
-  html: string;
+
+ sgMail.setApiKey(SENDGRID_API_KEY||"")
+
+    interface msg  {
+    to: string
+    from: string 
+    subject:string
+    html: string
 }
+ export const sendEmail = (msg:msg) =>{
+  sgMail
+    .send(msg)
+  .then(() => {
+    console.log('Email sent')
+  })
+  .catch((error) => {
+    console.error(error)
+  })
+ }
 
-// Create transporter instance
-const createTransporter = () => {
-  return nodemailer.createTransport({
-    host: SMTP_HOST,
-    port: parseInt(SMTP_PORT || '587'),
-    secure: false, 
-    auth: {
-      user: SMTP_USER,
-      pass: SMTP_PASS,
-    },
-  });
-};
 
-export const sendEmail = async ({ to, subject, html }: EmailConfig): Promise<boolean> => {
-  try {
-    const transporter = createTransporter();
-    await transporter.sendMail({
-      from: process.env.SMTP_USER,
-      to,
-      subject,
-      html,
-    });
-    return true;
-  } catch (error) {
-    console.error('Email sending failed:', error);
-    return false;
-  }
-};
+
+
 export const createVerificationEmailHtml = (verificationLink: string, userName?: string): string => {
   return `
     <!DOCTYPE html>
@@ -64,6 +54,5 @@ export const createVerificationEmailHtml = (verificationLink: string, userName?:
           </p>
         </div>
       </body>
-    </html>
-  `;
+    </html>`;
 };

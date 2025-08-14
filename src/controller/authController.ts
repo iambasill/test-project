@@ -48,6 +48,7 @@ export const registerController = async (req: Request, res: Response, next: Next
     // Send verification email
     const emailSent = await sendEmail({
       to: email,
+      from:"",
       subject: 'Verify Your Email Address',
       html: emailHtml,
     });
