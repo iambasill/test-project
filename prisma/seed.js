@@ -1,6 +1,7 @@
 // prisma/seed.js
 
-import { PrismaClient } from "@prisma/client";
+const { PrismaClient } = require("../src/generated/prisma");
+
 
 const prisma = new PrismaClient() ;
 
@@ -25,20 +26,6 @@ async function main() {
   // 1. Create Users with all roles and statuses
   console.log('👥 Creating users...');
   const users = await Promise.all([
-    prisma.user.create({
-      data: {
-        email: 'platadmin@military.gov.ng',
-        firstName: 'Adebayo',
-        lastName: 'Ogundimu',
-        serviceNumber: 'PLATADMIN/001',
-        rank: 'Air Marshal',
-        unit: 'Defense Headquarters Abuja',
-        role: 'PLATADMIN',
-        status: 'ACTIVE',
-        password: '$2b$10$hashedpassword1',
-        lastLogin: new Date('2025-08-14T08:00:00Z'),
-      }
-    }),
     prisma.user.create({
       data: {
         email: 'admin1@military.gov.ng',
