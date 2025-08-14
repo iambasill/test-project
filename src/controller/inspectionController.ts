@@ -14,10 +14,10 @@ export const createInspection = async (req:Request, res:Response) => {
         functionalInspections = [],
         documentLegalInspections = []
     } = req.body;
+    if (!equipmentId) throw new BadRequestError("Sixtus please provide Equipment ID")
     const user: any = req.user
     const files = req.files || [];
 
-console.log(req.body)
 const equipment = await prisma.equipment.findUnique({
   where: { id: equipmentId }
 });
