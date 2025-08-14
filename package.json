@@ -5,7 +5,10 @@
   "main": "index.js",
   "scripts": {
     "build": "rm -rf build && prisma generate && tsc && cp -r src/generated build/src/",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+      "db:seed": "prisma db seed",
+      "db:reset": "prisma migrate reset --force",
+      "db:reset-seed": "prisma migrate reset --force && prisma db seed"
   },
   "keywords": [],
   "author": "",
