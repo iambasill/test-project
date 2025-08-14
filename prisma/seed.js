@@ -26,6 +26,20 @@ async function main() {
   // 1. Create Users with all roles and statuses
   console.log('👥 Creating users...');
   const users = await Promise.all([
+      prisma.user.create({
+      data: {
+        email: 'platform-admin@gmail.com',
+        firstName: 'Admin',
+        lastName: 'Admin',
+        serviceNumber: 'NAF/2018/0012347',
+        rank: 'Group Captain',
+        unit: 'Nigerian Air Force Base Kainji',
+        role: 'PLATADMIN',
+        status: 'ACTIVE',
+        password: '$2b$10$hashedpassword2',
+        lastLogin: new Date('2025-08-13T16:30:00Z'),
+      }
+    }),
     prisma.user.create({
       data: {
         email: 'admin1@military.gov.ng',
