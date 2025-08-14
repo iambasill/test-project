@@ -41,14 +41,14 @@ export const registerController = async (req: Request, res: Response, next: Next
   });
 
   const verificationToken = generateToken(user.id)
-  const verificationLink = `${CLIENT_URL}/verify-email?token=${verificationToken}`;
+  const verificationLink = `${CLIENT_URL}/reset/change-password?token=${verificationToken}`;
 
 
     // Send verification email
     const emailSent = await sendVerificationEmail (
        email,
       verificationLink,
-      `${firstName} + ${lastName}`
+      firstName
     );
 
     await prisma.user.update({
