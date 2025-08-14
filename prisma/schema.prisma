@@ -19,7 +19,7 @@ enum UserStatus {
 }
 
 enum UserRole {
-    SYSADMIN
+    PLATADMIN
     ADMIN
     MANAGER
     AUDITOR

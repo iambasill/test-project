@@ -95,7 +95,7 @@ if (!equipment) {
 export const getAllInspections = async (req:Request, res:Response) => {
     const user:any = req.user
 
-    const where = (user.role == "ADMIN") ? {} : {inspectorId:user.id}
+    const where = (user.role == "ADMIN" || "PLATADMIN") ? {} : {inspectorId:user.id}
 
     const inspections = await prisma.inspection.findMany({
         where,
