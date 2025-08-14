@@ -1,9 +1,11 @@
 import { Request, Response } from "express";
 import { prisma } from "../server";
 import { BadRequestError, unAuthorizedError } from "../httpClass/exceptions";
+import { inspectionData } from "../schema/schema";
 
 // Create a new inspection
 export const createInspection = async (req:Request, res:Response) => {
+    const data = inspectionData.parse(req.body)
     const {
         equipmentId,
         nextDueDate,
@@ -13,7 +15,7 @@ export const createInspection = async (req:Request, res:Response) => {
         mechanicalInspections = [],
         functionalInspections = [],
         documentLegalInspections = []
-    } = req.body;
+    } = data;
     const user: any = req.user
     const files = req.files || [];
 

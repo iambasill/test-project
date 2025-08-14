@@ -41,3 +41,18 @@ export const equipmentData = z.object({
     currentCondition:    z.enum(ConditionStatus).optional(),
     lastConditionCheck: z.string().optional()
 })
+
+
+
+export const inspectionData = z.object({
+        equipmentId: z.string(),
+        nextDueDate:z.string() ,
+        overallNotes: z.string(),
+        exteriorInspections: z.array(z.object()),
+        interiorInspections: z.array(z.object()),
+        mechanicalInspections: z.array(z.object()),
+        functionalInspections: z.array(z.object()),
+        documentLegalInspections: z.array(z.object())
+    
+
+})
