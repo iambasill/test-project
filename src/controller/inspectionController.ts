@@ -5,6 +5,7 @@ import { inspectionData } from "../schema/schema";
 
 // Create a new inspection
 export const createInspection = async (req:Request, res:Response) => {
+    const jsonData = JSON.parse(req.body)
     const {
         // equipmentId,
         nextDueDate,
@@ -14,7 +15,7 @@ export const createInspection = async (req:Request, res:Response) => {
         mechanicalInspections = [],
         functionalInspections = [],
         documentLegalInspections = []
-    } = req.body;
+    } = jsonData;
     const equipmentId = "a2475249-a705-48d6-9092-c3071159211e"
     const user: any = req.user
     const files = req.files || [];
@@ -72,18 +73,18 @@ if (!equipment) {
 
     });
 
-//     // Handle document uploads if files exist
-//    if (req.files) {
-//     const files = req.files as Record<string, Express.Multer.File[]>;
-//     const fileData = Object.entries(files).map(([fileName, [file]]) => ({
-//       fileName,
-//       url: file.path.toString(),
-//       inspectionId: inspection.id
-//     }));
+    // Handle document uploads if files exist
+   if (req.files) {
+    const files = req.files as Record<string, Express.Multer.File[]>;
+    const fileData = Object.entries(files).map(([fileName, [file]]) => ({
+      fileName,
+      url: file.path.toString(),
+      inspectionId: inspection.id
+    }));
 
-//     await prisma.document.createMany({
-//       data: fileData
-//     });
+    await prisma.document.createMany({
+      data: fileData
+    });
 
    
     res.status(201).json({
@@ -91,7 +92,7 @@ if (!equipment) {
         message: 'Inspection created successfully'
     });
 };
-
+}
 // Get all inspections
 export const getAllInspections = async (req:Request, res:Response) => {
     const user:any = req.user
