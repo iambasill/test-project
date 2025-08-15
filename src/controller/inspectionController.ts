@@ -16,6 +16,7 @@ export const createInspection = async (req:Request, res:Response) => {
         functionalInspections = [],
         documentLegalInspections = []
     } = jsonData;
+    console.log(jsonData)
     const equipmentId = "a2475249-a705-48d6-9092-c3071159211e"
     const user: any = req.user
     const files = req.files || [];
