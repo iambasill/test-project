@@ -5,7 +5,7 @@ import { inspectionData } from "../schema/schema";
 
 // Create a new inspection
 export const createInspection = async (req:Request, res:Response) => {
-    const jsonData = JSON.parse(req.body)
+    const jsonData = JSON.parse(req.body.data)
     const {
         // equipmentId,
         nextDueDate,
