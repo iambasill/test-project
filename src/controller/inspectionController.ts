@@ -6,7 +6,7 @@ import { inspectionData } from "../schema/schema";
 // Create a new inspection
 export const createInspection = async (req:Request, res:Response) => {
     const {
-        equipmentId,
+        // equipmentId,
         nextDueDate,
         overallNotes,
         exteriorInspections = [],
@@ -15,6 +15,7 @@ export const createInspection = async (req:Request, res:Response) => {
         functionalInspections = [],
         documentLegalInspections = []
     } = req.body;
+    const equipmentId = "a2475249-a705-48d6-9092-c3071159211e"
     const user: any = req.user
     const files = req.files || [];
 
