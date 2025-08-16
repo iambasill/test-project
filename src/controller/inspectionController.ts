@@ -95,6 +95,7 @@ if (!equipment) {
       url: file.path.toString(),
       inspectionId: inspection.id
     }));
+    console.log("fileData" : fileData)
 
  //   await prisma.document.createMany({
  //     data: fileData
@@ -103,9 +104,9 @@ if (!equipment) {
 res.status(201).json({
         success: true,
         message: 'Inspection created successfully'
+        
+    })
     }
-    
-}
 
 // Get all inspections
 export const getAllInspections = async (req:Request, res:Response) => {
