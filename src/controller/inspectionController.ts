@@ -99,13 +99,12 @@ if (!equipment) {
  //   await prisma.document.createMany({
  //     data: fileData
  //   });
-
-   
-    res.status(201).json({
+};
+res.status(201).json({
         success: true,
         message: 'Inspection created successfully'
-    });
-};
+    }
+    
 }
 
 // Get all inspections
