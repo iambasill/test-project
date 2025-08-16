@@ -87,8 +87,8 @@ if (!equipment) {
     });
 
     // Handle document uploads if files exist
-  const status = false;
-   if (status) {
+  
+   if (req.files) {
     const files = req.files as Record<string, Express.Multer.File[]>;
     const fileData = Object.entries(files).map(([fileName, [file]]) => ({
       fileName,
@@ -96,9 +96,9 @@ if (!equipment) {
       inspectionId: inspection.id
     }));
 
-    await prisma.document.createMany({
-      data: fileData
-    });
+ //   await prisma.document.createMany({
+ //     data: fileData
+ //   });
 
    
     res.status(201).json({
