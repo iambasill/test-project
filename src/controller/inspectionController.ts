@@ -4,43 +4,6 @@ import { BadRequestError, unAuthorizedError } from "../httpClass/exceptions";
 import { inspectionData } from "../schema/schema";
 
 // Helper function to parse form data
-const parseFormData = (body: any) => {
-    if (!body) {
-        return {
-            equipmentId: undefined,
-            nextDueDate: undefined,
-            overallNotes: undefined,
-            exteriorInspections: [],
-            interiorInspections: [],
-            mechanicalInspections: [],
-            functionalInspections: [],
-            documentLegalInspections: []
-        };
-    }
-
-    const parseIfString = (value: any) => {
-        if (typeof value === 'string' && (value.startsWith('{') || value.startsWith('['))) {
-            try {
-                return JSON.parse(value);
-            } catch {
-                return value;
-            }
-        }
-        return value;
-    };
-
-    return {
-        equipmentId: body.equipmentId,
-        nextDueDate: body.nextDueDate,
-        overallNotes: body.overallNotes,
-        exteriorInspections: parseIfString(body.exteriorInspections) || [],
-        interiorInspections: parseIfString(body.interiorInspections) || [],
-        mechanicalInspections: parseIfString(body.mechanicalInspections) || [],
-        functionalInspections: parseIfString(body.functionalInspections) || [],
-        documentLegalInspections: parseIfString(body.documentLegalInspections) || []
-    };
-};
-
 
 
 // Create a new inspection
@@ -53,6 +16,7 @@ export const createInspection = async (req: Request, res: Response) => {
     console.log('==================');
 
     const user: any = req.user;
+    
 
     if (!req.body) {
         throw new BadRequestError('Request body is missing. Make sure your middleware is properly configured for multipart/form-data.');
@@ -67,7 +31,7 @@ export const createInspection = async (req: Request, res: Response) => {
         mechanicalInspections,
         functionalInspections,
         documentLegalInspections
-    } = parseFormData(req.body);
+    } = req.body;
 
 const equipment = await prisma.equipment.findUnique({
   where: { id: equipmentId }
@@ -123,7 +87,8 @@ if (!equipment) {
     });
 
     // Handle document uploads if files exist
-   if (req.files) {
+  const status = false;
+   if (status) {
     const files = req.files as Record<string, Express.Multer.File[]>;
     const fileData = Object.entries(files).map(([fileName, [file]]) => ({
       fileName,
