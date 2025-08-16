@@ -95,7 +95,7 @@ if (!equipment) {
       url: file.path.toString(),
       inspectionId: inspection.id
     }));
-    console.log("fileData" : fileData)
+    console.log("fileData:" , fileData)
 
  //   await prisma.document.createMany({
  //     data: fileData
