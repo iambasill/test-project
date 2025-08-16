@@ -41,53 +41,7 @@ const parseFormData = (body: any) => {
     };
 };
 
-// Helper function to process files and create documents
-const processDocumentsForInspectionItems = async (
-    inspectionItems: any[], 
-    files: any[], 
-    categoryPrefix: string,
-    inspectionId: string
-) => {
-    const processedItems = [];
-    
-    for (let index = 0; index < inspectionItems.length; index++) {
-        const item = inspectionItems[index];
-        
-        // Find files that match this inspection item
-        const itemFiles = files.filter(file => 
-            file.fieldname && file.fieldname.startsWith(`${categoryPrefix}_${index}_`)
-        );
 
-        // Create documents for this inspection item
-        const documents = [];
-        for (const file of itemFiles) {
-            const document = await prisma.document.create({
-                data: {
-                    url: file.path,
-                    fileName: file.originalname || file.filename,
-                    fileSize: file.size,
-                    mimeType: file.mimetype,
-                    description: `${categoryPrefix} inspection image for ${item.itemName}`,
-                    metadata: {
-                        fieldName: file.fieldname,
-                        inspectionCategory: categoryPrefix,
-                        inspectionItemIndex: index,
-                        itemName: item.itemName
-                    },
-                    inspectionId: inspectionId
-                }
-            });
-            documents.push(document);
-        }
-
-        processedItems.push({
-            ...item,
-            documents: documents
-        });
-    }
-    
-    return processedItems;
-};
 
 // Create a new inspection
 export const createInspection = async (req: Request, res: Response) => {
@@ -115,381 +69,144 @@ export const createInspection = async (req: Request, res: Response) => {
         documentLegalInspections
     } = parseFormData(req.body);
 
-    console.log('Parsed equipmentId:', equipmentId, typeof equipmentId);
+const equipment = await prisma.equipment.findUnique({
+  where: { id: equipmentId }
+});
 
-    if (!equipmentId) {
-        throw new BadRequestError('equipmentId is required');
-    }
+if (!equipment) {
+  throw new Error(`Equipment with ID ${equipmentId} not found`);
+}
 
-    // Try to find equipment by id first, then by chasisNumber
-    let equipment = await prisma.equipment.findUnique({
-        where: { id: equipmentId }
-    }).catch(() => null);
-
-    if (!equipment) {
-        equipment = await prisma.equipment.findUnique({
-            where: { chasisNumber: equipmentId }
-        }).catch(() => null);
-    }
-
-    if (!equipment) {
-        throw new Error(`Equipment with ID/Chassis Number ${equipmentId} not found`);
-    }
-
-    // Create the main inspection first
     const inspection = await prisma.inspection.create({
         data: {
-            equipmentId: equipment.id,
-            inspectorId: user.id,
+            equipmentId,
+            inspectorId:user.id,
             nextDueDate: nextDueDate ? new Date(nextDueDate) : null,
-            overallNotes
+            overallNotes,
+            exteriorInspections: {
+                create: exteriorInspections.map((item:any) => ({
+                    itemName: item.itemName,
+                    condition: item.condition,
+                    notes: item.notes
+                }))
+            },
+            interiorInspections: {
+                create: interiorInspections.map((item:any) => ({
+                    itemName: item.itemName,
+                    condition: item.condition,
+                    notes: item.notes
+                })) 
+            },
+            mechanicalInspections: {
+                create: mechanicalInspections.map((item:any) => ({
+                    itemName: item.itemName,
+                    condition: item.condition,
+                    notes: item.notes
+                }))
+            },
+            functionalInspections: {
+                create: functionalInspections.map((item:any) => ({
+                    itemName: item.itemName,
+                    condition: item.condition,
+                    notes: item.notes
+                }))
+            },
+            documentLegalInspections: {
+                create: documentLegalInspections.map((item:any) => ({
+                    itemName: item.itemName,
+                    condition: item.condition,
+                    notes: item.notes
+                }))
+            }
         },
+
     });
 
-    // Process files (convert to array if it's an object)
-    const filesArray = Array.isArray(req.files) ? req.files : 
-                      req.files ? Object.values(req.files).flat() : [];
+    // Handle document uploads if files exist
+   if (req.files) {
+    const files = req.files as Record<string, Express.Multer.File[]>;
+    const fileData = Object.entries(files).map(([fileName, [file]]) => ({
+      fileName,
+      url: file.path.toString(),
+      inspectionId: inspection.id
+    }));
 
-    // Process each category and create inspection items with their documents
-    const [
-        processedExteriorInspections,
-        processedInteriorInspections,
-        processedMechanicalInspections,
-        processedFunctionalInspections,
-        processedDocumentLegalInspections
-    ] = await Promise.all([
-        processDocumentsForInspectionItems(exteriorInspections, filesArray, 'exterior', inspection.id),
-        processDocumentsForInspectionItems(interiorInspections, filesArray, 'interior', inspection.id),
-        processDocumentsForInspectionItems(mechanicalInspections, filesArray, 'mechanical', inspection.id),
-        processDocumentsForInspectionItems(functionalInspections, filesArray, 'functional', inspection.id),
-        processDocumentsForInspectionItems(documentLegalInspections, filesArray, 'documentation', inspection.id)
-    ]);
+    await prisma.document.createMany({
+      data: fileData
+    });
 
-    // Create inspection items and link documents
-    const createdExteriorInspections = [];
-    for (const item of processedExteriorInspections) {
-        const exteriorInspection = await prisma.exteriorInspection.create({
-            data: {
-                inspectionId: inspection.id,
-                itemName: item.itemName,
-                condition: item.condition,
-                notes: item.notes
-            }
-        });
-
-        // Link documents to this specific inspection item
-        if (item.documents.length > 0) {
-            await prisma.document.updateMany({
-                where: { id: { in: item.documents.map(d => d.id) } },
-                data: { exteriorInspectionId: exteriorInspection.id }
-            });
-        }
-
-        createdExteriorInspections.push(exteriorInspection);
-    }
-
-    // Repeat for other categories
-    const createdInteriorInspections = [];
-    for (const item of processedInteriorInspections) {
-        const interiorInspection = await prisma.interiorInspection.create({
-            data: {
-                inspectionId: inspection.id,
-                itemName: item.itemName,
-                condition: item.condition,
-                notes: item.notes
-            }
-        });
-
-        if (item.documents.length > 0) {
-            await prisma.document.updateMany({
-                where: { id: { in: item.documents.map(d => d.id) } },
-                data: { interiorInspectionId: interiorInspection.id }
-            });
-        }
-
-        createdInteriorInspections.push(interiorInspection);
-    }
-
-    const createdMechanicalInspections = [];
-    for (const item of processedMechanicalInspections) {
-        const mechanicalInspection = await prisma.mechanicalInspection.create({
-            data: {
-                inspectionId: inspection.id,
-                itemName: item.itemName,
-                condition: item.condition,
-                notes: item.notes
-            }
-        });
-
-        if (item.documents.length > 0) {
-            await prisma.document.updateMany({
-                where: { id: { in: item.documents.map(d => d.id) } },
-                data: { mechanicalInspectionId: mechanicalInspection.id }
-            });
-        }
-
-        createdMechanicalInspections.push(mechanicalInspection);
-    }
-
-    const createdFunctionalInspections = [];
-    for (const item of processedFunctionalInspections) {
-        const functionalInspection = await prisma.functionalInspection.create({
-            data: {
-                inspectionId: inspection.id,
-                itemName: item.itemName,
-                condition: item.condition,
-                notes: item.notes
-            }
-        });
-
-        if (item.documents.length > 0) {
-            await prisma.document.updateMany({
-                where: { id: { in: item.documents.map(d => d.id) } },
-                data: { functionalInspectionId: functionalInspection.id }
-            });
-        }
-
-        createdFunctionalInspections.push(functionalInspection);
-    }
-
-    const createdDocumentLegalInspections = [];
-    for (const item of processedDocumentLegalInspections) {
-        const documentLegalInspection = await prisma.documentLegalInspection.create({
-            data: {
-                inspectionId: inspection.id,
-                itemName: item.itemName,
-                condition: item.condition,
-                notes: item.notes
-            }
-        });
-
-        if (item.documents.length > 0) {
-            await prisma.document.updateMany({
-                where: { id: { in: item.documents.map(d => d.id) } },
-                data: { documentLegalInspectionId: documentLegalInspection.id }
-            });
-        }
-
-        createdDocumentLegalInspections.push(documentLegalInspection);
-    }
-
+   
     res.status(201).json({
         success: true,
-        message: 'Inspection created successfully',
-        data: { inspectionId: inspection.id }
+        message: 'Inspection created successfully'
     });
 };
-
+}
 // Get all inspections
-export const getAllInspections = async (req: Request, res: Response) => {
-    const user: any = req.user;
+export const getAllInspections = async (req:Request, res:Response) => {
+    const user:any = req.user
 
-    const where = (user.role === "ADMIN" || user.role === "PLATADMIN") ? {} : { inspectorId: user.id };
+    const where = (user.role == "ADMIN" || "PLATADMIN") ? {} : {inspectorId:user.id}
 
     const inspections = await prisma.inspection.findMany({
         where,
         include: {
-            exteriorInspections: {
-                include: {
-                    documents: true
-                }
-            },
-            interiorInspections: {
-                include: {
-                    documents: true
-                }
-            },
-            mechanicalInspections: {
-                include: {
-                    documents: true
-                }
-            },
-            functionalInspections: {
-                include: {
-                    documents: true
-                }
-            },
-            documentLegalInspections: {
-                include: {
-                    documents: true
-                }
-            },
+            exteriorInspections: true,
+            interiorInspections: true,
+            mechanicalInspections: true,
+            functionalInspections: true,
+            documentLegalInspections: true,
+            documents: true,
             equipment: {
                 select: { chasisNumber: true, equipmentName: true, model: true }
             },
             inspector: {
-                select: { id: true, firstName: true, lastName: true, serviceNumber: true, email: true }
+                select: { id: true, firstName: true,lastName:true, serviceNumber:true, email: true }
             }
         },
         orderBy: { datePerformed: 'desc' }
     });
 
-    // Transform the response to match your desired format
-    const transformedInspections = inspections.map(inspection => ({
-        ...inspection,
-        exteriorInspections: inspection.exteriorInspections.map(item => ({
-            ...item,
-            imageFields: item.documents.map(doc => ({
-                fieldName: doc.metadata?.fieldName || 'unknown',
-                fileName: doc.fileName,
-                url: doc.url,
-                mimeType: doc.mimeType,
-                fileSize: doc.fileSize
-            }))
-        })),
-        interiorInspections: inspection.interiorInspections.map(item => ({
-            ...item,
-            imageFields: item.documents.map(doc => ({
-                fieldName: doc.metadata?.fieldName || 'unknown',
-                fileName: doc.fileName,
-                url: doc.url,
-                mimeType: doc.mimeType,
-                fileSize: doc.fileSize
-            }))
-        })),
-        mechanicalInspections: inspection.mechanicalInspections.map(item => ({
-            ...item,
-            imageFields: item.documents.map(doc => ({
-                fieldName: doc.metadata?.fieldName || 'unknown',
-                fileName: doc.fileName,
-                url: doc.url,
-                mimeType: doc.mimeType,
-                fileSize: doc.fileSize
-            }))
-        })),
-        functionalInspections: inspection.functionalInspections.map(item => ({
-            ...item,
-            imageFields: item.documents.map(doc => ({
-                fieldName: doc.metadata?.fieldName || 'unknown',
-                fileName: doc.fileName,
-                url: doc.url,
-                mimeType: doc.mimeType,
-                fileSize: doc.fileSize
-            }))
-        })),
-        documentLegalInspections: inspection.documentLegalInspections.map(item => ({
-            ...item,
-            imageFields: item.documents.map(doc => ({
-                fieldName: doc.metadata?.fieldName || 'unknown',
-                fileName: doc.fileName,
-                url: doc.url,
-                mimeType: doc.mimeType,
-                fileSize: doc.fileSize
-            }))
-        }))
-    }));
 
     res.status(200).json({
         success: true,
-        data: transformedInspections,
+        data: inspections,
     });
 };
 
 // Get single inspection by ID
-export const getInspectionById = async (req: Request, res: Response) => {
+export const getInspectionById = async (req:Request, res:Response) => {
     const { id } = req.params;
-    const inspections = await prisma.inspection.findMany({
-        where: { equipmentId: id },
+    const inspection = await prisma.inspection.findMany({
+        where: { equipmentId:id },
         include: {
-            exteriorInspections: {
-                include: {
-                    documents: true
-                }
-            },
-            interiorInspections: {
-                include: {
-                    documents: true
-                }
-            },
-            mechanicalInspections: {
-                include: {
-                    documents: true
-                }
-            },
-            functionalInspections: {
-                include: {
-                    documents: true
-                }
-            },
-            documentLegalInspections: {
-                include: {
-                    documents: true
-                }
-            },
+            exteriorInspections: true,
+            interiorInspections: true,
+            mechanicalInspections: true,
+            functionalInspections: true,
+            documentLegalInspections: true,
+            documents: true,
             equipment: true,
             inspector: {
-                select: { id: true, firstName: true, lastName: true, serviceNumber: true, email: true }
+                select: { id: true, firstName: true,lastName:true, serviceNumber:true, email: true }
             }
         }
     });
 
-    if (!inspections || inspections.length === 0) throw new BadRequestError('Inspection not found');
+    if (!inspection) throw new BadRequestError('Inspection not found')
 
-    // Transform the response to match your desired format
-    const transformedInspections = inspections.map(inspection => ({
-        ...inspection,
-        exteriorInspections: inspection.exteriorInspections.map(item => ({
-            ...item,
-            imageFields: item.documents.map(doc => ({
-                fieldName: doc.metadata?.fieldName || 'unknown',
-                fileName: doc.fileName,
-                url: doc.url,
-                mimeType: doc.mimeType,
-                fileSize: doc.fileSize
-            }))
-        })),
-        interiorInspections: inspection.interiorInspections.map(item => ({
-            ...item,
-            imageFields: item.documents.map(doc => ({
-                fieldName: doc.metadata?.fieldName || 'unknown',
-                fileName: doc.fileName,
-                url: doc.url,
-                mimeType: doc.mimeType,
-                fileSize: doc.fileSize
-            }))
-        })),
-        mechanicalInspections: inspection.mechanicalInspections.map(item => ({
-            ...item,
-            imageFields: item.documents.map(doc => ({
-                fieldName: doc.metadata?.fieldName || 'unknown',
-                fileName: doc.fileName,
-                url: doc.url,
-                mimeType: doc.mimeType,
-                fileSize: doc.fileSize
-            }))
-        })),
-        functionalInspections: inspection.functionalInspections.map(item => ({
-            ...item,
-            imageFields: item.documents.map(doc => ({
-                fieldName: doc.metadata?.fieldName || 'unknown',
-                fileName: doc.fileName,
-                url: doc.url,
-                mimeType: doc.mimeType,
-                fileSize: doc.fileSize
-            }))
-        })),
-        documentLegalInspections: inspection.documentLegalInspections.map(item => ({
-            ...item,
-            imageFields: item.documents.map(doc => ({
-                fieldName: doc.metadata?.fieldName || 'unknown',
-                fileName: doc.fileName,
-                url: doc.url,
-                mimeType: doc.mimeType,
-                fileSize: doc.fileSize
-            }))
-        }))
-    }));
 
     res.status(200).json({
         success: true,
-        data: transformedInspections
+        data: inspection
     });
 };
 
 // Update inspection
-export const updateInspection = async (req: Request, res: Response) => {
+export const updateInspection = async (req:Request, res:Response) => {
     const { id } = req.params;
     const {
+
         nextDueDate,
         overallNotes,
         exteriorInspections,
@@ -499,83 +216,71 @@ export const updateInspection = async (req: Request, res: Response) => {
         documentLegalInspections
     } = req.body;
 
-    // Update main inspection
-    await prisma.inspection.update({
+    const files = req.files || [];
+
+    const inspection = await prisma.inspection.update({
         where: { id },
         data: {
-            nextDueDate: nextDueDate ? new Date(nextDueDate) : undefined,
-            overallNotes,
+        nextDueDate,
+        overallNotes,
+        exteriorInspections,
+        interiorInspections,
+        mechanicalInspections,
+        functionalInspections,
+        documentLegalInspections
+        },
+        include: {
+            exteriorInspections: true,
+            interiorInspections: true,
+            mechanicalInspections: true,
+            functionalInspections: true,
+            documentLegalInspections: true,
+            documents: true
         }
     });
 
-    // Delete existing inspection items and their document links
-    await Promise.all([
-        prisma.document.updateMany({
-            where: { 
-                OR: [
-                    { exteriorInspectionId: { not: null } },
-                    { interiorInspectionId: { not: null } },
-                    { mechanicalInspectionId: { not: null } },
-                    { functionalInspectionId: { not: null } },
-                    { documentLegalInspectionId: { not: null } }
-                ],
-                inspectionId: id
-            },
-            data: {
-                exteriorInspectionId: null,
-                interiorInspectionId: null,
-                mechanicalInspectionId: null,
-                functionalInspectionId: null,
-                documentLegalInspectionId: null
-            }
-        }),
-        prisma.exteriorInspection.deleteMany({ where: { inspectionId: id } }),
-        prisma.interiorInspection.deleteMany({ where: { inspectionId: id } }),
-        prisma.mechanicalInspection.deleteMany({ where: { inspectionId: id } }),
-        prisma.functionalInspection.deleteMany({ where: { inspectionId: id } }),
-        prisma.documentLegalInspection.deleteMany({ where: { inspectionId: id } })
-    ]);
+       if (req.files) {
+    const files = req.files as Record<string, Express.Multer.File[]>;
+    const fileData = Object.entries(files).map(([fileName, [file]]) => ({
+      fileName,
+      url: file.path.toString(),
+    }));
 
-    // Process new files and recreate inspection items (similar to create logic)
-    // ... (implement similar logic as in createInspection)
+    await prisma.document.updateMany({
+    where:{
+        inspectionId:inspection.id
+    },
+      data: fileData
+    });
+       }
 
     const updatedInspection = await prisma.inspection.findUnique({
         where: { id },
         include: {
-            exteriorInspections: {
-                include: { documents: true }
-            },
-            interiorInspections: {
-                include: { documents: true }
-            },
-            mechanicalInspections: {
-                include: { documents: true }
-            },
-            functionalInspections: {
-                include: { documents: true }
-            },
-            documentLegalInspections: {
-                include: { documents: true }
-            },
+            exteriorInspections: true,
+            interiorInspections: true,
+            mechanicalInspections: true,
+            functionalInspections: true,
+            documentLegalInspections: true,
+            documents: true,
             equipment: true,
             inspector: {
-                select: { id: true, firstName: true, lastName: true, serviceNumber: true, email: true }
+                select: { id: true, firstName: true,lastName:true, serviceNumber:true, email: true }
             }
-        }
-    });
+    }
+    })
 
     res.status(200).json({
         success: true,
         data: updatedInspection,
         message: 'Inspection updated successfully'
     });
-};
+}
 
 // Delete inspection
-export const deleteInspection = async (req: Request, res: Response) => {
+export const deleteInspection = async (req:Request, res:Response) => {
     const { id } = req.params;
 
-    // This will cascade delete inspection items and unlink documents
     await prisma.inspection.delete({
         where: { id }
     });
