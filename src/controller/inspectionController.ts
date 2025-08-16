@@ -106,7 +106,7 @@ if (!equipment) {
         message: 'Inspection created successfully'
     });
 };
-}
+
 // Get all inspections
 export const getAllInspections = async (req:Request, res:Response) => {
     const user:any = req.user
