@@ -44,7 +44,7 @@ if (!equipment) {
    const inspection = await prisma.inspection.create({
     data: {
         equipment: {
-            connect: { id: equipmentId }
+            connect: { id: "a2475249-a705-48d6-9092-c3071159211e" }
         },
         inspector: {
             connect: { id: user.id }
