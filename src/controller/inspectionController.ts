@@ -48,49 +48,59 @@ export const createInspection = async (req: Request, res: Response) => {
     }
 
     // Fix 2: Use the correct field names based on your schema
-    const inspection = await prisma.inspection.create({
-        data: {
-            equipmentId: equipmentId, // Use the direct field, not relation
-            inspectorId: user.id,     // Use the direct field, not relation
-            nextDueDate: nextDueDate ? new Date(nextDueDate) : null,
-            overallNotes,
-            exteriorInspections: {
-                create: exteriorInspections.map((item: any) => ({
-                    itemName: item.itemName,
-                    condition: item.condition,
-                    notes: item.notes
-                }))
+const inspection = await prisma.inspection.create({
+            data: {
+                equipment: {
+                    connect: { id: "a2475249-a705-48d6-9092-c3071159211e" }
+                },
+                inspector: {
+                    connect: { id: user.id }
+                },
+                nextDueDate: nextDueDate ? new Date(nextDueDate) : null,
+                overallNotes,
+                exteriorInspections: {
+                    create: exteriorInspections.map((item: any) => ({
+                        itemName: item.itemName,
+                        condition: item.condition,
+                        notes: item.notes
+                    }))
+                },
+                interiorInspections: {
+                    create: interiorInspections.map((item: any) => ({
+                        itemName: item.itemName,
+                        condition: item.condition,
+                        notes: item.notes
+                    }))
+                },
+                mechanicalInspections: {
+                    create: mechanicalInspections.map((item: any) => ({
+                        itemName: item.itemName,
+                        condition: item.condition,
+                        notes: item.notes
+                    }))
+                },
+                functionalInspections: {
+                    create: functionalInspections.map((item: any) => ({
+                        itemName: item.itemName,
+                        condition: item.condition,
+                        notes: item.notes
+                    }))
+                },
+                documentLegalInspections: {
+                    create: documentLegalInspections.map((item: any) => ({
+                        itemName: item.itemName,
+                        condition: item.condition,
+                        notes: item.notes
+                    }))
+                }
             },
-            interiorInspections: {
-                create: interiorInspections.map((item: any) => ({
-                    itemName: item.itemName,
-                    condition: item.condition,
-                    notes: item.notes
-                }))
-            },
-            mechanicalInspections: {
-                create: mechanicalInspections.map((item: any) => ({
-                    itemName: item.itemName,
-                    condition: item.condition,
-                    notes: item.notes
-                }))
-            },
-            functionalInspections: {
-                create: functionalInspections.map((item: any) => ({
-                    itemName: item.itemName,
-                    condition: item.condition,
-                    notes: item.notes
-                }))
-            },
-            documentLegalInspections: {
-                create: documentLegalInspections.map((item: any) => ({
-                    itemName: item.itemName,
-                    condition: item.condition,
-                    notes: item.notes
-                }))
-            }
-        },
-    });
+        });
+
+        res.status(201).json({
+            success: true,
+            message: 'Inspection created successfully',
+            data: inspection
+        });
 
     // Handle document uploads if files exist
     if (req.files) {
