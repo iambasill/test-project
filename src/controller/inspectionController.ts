@@ -60,7 +60,7 @@ export const createInspection = async (req: Request, res: Response) => {
     const inspection = await prisma.inspection.create({
         data: {
             equipment: {
-                connect: { id: equipmentId } // Use equipmentId from request instead of hardcoded
+                connect: { id: "a2475249-a705-48d6-9092-c3071159211e" } 
             },
             inspector: {
                 connect: { id: user.id }
@@ -200,84 +200,7 @@ export const getInspectionById = async (req: Request, res: Response) => {
     });
 };
 
-// Update inspection
-export const updateInspection = async (req: Request, res: Response) => {
-    const { id } = req.params;
-    const {
-        nextDueDate,
-        overallNotes,
-        exteriorInspections,
-        interiorInspections,
-        mechanicalInspections,
-        functionalInspections,
-        documentLegalInspections
-    } = req.body;
 
-    const inspection = await prisma.inspection.update({
-        where: { id },
-        data: {
-            nextDueDate,
-            overallNotes,
-            // Note: You can't update nested relations like this directly
-            // You'd need to handle each inspection type separately
-        },
-        include: {
-            exteriorInspections: true,
-            interiorInspections: true,
-            mechanicalInspections: true,
-            functionalInspections: true,
-            documentLegalInspections: true,
-            documents: true
-        }
-    });
-
-    if (req.files) {
-        const files = req.files as Record<string, Express.Multer.File[]>;
-        
-        if (files && typeof files === 'object') {
-            const fileEntries = Object.entries(files);
-            if (fileEntries.length > 0) {
-                const fileData = fileEntries
-                    .filter(([fileName, fileArray]) => fileArray && fileArray.length > 0)
-                    .map(([fileName, fileArray]) => ({
-                        fileName,
-                        url: fileArray[0].path.toString(),
-                        inspectionId: inspection.id
-                    }));
-
-                // Note: updateMany with different data for each record won't work
-                // You'd need to create new documents or update them individually
-                if (fileData.length > 0) {
-                    // await prisma.document.createMany({
-                    //     data: fileData
-                    // });
-                }
-            }
-        }
-    }
-
-    const updatedInspection = await prisma.inspection.findUnique({
-        where: { id },
-        include: {
-            exteriorInspections: true,
-            interiorInspections: true,
-            mechanicalInspections: true,
-            functionalInspections: true,
-            documentLegalInspections: true,
-            documents: true,
-            equipment: true,
-            inspector: {
-                select: { id: true, firstName: true, lastName: true, serviceNumber: true, email: true }
-            }
-        }
-    })
-
-    res.status(200).json({
-        success: true,
-        data: updatedInspection,
-        message: 'Inspection updated successfully'
-    });
-}
 
 // Delete inspection
 export const deleteInspection = async (req: Request, res: Response) => {
