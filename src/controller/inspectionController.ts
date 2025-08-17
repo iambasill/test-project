@@ -17,7 +17,6 @@ export const createInspection = async (req: Request, res: Response) => {
 
     const user: any = req.user;
     
-
     if (!req.body) {
         throw new BadRequestError('Request body is missing. Make sure your middleware is properly configured for multipart/form-data.');
     }
@@ -26,90 +25,94 @@ export const createInspection = async (req: Request, res: Response) => {
         equipmentId,
         nextDueDate,
         overallNotes,
-        exteriorInspections,
-        interiorInspections,
-        mechanicalInspections,
-        functionalInspections,
-        documentLegalInspections
+        exteriorInspections: exteriorInspectionsRaw,
+        interiorInspections: interiorInspectionsRaw,
+        mechanicalInspections: mechanicalInspectionsRaw,
+        functionalInspections: functionalInspectionsRaw,
+        documentLegalInspections: documentLegalInspectionsRaw
     } = req.body;
 
-const equipment = await prisma.equipment.findFirst({
-  where: { id: equipmentId }
-});
+    // Parse the JSON strings back to arrays
+    const exteriorInspections = exteriorInspectionsRaw ? JSON.parse(exteriorInspectionsRaw) : [];
+    const interiorInspections = interiorInspectionsRaw ? JSON.parse(interiorInspectionsRaw) : [];
+    const mechanicalInspections = mechanicalInspectionsRaw ? JSON.parse(mechanicalInspectionsRaw) : [];
+    const functionalInspections = functionalInspectionsRaw ? JSON.parse(functionalInspectionsRaw) : [];
+    const documentLegalInspections = documentLegalInspectionsRaw ? JSON.parse(documentLegalInspectionsRaw) : [];
 
-if (!equipment) {
-  throw new Error(`Equipment with ID ${equipmentId} not found`);
-}
+    const equipment = await prisma.equipment.findFirst({
+        where: { id: equipmentId }
+    });
 
-   const inspection = await prisma.inspection.create({
-    data: {
-        equipment: {
-            connect: { id: "a2475249-a705-48d6-9092-c3071159211e" }
-        },
-        inspector: {
-            connect: { id: user.id }
-        },
-        nextDueDate: nextDueDate ? new Date(nextDueDate) : null,
-        overallNotes,
-        exteriorInspections: {
-            create: (exteriorInspections || []).map((item: any) => ({
-                itemName: item.itemName,
-                condition: item.condition,
-                notes: item.notes
-            }))
-        },
-        interiorInspections: {
-            create: (interiorInspections || []).map((item: any) => ({
-                itemName: item.itemName,
-                condition: item.condition,
-                notes: item.notes
-            }))
-        },
-        mechanicalInspections: {
-            create: (mechanicalInspections || []).map((item: any) => ({
-                itemName: item.itemName,
-                condition: item.condition,
-                notes: item.notes
-            }))
-        },
-        functionalInspections: {
-            create: (functionalInspections || []).map((item: any) => ({
-                itemName: item.itemName,
-                condition: item.condition,
-                notes: item.notes
-            }))
-        },
-        documentLegalInspections: {
-            create: (documentLegalInspections || []).map((item: any) => ({
-                itemName: item.itemName,
-                condition: item.condition,
-                notes: item.notes
-            }))
-        }
-    },
-});
-    // Handle document uploads if files exist
-  
-   if (req.files) {
-    const files = req.files as Record<string, Express.Multer.File[]>;
-    const fileData = Object.entries(files).map(([fileName, [file]]) => ({
-      fileName,
-      url: file.path.toString(),
-      inspectionId: inspection.id
-    }));
-    console.log("fileData:" , fileData)
-
- //   await prisma.document.createMany({
- //     data: fileData
- //   });
-};
-res.status(201).json({
-        success: true,
-        message: 'Inspection created successfully'
-        
-    })
+    if (!equipment) {
+        throw new Error(`Equipment with ID ${equipmentId} not found`);
     }
 
+    // Fix 2: Use the correct field names based on your schema
+    const inspection = await prisma.inspection.create({
+        data: {
+            equipmentId: equipmentId, // Use the direct field, not relation
+            inspectorId: user.id,     // Use the direct field, not relation
+            nextDueDate: nextDueDate ? new Date(nextDueDate) : null,
+            overallNotes,
+            exteriorInspections: {
+                create: exteriorInspections.map((item: any) => ({
+                    itemName: item.itemName,
+                    condition: item.condition,
+                    notes: item.notes
+                }))
+            },
+            interiorInspections: {
+                create: interiorInspections.map((item: any) => ({
+                    itemName: item.itemName,
+                    condition: item.condition,
+                    notes: item.notes
+                }))
+            },
+            mechanicalInspections: {
+                create: mechanicalInspections.map((item: any) => ({
+                    itemName: item.itemName,
+                    condition: item.condition,
+                    notes: item.notes
+                }))
+            },
+            functionalInspections: {
+                create: functionalInspections.map((item: any) => ({
+                    itemName: item.itemName,
+                    condition: item.condition,
+                    notes: item.notes
+                }))
+            },
+            documentLegalInspections: {
+                create: documentLegalInspections.map((item: any) => ({
+                    itemName: item.itemName,
+                    condition: item.condition,
+                    notes: item.notes
+                }))
+            }
+        },
+    });
+
+    // Handle document uploads if files exist
+    if (req.files) {
+        const files = req.files as Record<string, Express.Multer.File[]>;
+        const fileData = Object.entries(files).map(([fileName, [file]]) => ({
+            fileName,
+            url: file.path.toString(),
+            inspectionId: inspection.id
+        }));
+        console.log("fileData:", fileData);
+
+        // Uncomment when ready to save documents
+        // await prisma.document.createMany({
+        //     data: fileData
+        // });
+    }
+
+    res.status(201).json({
+        success: true,
+        message: 'Inspection created successfully'
+    });
+}
 // Get all inspections
 export const getAllInspections = async (req:Request, res:Response) => {
     const user:any = req.user
