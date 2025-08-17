@@ -10,8 +10,6 @@ export const createInspection = async (req: Request, res: Response) => {
         throw new BadRequestError('Request body is missing');
     }
 
-    // Debug: Log the raw request body
-    console.log('Raw request body:', req.body);
 
     // Parse the JSON string if it exists
     let inspectionData;

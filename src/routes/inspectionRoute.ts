@@ -7,7 +7,7 @@ export const inspectionRouter = express.Router();
 
 inspectionRouter.get('/', authMiddleware, getAllInspections);
 inspectionRouter.get('/:id', authMiddleware, getInspectionById);
-inspectionRouter.post('/', authMiddleware, upload.any(), createInspection);
+inspectionRouter.post('/', authMiddleware, upload.none(), createInspection);
 
 
 
