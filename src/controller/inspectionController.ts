@@ -8,129 +8,128 @@ export const createInspection = async (req: Request, res: Response) => {
     const user: any = req.user;
     
     if (!req.body) {
-        throw new BadRequestError('Request body is missing. Make sure your middleware is properly configured for multipart/form-data.');
+        throw new BadRequestError('Request body is missing');
     }
 
+    // Debug logging
+    console.log('Request body:', JSON.stringify(req.body, null, 2));
+
+    // Handle both raw JSON and FormData cases
+    let inspectionData;
+    if (typeof req.body === 'string') {
+        try {
+            inspectionData = JSON.parse(req.body);
+        } catch (error) {
+            throw new BadRequestError('Invalid JSON data');
+        }
+    } else {
+        inspectionData = req.body;
+    }
+
+    // Validate required fields
+    if (!inspectionData.equipmentId) {
+        throw new BadRequestError('Equipment ID is required');
+    }
+
+    // Destructure with defaults
     const {
         equipmentId,
         nextDueDate,
-        overallNotes,
-        exteriorInspections: exteriorInspectionsRaw,
-        interiorInspections: interiorInspectionsRaw,
-        mechanicalInspections: mechanicalInspectionsRaw,
-        functionalInspections: functionalInspectionsRaw,
-        documentLegalInspections: documentLegalInspectionsRaw
-    } = req.body;
+        overallNotes = null,
+        exteriorInspections = [],
+        interiorInspections = [],
+        mechanicalInspections = [],
+        functionalInspections = [],
+        documentLegalInspections = []
+    } = inspectionData;
 
-    // Parse the JSON strings back to arrays with error handling
-    const safeParseJSON = (jsonString: any): any[] => {
-        if (!jsonString) return [];
-        if (Array.isArray(jsonString)) return jsonString;
-        
-        try {
-            const parsed = JSON.parse(jsonString);
-            return Array.isArray(parsed) ? parsed : [];
-        } catch (error) {
-            console.error('Failed to parse JSON:', error);
-            return [];
-        }
-    };
-
-    const exteriorInspections = safeParseJSON(exteriorInspectionsRaw);
-    const interiorInspections = safeParseJSON(interiorInspectionsRaw);
-    const mechanicalInspections = safeParseJSON(mechanicalInspectionsRaw);
-    const functionalInspections = safeParseJSON(functionalInspectionsRaw);
-    const documentLegalInspections = safeParseJSON(documentLegalInspectionsRaw);
-
-    const equipment = await prisma.equipment.findFirst({
+    // Verify equipment exists
+    const equipment = await prisma.equipment.findUnique({
         where: { id: equipmentId }
     });
 
     if (!equipment) {
-        throw new Error(`Equipment with ID ${equipmentId} not found`);
+        throw new BadRequestError(`Equipment with ID ${equipmentId} not found`);
     }
 
-    const inspection = await prisma.inspection.create({
-        data: {
-            equipment: {
-                connect: { id: "a2475249-a705-48d6-9092-c3071159211e" } 
+    // Create inspection with all relations
+    try {
+        const inspection = await prisma.inspection.create({
+            data: {
+                equipment: { connect: { id: equipmentId } },
+                inspector: { connect: { id: user.id } },
+                nextDueDate: nextDueDate ? new Date(nextDueDate) : null,
+                overallNotes,
+                exteriorInspections: {
+                    create: validateInspectionItems(exteriorInspections)
+                },
+                interiorInspections: {
+                    create: validateInspectionItems(interiorInspections)
+                },
+                mechanicalInspections: {
+                    create: validateInspectionItems(mechanicalInspections)
+                },
+                functionalInspections: {
+                    create: validateInspectionItems(functionalInspections)
+                },
+                documentLegalInspections: {
+                    create: validateInspectionItems(documentLegalInspections)
+                }
             },
-            inspector: {
-                connect: { id: user.id }
-            },
-            nextDueDate: nextDueDate ? new Date(nextDueDate) : null,
-            overallNotes,
-            exteriorInspections: {
-                create: exteriorInspections.map((item: any) => ({
-                    itemName: item.itemName,
-                    condition: item.condition,
-                    notes: item.notes
-                }))
-            },
-            interiorInspections: {
-                create: interiorInspections.map((item: any) => ({
-                    itemName: item.itemName,
-                    condition: item.condition,
-                    notes: item.notes
-                }))
-            },
-            mechanicalInspections: {
-                create: mechanicalInspections.map((item: any) => ({
-                    itemName: item.itemName,
-                    condition: item.condition,
-                    notes: item.notes
-                }))
-            },
-            functionalInspections: {
-                create: functionalInspections.map((item: any) => ({
-                    itemName: item.itemName,
-                    condition: item.condition,
-                    notes: item.notes
-                }))
-            },
-            documentLegalInspections: {
-                create: documentLegalInspections.map((item: any) => ({
-                    itemName: item.itemName,
-                    condition: item.condition,
-                    notes: item.notes
-                }))
+            include: {
+                exteriorInspections: true,
+                interiorInspections: true,
+                mechanicalInspections: true,
+                functionalInspections: true,
+                documentLegalInspections: true
             }
-        },
+        });
+
+        // Handle file uploads if present
+        if (req.files) {
+            await handleFileUploads(req.files, inspection.id);
+        }
+
+        return res.status(201).json({
+            success: true,
+            data: inspection
+        });
+
+    } catch (error) {
+        console.error('Inspection creation failed:', error);
+        throw new Error('Failed to create inspection');
+    }
+};
+
+// Helper function to validate inspection items
+function validateInspectionItems(items: any[]) {
+    if (!Array.isArray(items)) return [];
+    
+    return items.map(item => ({
+        itemName: item.itemName || 'Unspecified',
+        condition: item.condition || 'NOT_APPLICABLE',
+        notes: item.notes || null
+    }));
+}
+
+// Helper function to handle file uploads
+async function handleFileUploads(files: any, inspectionId: string) {
+    const fileEntries = Object.entries(files);
+    if (fileEntries.length === 0) return;
+
+    const fileData = fileEntries.map(([fieldName, fileArray]) => {
+        const file = Array.isArray(fileArray) ? fileArray[0] : fileArray;
+        return {
+            fileName: fieldName,
+            url: file.path,
+            inspectionId,
+            fileSize: file.size,
+            mimeType: file.mimetype
+        };
     });
 
-    // Handle document uploads if files exist
-    if (req.files) {
-        const files = req.files as Record<string, Express.Multer.File[]>;
-        
-        // Fixed: Check if files is actually an object with entries
-        if (files && typeof files === 'object') {
-            const fileEntries = Object.entries(files);
-            if (fileEntries.length > 0) {
-                const fileData = fileEntries
-                    .filter(([fileName, fileArray]) => fileArray && fileArray.length > 0)
-                    .map(([fileName, fileArray]) => ({
-                        fileName,
-                        url: fileArray[0].path.toString(),
-                        inspectionId: inspection.id
-                    }));
-                
-                console.log("fileData:", fileData);
-
-                // Uncomment when ready to save documents
-                if (fileData.length > 0) {
-                    // await prisma.document.createMany({
-                    //     data: fileData
-                    // });
-                }
-            }
-        }
-    }
-
-    // Send response only once at the end
-    res.status(201).json({
-        success: true,
-        message: 'Inspection created successfully',
-        data: inspection
+    await prisma.document.createMany({
+        data: fileData
     });
 }
 
