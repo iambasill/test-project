@@ -5,13 +5,6 @@ import { inspectionData } from "../schema/schema";
 
 // Create a new inspection
 export const createInspection = async (req: Request, res: Response) => {
-    console.log('=== DEBUG INFO ===');
-    console.log('Content-Type:', req.headers['content-type']);
-    console.log('Raw req.body:', req.body);
-    console.log('Has files:', !!req.files);
-    console.log('Files:', req.files);
-    console.log('==================');
-
     const user: any = req.user;
     
     if (!req.body) {
@@ -189,7 +182,9 @@ export const getInspectionById = async (req: Request, res: Response) => {
             inspector: {
                 select: { id: true, firstName: true, lastName: true, serviceNumber: true, email: true }
             }
-        }
+        },
+        orderBy: { datePerformed: 'desc' }
+
     });
 
     if (!inspection || inspection.length === 0) throw new BadRequestError('Inspection not found')
