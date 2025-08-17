@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { prisma } from "../server";
 import { BadRequestError, unAuthorizedError } from "../httpClass/exceptions";
+import { API_BASE_URL } from "../../secrets";
 
 // Create a new inspection (optimized for performance)
 export const createInspection = async (req: Request, res: Response) => {
@@ -187,14 +188,14 @@ async function handleFileUploads(files: any, inspectionId: string) {
         if (!files || Object.keys(files).length === 0) return;
 
         const fileEntries = Object.entries(files);
-        const fileData = fileEntries.map(([fieldName, fileArray]) => {
+        const fileData = fileEntries.map(([fileName, fileArray]) => {
             const file = Array.isArray(fileArray) ? fileArray[0] : fileArray;
             return {
-                fileName: fieldName,
-                url: file.path,
+                fileName,
+                url: `${API_BASE_URL}/attachment/${file.filename}`,
                 inspectionId,
                 fileSize: file.size,
-                mimeType: file.mimetype
+                mimeType: file.mimetype,
             };
         });
 
