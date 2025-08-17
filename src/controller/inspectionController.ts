@@ -41,51 +41,49 @@ if (!equipment) {
   throw new Error(`Equipment with ID ${equipmentId} not found`);
 }
 
-    const inspection = await prisma.inspection.create({
-        data: {
-            equipmentId,
-            inspectorId:user.id,
-            nextDueDate: nextDueDate ? new Date(nextDueDate) : null,
-            overallNotes,
-            exteriorInspections: {
-                create: exteriorInspections.map((item:any) => ({
-                    itemName: item.itemName,
-                    condition: item.condition,
-                    notes: item.notes
-                }))
-            },
-            interiorInspections: {
-                create: interiorInspections.map((item:any) => ({
-                    itemName: item.itemName,
-                    condition: item.condition,
-                    notes: item.notes
-                })) 
-            },
-            mechanicalInspections: {
-                create: mechanicalInspections.map((item:any) => ({
-                    itemName: item.itemName,
-                    condition: item.condition,
-                    notes: item.notes
-                }))
-            },
-            functionalInspections: {
-                create: functionalInspections.map((item:any) => ({
-                    itemName: item.itemName,
-                    condition: item.condition,
-                    notes: item.notes
-                }))
-            },
-            documentLegalInspections: {
-                create: documentLegalInspections.map((item:any) => ({
-                    itemName: item.itemName,
-                    condition: item.condition,
-                    notes: item.notes
-                }))
-            }
+   const inspection = await prisma.inspection.create({
+    data: {
+        equipmentId,
+        inspectorId: user.id,
+        nextDueDate: nextDueDate ? new Date(nextDueDate) : null,
+        overallNotes,
+        exteriorInspections: {
+            create: (exteriorInspections || []).map((item: any) => ({
+                itemName: item.itemName,
+                condition: item.condition,
+                notes: item.notes
+            }))
         },
-
-    });
-
+        interiorInspections: {
+            create: (interiorInspections || []).map((item: any) => ({
+                itemName: item.itemName,
+                condition: item.condition,
+                notes: item.notes
+            }))
+        },
+        mechanicalInspections: {
+            create: (mechanicalInspections || []).map((item: any) => ({
+                itemName: item.itemName,
+                condition: item.condition,
+                notes: item.notes
+            }))
+        },
+        functionalInspections: {
+            create: (functionalInspections || []).map((item: any) => ({
+                itemName: item.itemName,
+                condition: item.condition,
+                notes: item.notes
+            }))
+        },
+        documentLegalInspections: {
+            create: (documentLegalInspections || []).map((item: any) => ({
+                itemName: item.itemName,
+                condition: item.condition,
+                notes: item.notes
+            }))
+        }
+    },
+});
     // Handle document uploads if files exist
   
    if (req.files) {
