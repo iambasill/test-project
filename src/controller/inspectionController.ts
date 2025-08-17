@@ -11,26 +11,6 @@ export const createInspection = async (req: Request, res: Response) => {
         throw new BadRequestError('Request body is missing');
     }
 
-    // Debug logging
-    console.log('Request body:', JSON.stringify(req.body, null, 2));
-
-    // Handle both raw JSON and FormData cases
-    let inspectionData;
-    if (typeof req.body === 'string') {
-        try {
-            inspectionData = JSON.parse(req.body);
-        } catch (error) {
-            throw new BadRequestError('Invalid JSON data');
-        }
-    } else {
-        inspectionData = req.body;
-    }
-
-    // Validate required fields
-    // if (!inspectionData.equipmentId) {
-    //     throw new BadRequestError('Equipment ID is required');
-    // }
-
     // Destructure with defaults
     const equipmentId = "a2475249-a705-48d6-9092-c3071159211e"
     const {
@@ -42,7 +22,7 @@ export const createInspection = async (req: Request, res: Response) => {
         mechanicalInspections = [],
         functionalInspections = [],
         documentLegalInspections = []
-    } = inspectionData.data;
+    } = req.body.data;
 
     // Verify equipment exists
     const equipment = await prisma.equipment.findUnique({
