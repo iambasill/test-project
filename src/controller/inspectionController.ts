@@ -43,8 +43,12 @@ if (!equipment) {
 
    const inspection = await prisma.inspection.create({
     data: {
-        equipmentId,
-        inspectorId: user.id,
+        equipment: {
+            connect: { id: equipmentId }
+        },
+        inspector: {
+            connect: { id: user.id }
+        },
         nextDueDate: nextDueDate ? new Date(nextDueDate) : null,
         overallNotes,
         exteriorInspections: {
