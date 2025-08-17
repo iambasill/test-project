@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import { prisma } from "../server";
 import { BadRequestError, unAuthorizedError } from "../httpClass/exceptions";
-import { inspectionData } from "../schema/schema";
 
 // Create a new inspection
 export const createInspection = async (req: Request, res: Response) => {
@@ -12,6 +11,8 @@ export const createInspection = async (req: Request, res: Response) => {
     }
 
     // Destructure with defaults
+    const data = req.body
+    console.log(data)
     const equipmentId = "a2475249-a705-48d6-9092-c3071159211e"
     const {
         // equipmentId,
@@ -22,7 +23,7 @@ export const createInspection = async (req: Request, res: Response) => {
         mechanicalInspections = [],
         functionalInspections = [],
         documentLegalInspections = []
-    } = req.body.data;
+    } = data;
 
     // Verify equipment exists
     const equipment = await prisma.equipment.findUnique({
