@@ -33,7 +33,7 @@ export const createInspection = async (req: Request, res: Response) => {
         documentLegalInspections
     } = req.body;
 
-const equipment = await prisma.equipment.findUnique({
+const equipment = await prisma.equipment.findFirst({
   where: { id: equipmentId }
 });
 
