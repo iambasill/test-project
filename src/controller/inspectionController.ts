@@ -24,8 +24,9 @@ export const createInspection = async (req: Request, res: Response) => {
     }
 
     // Destructure from the parsed data
-    const equipmentId = "a2475249-a705-48d6-9092-c3071159211e";
+    // const equipmentId = "a2475249-a705-48d6-9092-c3071159211e";
     const {
+        equipmentId,
         nextDueDate,
         overallNotes = null,
         exteriorInspections = [],
