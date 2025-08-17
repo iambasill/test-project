@@ -27,13 +27,14 @@ export const createInspection = async (req: Request, res: Response) => {
     }
 
     // Validate required fields
-    if (!inspectionData.equipmentId) {
-        throw new BadRequestError('Equipment ID is required');
-    }
+    // if (!inspectionData.equipmentId) {
+    //     throw new BadRequestError('Equipment ID is required');
+    // }
 
     // Destructure with defaults
+    const equipmentId = "a2475249-a705-48d6-9092-c3071159211e"
     const {
-        equipmentId,
+        // equipmentId,
         nextDueDate,
         overallNotes = null,
         exteriorInspections = [],
