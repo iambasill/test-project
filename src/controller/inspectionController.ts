@@ -10,12 +10,25 @@ export const createInspection = async (req: Request, res: Response) => {
         throw new BadRequestError('Request body is missing');
     }
 
-    // Destructure with defaults
-    const data = req.body
-    console.log(data)
-    const equipmentId = "a2475249-a705-48d6-9092-c3071159211e"
+    // Debug: Log the raw request body
+    console.log('Raw request body:', req.body);
+
+    // Parse the JSON string if it exists
+    let inspectionData;
+    if (typeof req.body.data === 'string') {
+        try {
+            inspectionData = JSON.parse(req.body.data);
+        } catch (error) {
+            throw new BadRequestError('Invalid JSON data in request body');
+        }
+    } else {
+        inspectionData = req.body.data || {};
+    }
+
+
+    // Destructure from the parsed data
+    const equipmentId = "a2475249-a705-48d6-9092-c3071159211e";
     const {
-        // equipmentId,
         nextDueDate,
         overallNotes = null,
         exteriorInspections = [],
@@ -23,8 +36,7 @@ export const createInspection = async (req: Request, res: Response) => {
         mechanicalInspections = [],
         functionalInspections = [],
         documentLegalInspections = []
-    } = data;
-
+    } = inspectionData; 
     // Verify equipment exists
     const equipment = await prisma.equipment.findUnique({
         where: { id: equipmentId }
