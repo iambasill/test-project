@@ -42,7 +42,7 @@ export const createInspection = async (req: Request, res: Response) => {
         mechanicalInspections = [],
         functionalInspections = [],
         documentLegalInspections = []
-    } = inspectionData;
+    } = inspectionData.data;
 
     // Verify equipment exists
     const equipment = await prisma.equipment.findUnique({
@@ -178,7 +178,9 @@ export const getInspectionById = async (req: Request, res: Response) => {
             functionalInspections: true,
             documentLegalInspections: true,
             documents: true,
-            equipment: true,
+            equipment: {
+                select: { chasisNumber: true, equipmentName: true, model: true }
+            },
             inspector: {
                 select: { id: true, firstName: true, lastName: true, serviceNumber: true, email: true }
             }
