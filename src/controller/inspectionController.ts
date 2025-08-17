@@ -3,9 +3,6 @@ import { prisma } from "../server";
 import { BadRequestError, unAuthorizedError } from "../httpClass/exceptions";
 import { inspectionData } from "../schema/schema";
 
-// Helper function to parse form data
-
-
 // Create a new inspection
 export const createInspection = async (req: Request, res: Response) => {
     console.log('=== DEBUG INFO ===');
@@ -32,12 +29,25 @@ export const createInspection = async (req: Request, res: Response) => {
         documentLegalInspections: documentLegalInspectionsRaw
     } = req.body;
 
-    // Parse the JSON strings back to arrays
-    const exteriorInspections = exteriorInspectionsRaw ? JSON.parse(exteriorInspectionsRaw) : [];
-    const interiorInspections = interiorInspectionsRaw ? JSON.parse(interiorInspectionsRaw) : [];
-    const mechanicalInspections = mechanicalInspectionsRaw ? JSON.parse(mechanicalInspectionsRaw) : [];
-    const functionalInspections = functionalInspectionsRaw ? JSON.parse(functionalInspectionsRaw) : [];
-    const documentLegalInspections = documentLegalInspectionsRaw ? JSON.parse(documentLegalInspectionsRaw) : [];
+    // Parse the JSON strings back to arrays with error handling
+    const safeParseJSON = (jsonString: any): any[] => {
+        if (!jsonString) return [];
+        if (Array.isArray(jsonString)) return jsonString;
+        
+        try {
+            const parsed = JSON.parse(jsonString);
+            return Array.isArray(parsed) ? parsed : [];
+        } catch (error) {
+            console.error('Failed to parse JSON:', error);
+            return [];
+        }
+    };
+
+    const exteriorInspections = safeParseJSON(exteriorInspectionsRaw);
+    const interiorInspections = safeParseJSON(interiorInspectionsRaw);
+    const mechanicalInspections = safeParseJSON(mechanicalInspectionsRaw);
+    const functionalInspections = safeParseJSON(functionalInspectionsRaw);
+    const documentLegalInspections = safeParseJSON(documentLegalInspectionsRaw);
 
     const equipment = await prisma.equipment.findFirst({
         where: { id: equipmentId }
@@ -47,87 +57,96 @@ export const createInspection = async (req: Request, res: Response) => {
         throw new Error(`Equipment with ID ${equipmentId} not found`);
     }
 
-    // Fix 2: Use the correct field names based on your schema
-const inspection = await prisma.inspection.create({
-            data: {
-                equipment: {
-                    connect: { id: "a2475249-a705-48d6-9092-c3071159211e" }
-                },
-                inspector: {
-                    connect: { id: user.id }
-                },
-                nextDueDate: nextDueDate ? new Date(nextDueDate) : null,
-                overallNotes,
-                exteriorInspections: {
-                    create: exteriorInspections.map((item: any) => ({
-                        itemName: item.itemName,
-                        condition: item.condition,
-                        notes: item.notes
-                    }))
-                },
-                interiorInspections: {
-                    create: interiorInspections.map((item: any) => ({
-                        itemName: item.itemName,
-                        condition: item.condition,
-                        notes: item.notes
-                    }))
-                },
-                mechanicalInspections: {
-                    create: mechanicalInspections.map((item: any) => ({
-                        itemName: item.itemName,
-                        condition: item.condition,
-                        notes: item.notes
-                    }))
-                },
-                functionalInspections: {
-                    create: functionalInspections.map((item: any) => ({
-                        itemName: item.itemName,
-                        condition: item.condition,
-                        notes: item.notes
-                    }))
-                },
-                documentLegalInspections: {
-                    create: documentLegalInspections.map((item: any) => ({
-                        itemName: item.itemName,
-                        condition: item.condition,
-                        notes: item.notes
-                    }))
-                }
+    const inspection = await prisma.inspection.create({
+        data: {
+            equipment: {
+                connect: { id: equipmentId } // Use equipmentId from request instead of hardcoded
             },
-        });
-
-        res.status(201).json({
-            success: true,
-            message: 'Inspection created successfully',
-            data: inspection
-        });
+            inspector: {
+                connect: { id: user.id }
+            },
+            nextDueDate: nextDueDate ? new Date(nextDueDate) : null,
+            overallNotes,
+            exteriorInspections: {
+                create: exteriorInspections.map((item: any) => ({
+                    itemName: item.itemName,
+                    condition: item.condition,
+                    notes: item.notes
+                }))
+            },
+            interiorInspections: {
+                create: interiorInspections.map((item: any) => ({
+                    itemName: item.itemName,
+                    condition: item.condition,
+                    notes: item.notes
+                }))
+            },
+            mechanicalInspections: {
+                create: mechanicalInspections.map((item: any) => ({
+                    itemName: item.itemName,
+                    condition: item.condition,
+                    notes: item.notes
+                }))
+            },
+            functionalInspections: {
+                create: functionalInspections.map((item: any) => ({
+                    itemName: item.itemName,
+                    condition: item.condition,
+                    notes: item.notes
+                }))
+            },
+            documentLegalInspections: {
+                create: documentLegalInspections.map((item: any) => ({
+                    itemName: item.itemName,
+                    condition: item.condition,
+                    notes: item.notes
+                }))
+            }
+        },
+    });
 
     // Handle document uploads if files exist
     if (req.files) {
         const files = req.files as Record<string, Express.Multer.File[]>;
-        const fileData = Object.entries(files).map(([fileName, [file]]) => ({
-            fileName,
-            url: file.path.toString(),
-            inspectionId: inspection.id
-        }));
-        console.log("fileData:", fileData);
+        
+        // Fixed: Check if files is actually an object with entries
+        if (files && typeof files === 'object') {
+            const fileEntries = Object.entries(files);
+            if (fileEntries.length > 0) {
+                const fileData = fileEntries
+                    .filter(([fileName, fileArray]) => fileArray && fileArray.length > 0)
+                    .map(([fileName, fileArray]) => ({
+                        fileName,
+                        url: fileArray[0].path.toString(),
+                        inspectionId: inspection.id
+                    }));
+                
+                console.log("fileData:", fileData);
 
-        // Uncomment when ready to save documents
-        // await prisma.document.createMany({
-        //     data: fileData
-        // });
+                // Uncomment when ready to save documents
+                if (fileData.length > 0) {
+                    // await prisma.document.createMany({
+                    //     data: fileData
+                    // });
+                }
+            }
+        }
     }
 
+    // Send response only once at the end
     res.status(201).json({
         success: true,
-        message: 'Inspection created successfully'
+        message: 'Inspection created successfully',
+        data: inspection
     });
 }
-// Get all inspections
-export const getAllInspections = async (req:Request, res:Response) => {
-    const user:any = req.user
 
-    const where = (user.role == "ADMIN" || "PLATADMIN") ? {} : {inspectorId:user.id}
+// Get all inspections
+export const getAllInspections = async (req: Request, res: Response) => {
+    const user: any = req.user
+
+    // Fixed: Logical operator issue - this was always evaluating to empty object
+    const where = (user.role === "ADMIN" || user.role === "PLATADMIN") ? {} : { inspectorId: user.id }
 
     const inspections = await prisma.inspection.findMany({
         where,
@@ -142,12 +161,11 @@ export const getAllInspections = async (req:Request, res:Response) => {
                 select: { chasisNumber: true, equipmentName: true, model: true }
             },
             inspector: {
-                select: { id: true, firstName: true,lastName:true, serviceNumber:true, email: true }
+                select: { id: true, firstName: true, lastName: true, serviceNumber: true, email: true }
             }
         },
         orderBy: { datePerformed: 'desc' }
     });
-
 
     res.status(200).json({
         success: true,
@@ -156,10 +174,10 @@ export const getAllInspections = async (req:Request, res:Response) => {
 };
 
 // Get single inspection by ID
-export const getInspectionById = async (req:Request, res:Response) => {
+export const getInspectionById = async (req: Request, res: Response) => {
     const { id } = req.params;
     const inspection = await prisma.inspection.findMany({
-        where: { equipmentId:id },
+        where: { equipmentId: id },
         include: {
             exteriorInspections: true,
             interiorInspections: true,
@@ -169,13 +187,12 @@ export const getInspectionById = async (req:Request, res:Response) => {
             documents: true,
             equipment: true,
             inspector: {
-                select: { id: true, firstName: true,lastName:true, serviceNumber:true, email: true }
+                select: { id: true, firstName: true, lastName: true, serviceNumber: true, email: true }
             }
         }
     });
 
-    if (!inspection) throw new BadRequestError('Inspection not found')
-
+    if (!inspection || inspection.length === 0) throw new BadRequestError('Inspection not found')
 
     res.status(200).json({
         success: true,
@@ -184,10 +201,9 @@ export const getInspectionById = async (req:Request, res:Response) => {
 };
 
 // Update inspection
-export const updateInspection = async (req:Request, res:Response) => {
+export const updateInspection = async (req: Request, res: Response) => {
     const { id } = req.params;
     const {
-
         nextDueDate,
         overallNotes,
         exteriorInspections,
@@ -197,18 +213,13 @@ export const updateInspection = async (req:Request, res:Response) => {
         documentLegalInspections
     } = req.body;
 
-    const files = req.files || [];
-
     const inspection = await prisma.inspection.update({
         where: { id },
         data: {
-        nextDueDate,
-        overallNotes,
-        exteriorInspections,
-        interiorInspections,
-        mechanicalInspections,
-        functionalInspections,
-        documentLegalInspections
+            nextDueDate,
+            overallNotes,
+            // Note: You can't update nested relations like this directly
+            // You'd need to handle each inspection type separately
         },
         include: {
             exteriorInspections: true,
@@ -220,20 +231,30 @@ export const updateInspection = async (req:Request, res:Response) => {
         }
     });
 
-       if (req.files) {
-    const files = req.files as Record<string, Express.Multer.File[]>;
-    const fileData = Object.entries(files).map(([fileName, [file]]) => ({
-      fileName,
-      url: file.path.toString(),
-    }));
+    if (req.files) {
+        const files = req.files as Record<string, Express.Multer.File[]>;
+        
+        if (files && typeof files === 'object') {
+            const fileEntries = Object.entries(files);
+            if (fileEntries.length > 0) {
+                const fileData = fileEntries
+                    .filter(([fileName, fileArray]) => fileArray && fileArray.length > 0)
+                    .map(([fileName, fileArray]) => ({
+                        fileName,
+                        url: fileArray[0].path.toString(),
+                        inspectionId: inspection.id
+                    }));
 
-    await prisma.document.updateMany({
-    where:{
-        inspectionId:inspection.id
-    },
-      data: fileData
-    });
-       }
+                // Note: updateMany with different data for each record won't work
+                // You'd need to create new documents or update them individually
+                if (fileData.length > 0) {
+                    // await prisma.document.createMany({
+                    //     data: fileData
+                    // });
+                }
+            }
+        }
+    }
 
     const updatedInspection = await prisma.inspection.findUnique({
         where: { id },
@@ -246,9 +267,9 @@ export const updateInspection = async (req:Request, res:Response) => {
             documents: true,
             equipment: true,
             inspector: {
-                select: { id: true, firstName: true,lastName:true, serviceNumber:true, email: true }
+                select: { id: true, firstName: true, lastName: true, serviceNumber: true, email: true }
             }
-    }
+        }
     })
 
     res.status(200).json({
@@ -259,7 +280,7 @@ export const updateInspection = async (req:Request, res:Response) => {
 }
 
 // Delete inspection
-export const deleteInspection = async (req:Request, res:Response) => {
+export const deleteInspection = async (req: Request, res: Response) => {
     const { id } = req.params;
 
     await prisma.inspection.delete({
