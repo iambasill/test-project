@@ -211,17 +211,18 @@ export const updateEquipment = async (req:Request, res:Response) => {
 export const deleteEquipment = async (req:Request, res:Response) => {
   const { id } = req.params;
 
-  const equipment = await prisma.equipment.findFirst({
+  await prisma.$transaction(async(tx)=>{
+     const equipment = await tx.equipment.findFirst({
     where:{id}
   })
   if (!equipment) throw new BadRequestError("Equipment Not found")
 
-
-  
-  await prisma.equipment.delete({
+  await tx.equipment.delete({
     where: { id }
   });
-  
+
+  })
+ 
   res.status(200).json({
     success: true,
     message: 'Equipment deleted successfully'

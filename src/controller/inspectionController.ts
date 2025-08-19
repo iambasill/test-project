@@ -23,8 +23,6 @@ export const createInspection = async (req: Request, res: Response) => {
         inspectionData = req.body.data || {};
     }
 
-    // Destructure from the parsed data
-    // const equipmentId = "a2475249-a705-48d6-9092-c3071159211e";
     const {
         equipmentId,
         nextDueDate,
@@ -39,7 +37,7 @@ export const createInspection = async (req: Request, res: Response) => {
     // Verify equipment exists
     const equipment = await prisma.equipment.findUnique({
         where: { id: equipmentId },
-        select: { id: true } // Only select what we need
+        select: { id: true } 
     });
 
     if (!equipment) {

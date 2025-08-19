@@ -2,7 +2,7 @@ import express, { Request, Response, NextFunction } from "express";
 import { prisma } from "../server";
 import { BadRequestError, unAuthorizedError } from "../httpClass/exceptions";
 import { signUpSchema, loginSchema } from "../schema/schema";
-import { AUTH_JWT_TOKEN, CLIENT_URL } from "../../secrets";
+import { API_BASE_URL, AUTH_JWT_TOKEN, CLIENT_URL } from "../../secrets";
 import bcrypt from 'bcrypt';
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { checkUser } from "../utils/func";
@@ -41,7 +41,7 @@ export const registerController = async (req: Request, res: Response, next: Next
   });
 
   const verificationToken = generateToken(user.id)
-  const verificationLink = `${CLIENT_URL}/reset/change-password?token=${verificationToken}`;
+  const verificationLink = `${API_BASE_URL}/download/apk/?token=${verificationToken}`;
 
 
     // Send verification email
@@ -71,6 +71,7 @@ export const loginController = async (req: Request, res: Response) => {
   const user = await prisma.user.findFirst({ where: { email } });
   if (!user) throw new BadRequestError("Invalid Credentials"); 
   if (user.status === 'SUSPENDED') throw new BadRequestError("Account Suspended"); 
+
 
   
 
@@ -212,3 +213,15 @@ export const verifyToken = async (req: Request, res: Response) => {
     });
 
 }
+
+export const getApk = async(req:Request,res:Response) => {
+  const token = req.query.token
+  //verify token
+
+  if (token) {
+    res.redirect("https://expo.dev/artifacts/eas/2Vt9L1cbzTLmdSNHJpQvuf.apk");
+  } else {
+    res.status(401).send("Invalid token");
+  }
+}
+
