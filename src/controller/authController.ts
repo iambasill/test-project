@@ -7,6 +7,8 @@ import bcrypt from 'bcrypt';
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { checkUser } from "../utils/func";
 import { sendVerificationEmail } from "../config/emailService";
+import { success } from "zod";
+import { UserStatus } from "../generated/prisma";
 // import { sendPasswordResetEmail } from "../utils/emailService";
 
 const generateToken = (userId: string) => {
@@ -182,7 +184,7 @@ export const resetPasswordController = async (req: Request, res: Response) => {
 };
 
 // Email verification endpoint
-export const verifyToken = async (req: Request, res: Response) => {
+export const verifyTokenController = async (req: Request, res: Response) => {
     const { token } = req.query;
 
     if (!token || typeof token !== 'string') throw new BadRequestError('Verification token is required' )
@@ -224,4 +226,18 @@ export const getApk = async(req:Request,res:Response) => {
     res.status(401).send("Invalid token");
   }
 }
+export  const verifyUserController = async (req:Request,res:Response) => {
+  const {email} = req.body
 
+  const user = await prisma.user.findFirst({
+    where:{
+      email
+    }
+  })
+
+  if (!user) throw new BadRequestError("User does not exist!")
+  res.status(200).json({
+    success:"true",
+    UserStatus: user.status
+  })
+}
