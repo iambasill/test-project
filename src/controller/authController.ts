@@ -43,7 +43,7 @@ export const registerController = async (req: Request, res: Response, next: Next
   });
 
   const verificationToken = generateToken(user.id)
-  const verificationLink = `${API_BASE_URL}/download/apk/?token=${verificationToken}`;
+  const verificationLink = `${API_BASE_URL}/download/apk?token=${verificationToken}`;
 
 
     // Send verification email
