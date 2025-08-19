@@ -16,7 +16,7 @@ rootRoute.use('/api/equipment',equipmentRouter)
 rootRoute.use('/api/operator',operatorRouter)
 rootRoute.use('/api/inspection',inspectionRouter)
 rootRoute.get('/attachment/:filename',attachmentController)
-rootRoute.get('//download/apk/', getApkController)
+rootRoute.get('/download/apk/', getApkController)
 
 
 
