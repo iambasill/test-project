@@ -216,7 +216,7 @@ export const verifyTokenController = async (req: Request, res: Response) => {
 
 }
 
-export const getApk = async(req:Request,res:Response) => {
+export const getApkController = async(req:Request,res:Response) => {
   const token = req.query.token
   //verify token
 
