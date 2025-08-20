@@ -11,9 +11,15 @@ import { success } from "zod";
 import { UserStatus } from "../generated/prisma";
 // import { sendPasswordResetEmail } from "../utils/emailService";
 
-const generateToken = (userId: string) => {
+const generateToken = async (userId: string) => {
+  const token = jwt.sign({ id: userId }, AUTH_JWT_TOKEN as string);
 
-  return jwt.sign({ id: userId }, AUTH_JWT_TOKEN as string);
+  await prisma.user.update({
+    where: { id: userId },
+    data: { resetToken:token,resetTokenExpiry: new Date(Date.now() + 86400000) }
+  });
+
+  return token
 
 };
 
@@ -42,7 +48,7 @@ export const registerController = async (req: Request, res: Response, next: Next
     data: { email, firstName, lastName, role, password: hashedPassword, status: 'PENDING',refreshToken:"null" }
   });
 
-  const verificationToken = generateToken(user.id)
+  const verificationToken = await generateToken(user.id)
   const verificationLink = `${API_BASE_URL}/download/apk?token=${verificationToken}`;
 
 
@@ -52,11 +58,6 @@ export const registerController = async (req: Request, res: Response, next: Next
       verificationLink,
       firstName
     );
-
-    await prisma.user.update({
-    where: { id: user.id },
-    data: { resetToken:verificationToken,resetTokenExpiry: new Date(Date.now() + 86400000) }
-  });
 
   res.status(201).send({
     success: true,
@@ -82,7 +83,7 @@ export const loginController = async (req: Request, res: Response) => {
 
   const { password: _, ...userData } = user; 
 
-  const token = generateToken(user.id);
+  const token = await generateToken(user.id);
 
 //   const refreshToken = generateRefreshToken(user.id);
 
@@ -182,6 +183,7 @@ export const resetPasswordController = async (req: Request, res: Response) => {
   res.status(200).send({ success: true, message: "Password reset successful" });
 };
 
+
 // Email verification endpoint
 export const verifyTokenController = async (req: Request, res: Response) => {
     const { token } = req.query;
@@ -191,7 +193,8 @@ export const verifyTokenController = async (req: Request, res: Response) => {
 
     // Verify the token
       const decoded = jwt.verify(token, AUTH_JWT_TOKEN as string) as JwtPayload;
-    if (!decoded || typeof decoded !== 'object' || !('id' in decoded) || decoded.id == undefined) {
+      console.log(decoded)
+    if (!decoded || typeof decoded !== 'object' || decoded.error|| decoded.id == undefined) {
         throw new unAuthorizedError("INVALID TOKEN PAYLOAD");
     }
     
@@ -203,7 +206,7 @@ export const verifyTokenController = async (req: Request, res: Response) => {
   
     res.status(200).json({
       success: true,
-      message: 'Email verified successfully!',
+      message: 'Token verified successfully!',
     });
 
 }
@@ -218,6 +221,9 @@ export const getApkController = async(req:Request,res:Response) => {
     res.status(401).send("Invalid token");
   }
 }
+
+
+
 export  const verifyUserController = async (req:Request,res:Response) => {
   const {email} = req.body
 
@@ -228,9 +234,13 @@ export  const verifyUserController = async (req:Request,res:Response) => {
   })
 
   if (!user) throw new BadRequestError("User does not exist!")
+
+  const token = await generateToken(user.id)
+  
   res.status(200).json({
     success:"true",
-    UserStatus: user.status
+    UserStatus: user.status,
+    token:token
   })
 }
 
