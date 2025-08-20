@@ -191,7 +191,6 @@ export const verifyTokenController = async (req: Request, res: Response) => {
 
     // Verify the token
       const decoded = jwt.verify(token, AUTH_JWT_TOKEN as string) as JwtPayload;
-      console.log(decoded)
     if (!decoded || typeof decoded !== 'object' || !('id' in decoded) || decoded.id == undefined) {
         throw new unAuthorizedError("INVALID TOKEN PAYLOAD");
     }
@@ -200,15 +199,8 @@ export const verifyTokenController = async (req: Request, res: Response) => {
     // Find user
     const user = await checkUser(decoded.id);
     if (!user) throw new BadRequestError('User not found')
-    if (user.status == "ACTIVE") throw new BadRequestError('Email is already verified' )
-   
-      await prisma.user.update({
-        where:{id:user.id},
-        data:{
-          status:"ACTIVE"
-        }
-      })
-
+  
+  
     res.status(200).json({
       success: true,
       message: 'Email verified successfully!',
