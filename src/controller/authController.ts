@@ -191,13 +191,14 @@ export const verifyTokenController = async (req: Request, res: Response) => {
 
     // Verify the token
       const decoded = jwt.verify(token, AUTH_JWT_TOKEN as string) as JwtPayload;
-    if (!decoded || typeof decoded !== 'object' || !('id' in decoded) || decoded.userId == undefined) {
+      console.log(decoded)
+    if (!decoded || typeof decoded !== 'object' || !('id' in decoded) || decoded.id == undefined) {
         throw new unAuthorizedError("INVALID TOKEN PAYLOAD");
     }
     
 
     // Find user
-    const user = await checkUser(decoded.userId);
+    const user = await checkUser(decoded.id);
     if (!user) throw new BadRequestError('User not found')
     if (user.status == "ACTIVE") throw new BadRequestError('Email is already verified' )
    
