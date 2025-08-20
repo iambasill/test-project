@@ -3,9 +3,6 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "prisma": {
-    "seed": "node prisma/seed.ts"
-  },
   "scripts": {
     "build": "rm -rf build && prisma generate && tsc && cp -r src/generated build/src/",
     "test": "echo \"Error: no test specified\" && exit 1",
