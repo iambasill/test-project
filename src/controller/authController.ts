@@ -191,7 +191,7 @@ export const verifyTokenController = async (req: Request, res: Response) => {
 
     // Verify the token
       const decoded = jwt.verify(token, AUTH_JWT_TOKEN as string) as JwtPayload;
-    if (!decoded || typeof decoded !== 'object' || !('id' in decoded)) {
+    if (!decoded || typeof decoded !== 'object' || !('id' in decoded) || decoded.userId == undefined) {
         throw new unAuthorizedError("INVALID TOKEN PAYLOAD");
     }
     
