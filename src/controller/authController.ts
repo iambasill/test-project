@@ -95,7 +95,6 @@ export const loginController = async (req: Request, res: Response) => {
   res.status(200).send({
     success: true,
     token,
-    // refreshToken,
     user: userData,
   });
 };
@@ -241,3 +240,4 @@ export  const verifyUserController = async (req:Request,res:Response) => {
     UserStatus: user.status
   })
 }
+
