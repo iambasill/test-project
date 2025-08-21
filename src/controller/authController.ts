@@ -180,7 +180,14 @@ export const changePasswordController = async (req: Request, res: Response) => {
     data: { password: hashedPassword, resetToken: null, resetTokenExpiry: null }
   });
 
-  res.status(200).send({ success: true, message: "Password reset successful" });
+
+    await prisma.user.update({
+      where:{id:user.id},
+      data:{status:"ACTIVE"}
+    })
+  
+
+  res.status(200).send({ success: true, message: "Password changed successful" });
 };
 
 
@@ -203,11 +210,6 @@ export const verifyTokenController = async (req: Request, res: Response) => {
     const user = await checkUser(decoded.id);
     if (!user) throw new BadRequestError('User not found')
 
-    await prisma.user.update({
-      where:{id:user.id},
-      data:{status:"ACTIVE"}
-    })
-  
   
     res.status(200).json({
       success: true,
