@@ -12,6 +12,6 @@ authRoute.post('/verify-user',verifyUserController )
 
 // authRoute.post('/send-verification', verifyEmailController)
 authRoute.post('/verify-token', verifyTokenController)
-authRoute.post('/reset-password',changePasswordController)
+authRoute.post('/change-password',changePasswordController)
 
 // authRoute.post('/verify-account',verifyAccount)
