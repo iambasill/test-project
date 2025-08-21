@@ -162,7 +162,7 @@ export const loginController = async (req: Request, res: Response) => {
 /**
  * Reset password using a valid token.
  */
-export const resetPasswordController = async (req: Request, res: Response) => {
+export const changePasswordController = async (req: Request, res: Response) => {
   const { token, newPassword } = req.body;
 
   const user = await prisma.user.findFirst({
@@ -202,6 +202,11 @@ export const verifyTokenController = async (req: Request, res: Response) => {
     // Find user
     const user = await checkUser(decoded.id);
     if (!user) throw new BadRequestError('User not found')
+
+    await prisma.user.update({
+      where:{id:user.id},
+      data:{status:"ACTIVE"}
+    })
   
   
     res.status(200).json({
