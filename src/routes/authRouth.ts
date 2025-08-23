@@ -1,17 +1,36 @@
-import express from 'express'
-import { loginController, registerController, changePasswordController, verifyTokenController, verifyUserController} from '../controller/authController'
+import express from 'express';
+import { 
+  loginController, 
+  registerController, 
+  changePasswordController, 
+  verifyTokenController, 
+  verifyUserController,
+  logoutController,
+  getAdminStatusController,
+  forceTerminateAdminController,
+  forgotPasswordController,
+} from '../controller/authController';
 
-export const authRoute = express()
+import { authMiddleware } from '../middlewares/authMiddleware';
+import { requirePlatformAdmin } from '../middlewares/adminMiddleware';
 
-authRoute.get('/',()=>{
-    return "hello"
-})
-authRoute.post('/login',loginController)
-authRoute.post('/signup',registerController)
-authRoute.post('/verify-user',verifyUserController )
+export const authRoute = express();
 
-// authRoute.post('/send-verification', verifyEmailController)
-authRoute.post('/verify-token', verifyTokenController)
-authRoute.post('/change-password',changePasswordController)
+// Public routes (no authentication required)
+authRoute.post('/login', loginController);
+authRoute.post('/signup', registerController);
+authRoute.post('/verify-user', verifyUserController);
+authRoute.post('/change-password', changePasswordController);
+authRoute.post('/forgot-password', forgotPasswordController);
 
-// authRoute.post('/verify-account',verifyAccount)
+
+// General authenticated routes
+authRoute.post('/verify-token', authMiddleware, verifyTokenController);
+
+authRoute.post('/logout', authMiddleware, logoutController);
+
+// Admin status
+authRoute.get('/admin-status', requirePlatformAdmin, getAdminStatusController);
+
+// Platform admin only routes (emergency override)
+authRoute.post('/force-terminate-admin', requirePlatformAdmin, forceTerminateAdminController);

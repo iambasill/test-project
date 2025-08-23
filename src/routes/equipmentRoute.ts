@@ -8,11 +8,11 @@ export const equipmentRouter = express.Router();
 
 
 // Base routes
-equipmentRouter.get('/', getAllEquipment);
-equipmentRouter.post('/', upload.fields(UPLOAD_FIELDS), createEquipment);
+equipmentRouter.get('/',authMiddleware, getAllEquipment);
+equipmentRouter.post('/', authMiddleware,upload.fields(UPLOAD_FIELDS), createEquipment);
 
 // // Specific equipment routes
-equipmentRouter.get('/:id', getEquipmentById);
-equipmentRouter.put('/:id', upload.fields(UPLOAD_FIELDS), updateEquipment);
-equipmentRouter.delete('/:id', deleteEquipment);
+equipmentRouter.get('/:id', authMiddleware,getEquipmentById);
+equipmentRouter.put('/:id',authMiddleware, upload.fields(UPLOAD_FIELDS), updateEquipment);
+equipmentRouter.delete('/:id',authMiddleware, deleteEquipment);
 

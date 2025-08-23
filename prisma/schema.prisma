@@ -43,24 +43,27 @@ enum AcquisitionMethod {
 }
 
 model User {
-    id               String               @id @default(uuid())
-    email            String               @unique
-    firstName        String
-    lastName         String
-    serviceNumber    String?              @unique
-    rank             String?
-    unit             String?
-    role             UserRole?
-    status           UserStatus           @default(PENDING)
-    password         String
-    refreshToken     String?
-    resetToken       String?
-    resetTokenExpiry DateTime?
-    lastLogin        DateTime?
-    createdAt        DateTime             @default(now())
-    updatedAt        DateTime             @updatedAt
-    inspections      Inspection[]
-    conditionRecords EquipmentCondition[]
+    id                    String                 @id @default(uuid())
+    email                 String                 @unique
+    firstName             String
+    lastName              String
+    serviceNumber         String?                @unique
+    rank                  String?
+    unit                  String?
+    role                  UserRole?
+    status                UserStatus             @default(PENDING)
+    password              String
+    isActive              Boolean                @default(false)
+    refreshToken          String?
+    resetToken            String?
+    resetTokenExpiry      DateTime?
+    lastLogin             DateTime?
+    createdAt             DateTime               @default(now())
+    updatedAt             DateTime               @updatedAt
+    inspections           Inspection[]
+    conditionRecords      EquipmentCondition[]
+    User_sessions         User_sessions[]
+    Active_admin_sessions Active_admin_sessions?
 
     @@map("users")
 }
@@ -340,4 +343,25 @@ model Document {
     updatedAt DateTime @updatedAt
 
     @@map("documents")
+}
+
+model Active_admin_sessions {
+    id          Int       @id @default(1)
+    admin_id    String    @unique
+    login_time  DateTime
+    logout_time DateTime?
+    user        User      @relation(fields: [admin_id], references: [id], onDelete: Cascade)
+
+    @@map("Active_admin_sessions")
+}
+
+model User_sessions {
+    id            String    @id @default(cuid())
+    user_id       String
+    session_token String
+    login_time    DateTime  @default(now())
+    logout_time   DateTime?
+    user          User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+    @@map("user_sessions")
 }

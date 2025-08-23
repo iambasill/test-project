@@ -96,19 +96,19 @@ export const updateUser = async (req: Request, res: Response) => {
     });
   }
 
-// Delete user
-export const deleteUser = async (req: Request, res: Response) => {
-    const { id } = req.params;
-    await prisma.user.delete({
-      where: { id },
-    });
+// // Delete user
+// export const deleteUser = async (req: Request, res: Response) => {
+//     const { id } = req.params;
+//     await prisma.user.delete({
+//       where: { id },
+//     });
 
-    res.status(200).json({
-      success: true,
-      message: 'User deleted successfully',
-    });
+//     res.status(200).json({
+//       success: true,
+//       message: 'User deleted successfully',
+//     });
   
-};
+// };
 
 // Update user status
 export const updateUserStatus = async (req: Request, res: Response) => {
@@ -117,21 +117,12 @@ export const updateUserStatus = async (req: Request, res: Response) => {
 
     const updatedUser = await prisma.user.update({
       where: { id },
-      data: {status},
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        status: true,
-        updatedAt: true,
-      },
+      data: {status}
     });
 
     res.status(200).json({
       success: true,
       message: 'User status updated successfully',
-      updateUser:updatedUser
      
     });
   }
