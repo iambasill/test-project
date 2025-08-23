@@ -154,7 +154,8 @@ await generateUserSession(user.id,token);
 
   res.status(200).send({
     success: true,
-    token
+    token,
+    user
   });
 };
 
@@ -337,5 +338,30 @@ export const verifyUserController = async (req: Request, res: Response) => {
     success: "true",
     UserStatus: user.status,
     token: token
+  });
+};
+
+export const resendVerficationController = async (req: Request, res: Response, next: NextFunction) => {
+  const {email} = req.body
+
+  const existingUser = await prisma.user.findFirst({ where: { email } });
+  if (!existingUser) {
+    throw new BadRequestError('User does not exists');
+  }
+
+  const verificationToken = await generateToken(existingUser.id);
+  const verificationLink = `${API_BASE_URL}/download/apk?token=${verificationToken}`;
+
+  // Send verification email
+  const emailSent = await sendVerificationEmail(
+    email,
+    verificationLink,
+    existingUser.firstName,
+    "register"
+  );
+
+  res.status(200).send({
+    success: true,
+    message: "User verified successfully. Please check your email.",
   });
 };

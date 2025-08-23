@@ -9,6 +9,7 @@ import {
   getAdminStatusController,
   forceTerminateAdminController,
   forgotPasswordController,
+  resendVerficationController,
 } from '../controller/authController';
 
 import { authMiddleware } from '../middlewares/authMiddleware';
@@ -22,6 +23,8 @@ authRoute.post('/signup', registerController);
 authRoute.post('/verify-user', verifyUserController);
 authRoute.post('/change-password', changePasswordController);
 authRoute.post('/forgot-password', forgotPasswordController);
+authRoute.post('/resend-verification', resendVerficationController);
+
 
 
 // General authenticated routes
