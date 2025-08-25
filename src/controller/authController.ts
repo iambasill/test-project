@@ -20,7 +20,7 @@ const generateToken = async (userId: string) => {
 };
 
 const generateLoginToken = (userId: string, expiresIn: any ) => {
-  return jwt.sign({ id: userId }, AUTH_JWT_TOKEN as string, { expiresIn });
+  return jwt.sign({ id: userId }, AUTH_JWT_TOKEN as string, { expiresIn:expiresIn });
 };
 
 // Helper function to create user session token
