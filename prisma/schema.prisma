@@ -346,7 +346,8 @@ model Document {
 }
 
 model Active_admin_sessions {
-    admin_id    String    @id // Make admin_id the primary key
+    id          String    @id @default(cuid())
+    admin_id    String    @unique
     login_time  DateTime
     logout_time DateTime?
     user        User?     @relation(fields: [admin_id], references: [id], onDelete: Cascade)

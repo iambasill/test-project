@@ -83,7 +83,6 @@ const manageAdminSession = async (userId: string) => {
       admin_id: userId, 
       login_time: new Date(), 
       logout_time: logoutAt 
-      // id will be automatically generated with cuid()
     }
   });
 
