@@ -346,11 +346,11 @@ model Document {
 }
 
 model Active_admin_sessions {
-    id          Int       @id @default(1)
-    admin_id    String    @unique
+    id          String    @id @default(cuid())
+    admin_id    String?   @unique
     login_time  DateTime
     logout_time DateTime?
-    user        User      @relation(fields: [admin_id], references: [id], onDelete: Cascade)
+    user        User?     @relation(fields: [admin_id], references: [id], onDelete: Cascade)
 
     @@map("Active_admin_sessions")
 }
