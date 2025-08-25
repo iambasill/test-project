@@ -70,33 +70,22 @@ const manageAdminSession = async (userId: string) => {
 
   const logoutAt = new Date(Date.now() + 2 * 60 * 60 * 1000); 
   
-  // First try to find if a session exists for this admin
-  const currentSession = await prisma.active_admin_sessions.findUnique({
-    where: { admin_id: userId } // Use the unique field
+  // Use upsert for cleaner code (since admin_id is unique)
+  const session = await prisma.active_admin_sessions.upsert({
+    where: { 
+      admin_id: userId // Use the unique field for lookup
+    },
+    update: { 
+      login_time: new Date(), 
+      logout_time: logoutAt 
+    },
+    create: { 
+      admin_id: userId, 
+      login_time: new Date(), 
+      logout_time: logoutAt 
+      // id will be automatically generated with cuid()
+    }
   });
-
-  let session;
-  if (currentSession) {
-    // Update existing session
-    session = await prisma.active_admin_sessions.update({
-      where: { 
-        id: currentSession.id // Use the actual primary key here
-      },
-      data: { 
-        login_time: new Date(), 
-        logout_time: logoutAt 
-      }
-    });
-  } else {
-    // Create new session
-    session = await prisma.active_admin_sessions.create({
-      data: { 
-        admin_id: userId, 
-        login_time: new Date(), 
-        logout_time: logoutAt 
-      }
-    });
-  }
 
   return session.logout_time;
 };
