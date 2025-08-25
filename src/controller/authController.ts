@@ -53,34 +53,52 @@ const generateUserSession = async (userId: string,session_token:string) => {
   
 };
 
-// Helper function to manage admin sessions
 const manageAdminSession = async (userId: string) => {
-  
-    // Check if there's already an active admin session from a different admin
-    const existingSession = await prisma.active_admin_sessions.findFirst({
-      where: {
-        admin_id: { not: userId }, 
-        logout_time: {
-          gt: new Date() // Still active
-        }
+  // Check if there's already an active admin session from a different admin
+  const existingSession = await prisma.active_admin_sessions.findFirst({
+    where: {
+      admin_id: { not: userId }, 
+      logout_time: {
+        gt: new Date() // Still active
       }
-    });
-
-    if (existingSession) {
-      throw new BadRequestError("Another admin is currently active. You cannot log in until their session ends")
     }
-
-
-    const logoutAt = new Date(Date.now() + 2 * 60 * 60 * 1000); 
-    const session = await prisma.active_admin_sessions.upsert({
-    where: { admin_id: userId },
-    update: { login_time: new Date(), logout_time: logoutAt },
-    create: { admin_id: userId, login_time: new Date(), logout_time: logoutAt }
   });
 
-  return session.logout_time;
+  if (existingSession) {
+    throw new BadRequestError("Another admin is currently active. You cannot log in until their session ends");
+  }
 
+  const logoutAt = new Date(Date.now() + 2 * 60 * 60 * 1000); 
   
+  // First try to find if a session exists for this admin
+  const currentSession = await prisma.active_admin_sessions.findUnique({
+    where: { admin_id: userId } // Use the unique field
+  });
+
+  let session;
+  if (currentSession) {
+    // Update existing session
+    session = await prisma.active_admin_sessions.update({
+      where: { 
+        id: currentSession.id // Use the actual primary key here
+      },
+      data: { 
+        login_time: new Date(), 
+        logout_time: logoutAt 
+      }
+    });
+  } else {
+    // Create new session
+    session = await prisma.active_admin_sessions.create({
+      data: { 
+        admin_id: userId, 
+        login_time: new Date(), 
+        logout_time: logoutAt 
+      }
+    });
+  }
+
+  return session.logout_time;
 };
 
 // ====================== CONTROLLERS ====================== //
@@ -166,6 +184,7 @@ export const logoutController = async (req: Request, res: Response) => {
   const user:any = req.user
   const token:any = req.token
 
+  
   // Clear user session
   await prisma.user_sessions.updateMany({
     where: { 
