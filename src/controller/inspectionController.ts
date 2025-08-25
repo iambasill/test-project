@@ -318,7 +318,6 @@ export const getInspectionById = async (req: Request, res: Response) => {
 
 
     
-    try {
         const inspections = await prisma.inspection.findMany({
             where,
             include: {
@@ -400,13 +399,7 @@ export const getInspectionById = async (req: Request, res: Response) => {
             success: true,
             data: inspections
         });
-    } catch (error) {
-        if (error instanceof BadRequestError) {
-            throw error;
-        }
-        console.error('Error fetching inspection:', error);
-        throw new Error('Failed to fetch inspection');
-    }
+    
 };
 
 // Delete inspection (optimized with cascade handling)
