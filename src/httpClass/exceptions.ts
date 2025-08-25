@@ -14,7 +14,7 @@ export class unAuthorizedError extends http_Exception {
 }
 
 export class notFoundError extends http_Exception {
-    constructor(message: string=("Not Found"),statusCode: number = 401) {
+    constructor(message: string=("Not Found"),statusCode: number = 404) {
         super(statusCode, message);
     }
 }
