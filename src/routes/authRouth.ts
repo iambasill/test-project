@@ -33,7 +33,7 @@ authRoute.post('/verify-token', authMiddleware, verifyTokenController);
 authRoute.post('/logout', authMiddleware, logoutController);
 
 // Admin status
-authRoute.get('/admin-status', requirePlatformAdmin, getAdminStatusController);
+authRoute.get('/admin-status',authMiddleware, requirePlatformAdmin, getAdminStatusController);
 
 // Platform admin only routes (emergency override)
-authRoute.post('/force-terminate-admin', requirePlatformAdmin, forceTerminateAdminController);
+authRoute.post('/force-terminate-admin', authMiddleware, requirePlatformAdmin, forceTerminateAdminController);
