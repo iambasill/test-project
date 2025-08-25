@@ -228,7 +228,7 @@ export const getAdminStatusController = async (req: Request, res: Response) => {
   res.status(200).send({
     success: true,
     adminActive: true,
-    loginTime: activeSession.login_time,
+    loginTime: activeSession
 
   });
 };
