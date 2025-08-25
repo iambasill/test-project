@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { prisma } from "../server";
-import { BadRequestError, unAuthorizedError } from "../httpClass/exceptions";
+import { BadRequestError, notFoundError, unAuthorizedError } from "../httpClass/exceptions";
 import { API_BASE_URL } from "../../secrets";
 
 // Create a new inspection (optimized for performance)
@@ -393,7 +393,7 @@ export const getInspectionById = async (req: Request, res: Response) => {
         });
 
         if (!inspections || inspections.length === 0) {
-            throw new BadRequestError('No inspections found for this equipment');
+            throw new notFoundError('No inspections found for this equipment');
         }
 
         res.status(200).json({
