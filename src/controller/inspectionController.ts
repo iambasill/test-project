@@ -306,11 +306,21 @@ export const getAllInspections = async (req: Request, res: Response) => {
 
 // Get single inspection by equipment ID (optimized)
 export const getInspectionById = async (req: Request, res: Response) => {
+    
     const { id } = req.params;
+        const user: any = req.user;
+    
+
+    // Build where clause based on user role
+    const where = (user.role === "ADMIN" || user.role === "PLATADMIN") 
+        ? {equipmentId: id } 
+        : { inspectorId: user.id,equipmentId: id  };
+
+
     
     try {
         const inspections = await prisma.inspection.findMany({
-            where: { equipmentId: id },
+            where,
             include: {
                 exteriorInspections: {
                     select: {

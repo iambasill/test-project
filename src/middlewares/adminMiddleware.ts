@@ -4,20 +4,6 @@ import { prisma } from '../server';
 import { unAuthorizedError } from '../httpClass/exceptions';
 import { AUTH_JWT_TOKEN } from '../../secrets';
 
-// Extend Express Request type
-declare global {
-  namespace Express {
-    interface Request {
-      adminSession?: {
-        sessionToken: string;
-        loginTime: Date;
-        expiryTime: Date;
-        isActive: boolean;
-      };
-    }
-  }
-}
-
 /**
  * Middleware specifically for Platform Admin actions (highest privilege)
  */
