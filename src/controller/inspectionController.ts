@@ -312,7 +312,7 @@ export const getInspectionById = async (req: Request, res: Response) => {
     
 
     // Build where clause based on user role
-    const where = (user.role === "ADMIN" || user.role === "PLATADMIN") 
+    const where = (user.role === "ADMIN" || user.role === "PLATADMIN" || user.role === "AUDITOR") 
         ? {equipmentId: id } 
         : { inspectorId: user.id,equipmentId: id  };
 

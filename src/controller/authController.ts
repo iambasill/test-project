@@ -255,11 +255,15 @@ export const forceTerminateAdminController = async (req: Request, res: Response)
     data: { logout_time: new Date() }
   });
 
-   await prisma.user.update({
+   await prisma.user.updateMany({
     where:{id:userId},
     data:{
       isActive:false
     }
+   })
+
+   await prisma.active_admin_sessions.deleteMany({
+    where:{admin_id:userId}
    })
 
   res.status(200).send({
