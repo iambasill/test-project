@@ -60,6 +60,9 @@ const manageAdminSession = async (userId: string) => {
       admin_id: { not: userId }, 
       logout_time: {
         gt: new Date() // Still active
+      },
+      user:{
+        status: "ACTIVE"
       }
     }
   });
