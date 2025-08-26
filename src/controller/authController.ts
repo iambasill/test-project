@@ -68,6 +68,13 @@ const manageAdminSession = async (userId: string) => {
     throw new BadRequestError("Another admin is currently active. You cannot log in until their session ends");
   }
 
+    await prisma.active_admin_sessions.deleteMany({
+     where:{
+      admin_id:{not:userId}
+     }
+   })
+ 
+
   const logoutAt = new Date(Date.now() + 2 * 60 * 60 * 1000); 
   
   // Use upsert for cleaner code (since admin_id is unique)
@@ -184,10 +191,11 @@ export const logoutController = async (req: Request, res: Response) => {
 
   // If user is admin and has admin session, clear it
   if (user.role && ['ADMIN'].includes(user.role)) {
-    const result = await prisma.active_admin_sessions.updateMany({
-      where: { admin_id: user.id },
-      data: { logout_time: new Date() }
-    });
+  
+     await prisma.active_admin_sessions.deleteMany({
+     where:{admin_id:user.id}
+   })
+ 
   }
 
     await prisma.user.update({
@@ -244,26 +252,26 @@ export const getAdminStatusController = async (req: Request, res: Response) => {
  * Force terminate admin session - Emergency override for PLATADMIN
  */
 export const forceTerminateAdminController = async (req: Request, res: Response) => {
-
   const { userId } = req.body;
+  const user = checkUser(userId)
 
-  // Terminate target admin session
-  const result = await prisma.active_admin_sessions.updateMany({
+  await prisma.user_sessions.updateMany({
     where: { 
-      admin_id: userId 
+      user_id: userId,
+      // TODO: session_token:token
     },
-    data: { logout_time: new Date() }
+    data:{logout_time: new Date()}
   });
+  // Terminate target admin session
+  const result = await prisma.active_admin_sessions.deleteMany({
+     where:{admin_id:userId}
+   })
 
-   await prisma.user.updateMany({
+   await prisma.user.update({
     where:{id:userId},
     data:{
       isActive:false
     }
-   })
-
-   await prisma.active_admin_sessions.deleteMany({
-    where:{admin_id:userId}
    })
 
   res.status(200).send({
