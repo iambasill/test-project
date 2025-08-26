@@ -221,7 +221,11 @@ export const logoutController = async (req: Request, res: Response) => {
 export const getAdminStatusController = async (req: Request, res: Response) => {
   const activeSession = await prisma.active_admin_sessions.findFirst({
     
-    where: { // TODO:  revert after development
+    where: { 
+      // TODO:  revert after development
+      user: {
+        status: "ACTIVE"
+      }
     },
     include:{
       user:{
