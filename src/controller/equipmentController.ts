@@ -310,9 +310,18 @@ export const getOwnershipHistoryByEquipment = async (req: Request, res: Response
 
 
 export const getEquipmentOwnerships = async (req: Request, res: Response) => {
+    const { id } = req.params;
     
+    // const equipment = await prisma.equipment.findUnique({
+    //   where:{id},
+    //   select: {id:true}})
+
+    // if (!equipment) throw new BadRequestError('Equipment not found')
+
+
+
     const ownerships = await prisma.equipmentOwnership.findMany({
-      where: {equipmentId:"1b9d2d59-2261-4bbf-afa8-a6805250fcbc"},
+      where: { equipmentId:id},
       include: {
           assignedBy:{
             select:{

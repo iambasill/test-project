@@ -10,8 +10,8 @@ export const equipmentRouter = express.Router();
 // Base routes
 equipmentRouter.get('/',authMiddleware, getAllEquipment);
 equipmentRouter.post('/',upload.fields(UPLOAD_FIELDS), createEquipment);
-equipmentRouter.get('/ownership',authMiddleware,getEquipmentOwnerships)
-equipmentRouter.get('/ownership/:id',authMiddleware,getOwnershipHistoryByEquipment)
+equipmentRouter.get('/ownership:id',authMiddleware,getEquipmentOwnerships)
+// equipmentRouter.get('/ownership/:id',authMiddleware,getOwnershipHistoryByEquipment)
 
 
 // // Specific equipment routes
