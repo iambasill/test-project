@@ -293,7 +293,26 @@ export const getOwnershipHistoryByEquipment = async (req: Request, res: Response
 
     const equipmentOwnership = await prisma.equipmentOwnership.findMany({
       where: { equipmentId:id},
-       select: {
+      
+
+        })
+    
+
+    if (!equipmentOwnership) throw new BadRequestError('Equipment ownership not found'),
+
+    res.status(200).json({
+      success: true,
+      data: equipmentOwnership,
+    });
+  
+  }
+ 
+
+
+export const getEquipmentOwnerships = async (req: Request, res: Response) => {
+
+    const ownerships = await prisma.equipmentOwnership.findMany({
+ include: {
           assignedBy:{
             select:{
               firstName            :true,
@@ -327,25 +346,6 @@ export const getOwnershipHistoryByEquipment = async (req: Request, res: Response
           
 
         },
-
-        })
-    
-
-    if (!equipmentOwnership) throw new BadRequestError('Equipment ownership not found'),
-
-    res.status(200).json({
-      success: true,
-      data: equipmentOwnership,
-    });
-  
-  }
- 
-
-
-export const getEquipmentOwnerships = async (req: Request, res: Response) => {
-
-    const ownerships = await prisma.equipmentOwnership.findMany({
-
   });
 
     res.status(200).json({
