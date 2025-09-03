@@ -293,14 +293,25 @@ export const getOwnershipHistoryByEquipment = async (req: Request, res: Response
 
     const equipmentOwnership = await prisma.equipmentOwnership.findMany({
       where: { equipmentId:id},
-          include: {
-          documents: {
-          select: { 
+       select: {
+          assignedBy:{
+            select:{
+              firstName            :true,
+              lastName             :true,
+              serviceNumber        :true,             
+              email                :true,                 
+              rank                 :true,
+              unit                 :true,
+            }
+          },
+          documents:{
+            select:{
             id: true,
             fileName: true,
             url: true,
             createdAt: true
-          }},
+            }
+          },
           operator:{
             select:{
               id:true,
@@ -311,9 +322,13 @@ export const getOwnershipHistoryByEquipment = async (req: Request, res: Response
               phoneNumber:true,
               branch:true,
               position:true
-            },
-          }},
-        orderBy: {createdAt: "desc"}})
+            }
+          },
+          
+
+        },
+
+        })
     
 
     if (!equipmentOwnership) throw new BadRequestError('Equipment ownership not found'),
@@ -324,62 +339,22 @@ export const getOwnershipHistoryByEquipment = async (req: Request, res: Response
     });
   
   }
+ 
 
 
-// export const getEquipmentOwnerships = async (req: Request, res: Response) => {
-//   try {
-//     const { page, limit, equipmentChasisNumber, operatorId, isCurrent } = QuerySchema.parse(req.query);
-    
-//     const skip = (page - 1) * limit;
-    
-//     const where: any = {};
-//     if (equipmentChasisNumber) where.equipmentChasisNumber = equipmentChasisNumber;
-//     if (operatorId) where.operatorId = operatorId;
-//     if (isCurrent !== undefined) where.isCurrent = isCurrent;
+export const getEquipmentOwnerships = async (req: Request, res: Response) => {
 
-//     const [ownerships, total] = await Promise.all([
-//       prisma.equipmentOwnership.findMany({
-//         where,
-//         skip,
-//         take: limit,
-//         include: {
-//           equipment: true,
-//           operator: true,
-//           documents: true,
-//         },
-//         orderBy: {
-//           createdAt: 'desc',
-//         },
-//       }),
-//       prisma.equipmentOwnership.count({ where }),
-//     ]);
+    const ownerships = await prisma.equipmentOwnership.findMany({
 
-//     res.json({
-//       success: true,
-//       data: ownerships,
-//       pagination: {
-//         page,
-//         limit,
-//         total,
-//         pages: Math.ceil(total / limit),
-//       },
-//     });
-//   } catch (error) {
-//     if (error instanceof z.ZodError) {
-//       return res.status(400).json({
-//         success: false,
-//         message: 'Invalid query parameters',
-//         errors: error.errors,
-//       });
-//     }
+  });
 
-//     console.error('Get equipment ownerships error:', error);
-//     res.status(500).json({
-//       success: false,
-//       message: 'Internal server error',
-//     });
-//   }
-// };
+    res.status(200).json({
+      success: true,
+      data: ownerships,
+
+    });
+
+};
 
 
 // export const updateEquipmentOwnership = async (req: Request, res: Response) => {
