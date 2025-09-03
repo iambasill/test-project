@@ -283,7 +283,7 @@ export const createEquipmentOwnership = async (req: Request, res: Response) => {
 export const getOwnershipHistoryByEquipment = async (req: Request, res: Response) => {
     const { id } = req.params;
     
-    const equipment = await prisma.equipment.findFirst({where:{id}})
+    const equipment = await prisma.equipment.findUnique({where:{id}})
     if (!equipment) throw new BadRequestError('Equipment not found')
 
 
