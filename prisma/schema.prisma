@@ -177,6 +177,10 @@ model EquipmentOwnership {
     userId     String
     assignedBy User     @relation(fields: [userId], references: [id])
 
+    @@index([equipmentId])
+    @@index([operatorId])
+    @@index([createdAt])
+    @@index([isCurrent])
     @@map("equipment_ownerships")
 }
 

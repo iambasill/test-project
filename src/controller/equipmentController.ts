@@ -283,20 +283,38 @@ export const createEquipmentOwnership = async (req: Request, res: Response) => {
 export const getOwnershipHistoryByEquipment = async (req: Request, res: Response) => {
     const { id } = req.params;
     
-    const equipment = await prisma.equipment.findUnique({where:{id}})
+    const equipment = await prisma.equipment.findUnique({
+      where:{id},
+      select: {id:true}})
+
     if (!equipment) throw new BadRequestError('Equipment not found')
 
 
 
     const equipmentOwnership = await prisma.equipmentOwnership.findMany({
       where: { equipmentId:id},
-           include: {
-          documents: true,
-        },
-        orderBy: {
-          createdAt: 'desc',
-        },
-    });
+          include: {
+          documents: {
+          select: { 
+            id: true,
+            fileName: true,
+            url: true,
+            createdAt: true
+          }},
+          operator:{
+            select:{
+              id:true,
+              serviceNumber:true,
+              firstName:true,
+              lastName:true,
+              officialEmailAddress:true,
+              phoneNumber:true,
+              branch:true,
+              position:true
+            },
+          }},
+        orderBy: {createdAt: "desc"}})
+    
 
     if (!equipmentOwnership) throw new BadRequestError('Equipment ownership not found'),
 
