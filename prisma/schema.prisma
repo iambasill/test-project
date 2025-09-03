@@ -64,6 +64,7 @@ model User {
     conditionRecords      EquipmentCondition[]
     User_sessions         User_sessions[]
     Active_admin_sessions Active_admin_sessions?
+    EquipmentOwnership    EquipmentOwnership[]
 
     @@map("users")
 }
@@ -149,16 +150,16 @@ model Operator {
 }
 
 model EquipmentOwnership {
-    id                    String    @id @default(uuid())
-    equipment             Equipment @relation(fields: [equipmentChasisNumber], references: [chasisNumber])
-    equipmentChasisNumber String // Changed from equipmentId
-    operator              Operator  @relation(fields: [operatorId], references: [id])
-    operatorId            String
-    startDate             DateTime  @default(now())
-    endDate               DateTime?
-    isCurrent             Boolean   @default(true)
-    primaryDuties         String?
-    driverLicenseId       String?
+    id              String    @id @default(uuid())
+    equipment       Equipment @relation(fields: [equipmentId], references: [id])
+    equipmentId     String // Changed from equipmentId
+    operator        Operator  @relation(fields: [operatorId], references: [id])
+    operatorId      String
+    startDate       DateTime  @default(now())
+    endDate         DateTime?
+    isCurrent       Boolean   @default(true)
+    primaryDuties   String?
+    driverLicenseId String?
 
     // Comander information
     coFirstName   String?
@@ -171,10 +172,12 @@ model EquipmentOwnership {
     notes                 String?
     documents             Document[]
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    createdAt  DateTime @default(now())
+    updatedAt  DateTime @updatedAt
+    UserId     String
+    assignedBy User     @relation(fields: [UserId], references: [id])
 
-    @@unique([equipmentChasisNumber, operatorId, isCurrent])
+    @@unique([equipmentId, operatorId, isCurrent])
     @@map("equipment_ownerships")
 }
 

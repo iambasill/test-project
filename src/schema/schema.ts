@@ -56,3 +56,55 @@ export const inspectionData = z.object({
     
 
 })
+export const ConditionStatusEnum = z.enum(['EXCELLENT', 'GOOD', 'FAIR', 'POOR']);
+
+
+
+export const CreateEquipmentOwnershipSchema = z.object({
+  equipmentId: z.string(),
+  operatorId: z.string(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional().nullable(),
+  primaryDuties: z.string().optional().nullable(),
+  driverLicenseId: z.string().optional().nullable(),
+  
+  // Commander information
+  coFirstName: z.string().optional().nullable(),
+  coLastName: z.string().optional().nullable(),
+  coEmail: z.string().optional().nullable(),
+  coPhoneNumber: z.string().optional().nullable(),
+  
+  // Equipment condition
+  conditionAtAssignment: ConditionStatusEnum.optional().default('EXCELLENT'),
+  notes: z.string().optional().nullable(),
+});
+
+
+
+export const UpdateEquipmentOwnershipSchema = z.object({
+  equipmentChasisNumber: z.string().min(1).optional(),
+  operatorId: z.string().uuid().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional().nullable(),
+  isCurrent: z.boolean().optional(),
+  primaryDuties: z.string().optional().nullable(),
+  driverLicenseId: z.string().optional().nullable(),
+  
+  // Commander information
+  coFirstName: z.string().optional().nullable(),
+  coLastName: z.string().optional().nullable(),
+  coEmail: z.string().optional().nullable(),
+  coPhoneNumber: z.string().optional().nullable(),
+  
+  // Equipment condition
+  conditionAtAssignment: ConditionStatusEnum.optional(),
+  notes: z.string().optional().nullable(),
+});
+
+const QuerySchema = z.object({
+  page: z.string().transform(Number).pipe(z.number().min(1)).optional().default(1),
+  limit: z.string().transform(Number).pipe(z.number().min(1).max(100)).optional().default(10),
+  equipmentChasisNumber: z.string().optional(),
+  operatorId: z.string().uuid().optional(),
+  isCurrent: z.string().transform(val => val === 'true').pipe(z.boolean()).optional(),
+});

@@ -1,10 +1,12 @@
-import { Operator } from './../generated/prisma/index.d';
+import { Operator, User } from './../generated/prisma/index.d';
 import {Request,Response} from 'express'
-import { BadRequestError } from '../httpClass/exceptions';
+import { BadRequestError, unAuthorizedError } from '../httpClass/exceptions';
 import { prisma } from '../server';
 
 
 export const getAllOperator = async (req:Request, res:Response) => {
+  const user:any = req.user
+  if (user.role === "OFFICER") throw new unAuthorizedError
   const operator = await prisma.operator.findMany({
     include: {
       ownerships:true,
@@ -21,6 +23,8 @@ export const getAllOperator = async (req:Request, res:Response) => {
 
 export const getAllOperatorById = async (req:Request, res:Response) => {
   const {id} = req.params
+    const user:any = req.user
+  if (user.role === "OFFICER") throw new unAuthorizedError
 
   const operator = await prisma.operator.findUnique({
     where:{id}
@@ -36,6 +40,8 @@ export const getAllOperatorById = async (req:Request, res:Response) => {
 
 
 export const createOperator = async (req:Request, res:Response) => {
+  const user:any = req.user
+  if (user.role === "OFFICER") throw new unAuthorizedError
 
   const {
     email,         
@@ -91,6 +97,8 @@ export const createOperator = async (req:Request, res:Response) => {
 };
 
 export const updateOperator = async (req:Request, res:Response) => {
+  const user:any = req.user
+  if (user.role === "OFFICER") throw new unAuthorizedError
   const {id} = req.params
 
   const operator = await prisma.operator.findUnique({
@@ -149,6 +157,8 @@ export const updateOperator = async (req:Request, res:Response) => {
 };
 
 export const deleteOperator = async (req:Request, res:Response) => {
+  const user:any = req.user
+  if (user.role === "OFFICER") throw new unAuthorizedError
   const {id} = req.params
 
   const operator = await prisma.operator.findUnique({

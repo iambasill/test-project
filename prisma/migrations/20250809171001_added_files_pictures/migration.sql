@@ -1,8 +1,0 @@
--- AlterTable
-ALTER TABLE `documents` ADD COLUMN `backView` VARCHAR(191) NULL,
-    ADD COLUMN `frontView` VARCHAR(191) NULL,
-    ADD COLUMN `leftView` VARCHAR(191) NULL,
-    ADD COLUMN `rightView` VARCHAR(191) NULL;
-
--- AlterTable
-ALTER TABLE `equipments` MODIFY `currentCondition` ENUM('EXCELLENT', 'GOOD', 'FAIR', 'POOR', 'FAILED', 'NOT_APPLICABLE') NOT NULL DEFAULT 'EXCELLENT';

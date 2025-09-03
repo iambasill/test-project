@@ -1,105 +1,27 @@
-/*
-  Warnings:
+-- CreateTable
+CREATE TABLE `users` (
+    `id` VARCHAR(191) NOT NULL,
+    `email` VARCHAR(191) NOT NULL,
+    `firstName` VARCHAR(191) NOT NULL,
+    `lastName` VARCHAR(191) NOT NULL,
+    `serviceNumber` VARCHAR(191) NULL,
+    `rank` VARCHAR(191) NULL,
+    `unit` VARCHAR(191) NULL,
+    `role` ENUM('PLATADMIN', 'ADMIN', 'MANAGER', 'AUDITOR', 'OFFICER') NULL,
+    `status` ENUM('PENDING', 'ACTIVE', 'SUSPENDED') NOT NULL DEFAULT 'PENDING',
+    `password` VARCHAR(191) NOT NULL,
+    `isActive` BOOLEAN NOT NULL DEFAULT false,
+    `refreshToken` VARCHAR(191) NULL,
+    `resetToken` VARCHAR(191) NULL,
+    `resetTokenExpiry` DATETIME(3) NULL,
+    `lastLogin` DATETIME(3) NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
 
-  - You are about to drop the column `password` on the `users` table. All the data in the column will be lost.
-  - You are about to alter the column `role` on the `users` table. The data in that column could be lost. The data in that column will be cast from `Enum(EnumId(7))` to `Enum(EnumId(0))`.
-  - The values [INACTIVE] on the enum `users_status` will be removed. If these variants are still used in the database, this will fail.
-  - You are about to drop the `disposal_records` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `equipment` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `equipment_access` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `equipment_assignments` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `equipment_documents` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `equipment_transfers` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `inspection_records` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `maintenance_records` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `warranty_info` table. If the table is not empty, all the data it contains will be lost.
-  - A unique constraint covering the columns `[serviceNumber]` on the table `users` will be added. If there are existing duplicate values, this will fail.
-  - Added the required column `passwordHash` to the `users` table without a default value. This is not possible if the table is not empty.
-
-*/
--- DropForeignKey
-ALTER TABLE `disposal_records` DROP FOREIGN KEY `disposal_records_equipmentId_fkey`;
-
--- DropForeignKey
-ALTER TABLE `equipment` DROP FOREIGN KEY `equipment_approvedById_fkey`;
-
--- DropForeignKey
-ALTER TABLE `equipment` DROP FOREIGN KEY `equipment_authorizedById_fkey`;
-
--- DropForeignKey
-ALTER TABLE `equipment` DROP FOREIGN KEY `equipment_registeredById_fkey`;
-
--- DropForeignKey
-ALTER TABLE `equipment_access` DROP FOREIGN KEY `equipment_access_equipmentId_fkey`;
-
--- DropForeignKey
-ALTER TABLE `equipment_access` DROP FOREIGN KEY `equipment_access_userId_fkey`;
-
--- DropForeignKey
-ALTER TABLE `equipment_assignments` DROP FOREIGN KEY `equipment_assignments_equipmentId_fkey`;
-
--- DropForeignKey
-ALTER TABLE `equipment_assignments` DROP FOREIGN KEY `equipment_assignments_userId_fkey`;
-
--- DropForeignKey
-ALTER TABLE `equipment_documents` DROP FOREIGN KEY `equipment_documents_equipmentId_fkey`;
-
--- DropForeignKey
-ALTER TABLE `equipment_transfers` DROP FOREIGN KEY `equipment_transfers_approvedById_fkey`;
-
--- DropForeignKey
-ALTER TABLE `equipment_transfers` DROP FOREIGN KEY `equipment_transfers_equipmentId_fkey`;
-
--- DropForeignKey
-ALTER TABLE `equipment_transfers` DROP FOREIGN KEY `equipment_transfers_initiatedById_fkey`;
-
--- DropForeignKey
-ALTER TABLE `inspection_records` DROP FOREIGN KEY `inspection_records_equipmentId_fkey`;
-
--- DropForeignKey
-ALTER TABLE `inspection_records` DROP FOREIGN KEY `inspection_records_inspectorId_fkey`;
-
--- DropForeignKey
-ALTER TABLE `maintenance_records` DROP FOREIGN KEY `maintenance_records_equipmentId_fkey`;
-
--- DropForeignKey
-ALTER TABLE `maintenance_records` DROP FOREIGN KEY `maintenance_records_technicianId_fkey`;
-
--- DropForeignKey
-ALTER TABLE `warranty_info` DROP FOREIGN KEY `warranty_info_equipmentId_fkey`;
-
--- AlterTable
-ALTER TABLE `users` DROP COLUMN `password`,
-    ADD COLUMN `passwordHash` VARCHAR(191) NOT NULL,
-    MODIFY `role` ENUM('ADMIN', 'INSPECTOR', 'OPERATOR', 'VIEWER') NULL,
-    MODIFY `status` ENUM('PENDING', 'ACTIVE', 'SUSPENDED', 'DELETED') NOT NULL DEFAULT 'PENDING';
-
--- DropTable
-DROP TABLE `disposal_records`;
-
--- DropTable
-DROP TABLE `equipment`;
-
--- DropTable
-DROP TABLE `equipment_access`;
-
--- DropTable
-DROP TABLE `equipment_assignments`;
-
--- DropTable
-DROP TABLE `equipment_documents`;
-
--- DropTable
-DROP TABLE `equipment_transfers`;
-
--- DropTable
-DROP TABLE `inspection_records`;
-
--- DropTable
-DROP TABLE `maintenance_records`;
-
--- DropTable
-DROP TABLE `warranty_info`;
+    UNIQUE INDEX `users_email_key`(`email`),
+    UNIQUE INDEX `users_serviceNumber_key`(`serviceNumber`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
 CREATE TABLE `equipments` (
@@ -111,17 +33,17 @@ CREATE TABLE `equipments` (
     `equipmentCategory` VARCHAR(191) NULL,
     `manufacturer` VARCHAR(191) NOT NULL,
     `modelNumber` VARCHAR(191) NULL,
-    `yearOfManufacture` INTEGER NOT NULL,
+    `yearOfManufacture` VARCHAR(191) NULL,
     `countryOfOrigin` VARCHAR(191) NOT NULL,
-    `dateOfAcquisition` DATETIME(3) NOT NULL,
+    `dateOfAcquisition` VARCHAR(191) NULL,
     `acquisitionMethod` ENUM('PURCHASE', 'LEASE', 'DONATION', 'TRANSFER', 'OTHER') NOT NULL,
     `supplierInfo` VARCHAR(191) NULL,
     `purchaseOrderNumber` VARCHAR(191) NULL,
     `contractReference` VARCHAR(191) NULL,
-    `costValue` DECIMAL(15, 2) NULL,
+    `costValue` VARCHAR(191) NULL,
     `currency` VARCHAR(191) NOT NULL DEFAULT 'NGN',
     `fundingSource` VARCHAR(191) NULL,
-    `weight` DECIMAL(10, 2) NULL,
+    `weight` VARCHAR(191) NULL,
     `dimensions` VARCHAR(191) NULL,
     `powerRequirements` VARCHAR(191) NULL,
     `fuelType` VARCHAR(191) NULL,
@@ -129,9 +51,12 @@ CREATE TABLE `equipments` (
     `operationalSpecs` TEXT NULL,
     `requiredCertifications` TEXT NULL,
     `environmentalConditions` TEXT NULL,
-    `currentCondition` ENUM('EXCELLENT', 'GOOD', 'FAIR', 'POOR', 'FAILED', 'NOT_APPLICABLE') NOT NULL DEFAULT 'EXCELLENT',
-    `lastConditionCheck` DATETIME(3) NULL,
+    `currentCondition` VARCHAR(191) NULL,
+    `lastConditionCheck` VARCHAR(191) NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
 
+    UNIQUE INDEX `equipments_id_key`(`id`),
     UNIQUE INDEX `equipments_chasisNumber_key`(`chasisNumber`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -150,8 +75,12 @@ CREATE TABLE `operators` (
     `identificationId` VARCHAR(191) NULL,
     `officialEmailAddress` VARCHAR(191) NULL,
     `phoneNumber` VARCHAR(191) NULL,
-    `alternatePhoneNumbers` JSON NULL,
-    `equipmentId` VARCHAR(191) NULL,
+    `alternatePhoneNumber1` VARCHAR(191) NULL,
+    `alternatePhoneNumber2` VARCHAR(191) NULL,
+    `alternatePhoneNumber3` VARCHAR(191) NULL,
+    `equipmentChasisNumber` VARCHAR(191) NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
 
     UNIQUE INDEX `operators_email_key`(`email`),
     UNIQUE INDEX `operators_serviceNumber_key`(`serviceNumber`),
@@ -162,7 +91,7 @@ CREATE TABLE `operators` (
 -- CreateTable
 CREATE TABLE `equipment_ownerships` (
     `id` VARCHAR(191) NOT NULL,
-    `equipmentId` VARCHAR(191) NOT NULL,
+    `equipmentChasisNumber` VARCHAR(191) NOT NULL,
     `operatorId` VARCHAR(191) NOT NULL,
     `startDate` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `endDate` DATETIME(3) NULL,
@@ -175,20 +104,24 @@ CREATE TABLE `equipment_ownerships` (
     `coPhoneNumber` VARCHAR(191) NULL,
     `conditionAtAssignment` ENUM('EXCELLENT', 'GOOD', 'FAIR', 'POOR', 'FAILED', 'NOT_APPLICABLE') NOT NULL DEFAULT 'EXCELLENT',
     `notes` VARCHAR(191) NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
 
-    UNIQUE INDEX `equipment_ownerships_equipmentId_operatorId_isCurrent_key`(`equipmentId`, `operatorId`, `isCurrent`),
+    UNIQUE INDEX `equipment_ownerships_equipmentChasisNumber_operatorId_isCurr_key`(`equipmentChasisNumber`, `operatorId`, `isCurrent`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
 CREATE TABLE `equipment_conditions` (
     `id` VARCHAR(191) NOT NULL,
-    `equipmentId` VARCHAR(191) NOT NULL,
+    `equipmentChasisNumber` VARCHAR(191) NOT NULL,
     `condition` ENUM('EXCELLENT', 'GOOD', 'FAIR', 'POOR', 'FAILED', 'NOT_APPLICABLE') NOT NULL,
     `date` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `notes` VARCHAR(191) NULL,
     `recordedById` VARCHAR(191) NULL,
     `inspectionId` VARCHAR(191) NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -275,7 +208,6 @@ CREATE TABLE `document_legal_inspections` (
 -- CreateTable
 CREATE TABLE `documents` (
     `id` VARCHAR(191) NOT NULL,
-    `type` VARCHAR(191) NOT NULL,
     `url` VARCHAR(191) NOT NULL,
     `description` VARCHAR(191) NULL,
     `metadata` JSON NULL,
@@ -298,20 +230,39 @@ CREATE TABLE `documents` (
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
--- CreateIndex
-CREATE UNIQUE INDEX `users_serviceNumber_key` ON `users`(`serviceNumber`);
+-- CreateTable
+CREATE TABLE `Active_admin_sessions` (
+    `id` VARCHAR(191) NOT NULL,
+    `admin_id` VARCHAR(191) NOT NULL,
+    `login_time` DATETIME(3) NOT NULL,
+    `logout_time` DATETIME(3) NULL,
+
+    UNIQUE INDEX `Active_admin_sessions_admin_id_key`(`admin_id`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `user_sessions` (
+    `id` VARCHAR(191) NOT NULL,
+    `user_id` VARCHAR(191) NOT NULL,
+    `session_token` VARCHAR(191) NOT NULL,
+    `login_time` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `logout_time` DATETIME(3) NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- AddForeignKey
-ALTER TABLE `operators` ADD CONSTRAINT `operators_equipmentId_fkey` FOREIGN KEY (`equipmentId`) REFERENCES `equipments`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `operators` ADD CONSTRAINT `operators_equipmentChasisNumber_fkey` FOREIGN KEY (`equipmentChasisNumber`) REFERENCES `equipments`(`chasisNumber`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `equipment_ownerships` ADD CONSTRAINT `equipment_ownerships_equipmentId_fkey` FOREIGN KEY (`equipmentId`) REFERENCES `equipments`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `equipment_ownerships` ADD CONSTRAINT `equipment_ownerships_equipmentChasisNumber_fkey` FOREIGN KEY (`equipmentChasisNumber`) REFERENCES `equipments`(`chasisNumber`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `equipment_ownerships` ADD CONSTRAINT `equipment_ownerships_operatorId_fkey` FOREIGN KEY (`operatorId`) REFERENCES `operators`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `equipment_conditions` ADD CONSTRAINT `equipment_conditions_equipmentId_fkey` FOREIGN KEY (`equipmentId`) REFERENCES `equipments`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `equipment_conditions` ADD CONSTRAINT `equipment_conditions_equipmentChasisNumber_fkey` FOREIGN KEY (`equipmentChasisNumber`) REFERENCES `equipments`(`chasisNumber`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `equipment_conditions` ADD CONSTRAINT `equipment_conditions_recordedById_fkey` FOREIGN KEY (`recordedById`) REFERENCES `users`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
@@ -366,3 +317,9 @@ ALTER TABLE `documents` ADD CONSTRAINT `documents_functionalInspectionId_fkey` F
 
 -- AddForeignKey
 ALTER TABLE `documents` ADD CONSTRAINT `documents_documentLegalInspectionId_fkey` FOREIGN KEY (`documentLegalInspectionId`) REFERENCES `document_legal_inspections`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Active_admin_sessions` ADD CONSTRAINT `Active_admin_sessions_admin_id_fkey` FOREIGN KEY (`admin_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `user_sessions` ADD CONSTRAINT `user_sessions_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
