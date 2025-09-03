@@ -1,7 +1,7 @@
 import { upload } from '../config/fileUpload';
 import { authMiddleware } from '../middlewares/authMiddleware';
 import { UPLOAD_FIELDS } from '../schema/uploadsSchema';
-import { createEquipment, createEquipmentOwnership, deleteEquipment, getAllEquipment, getEquipmentById, updateEquipment, getOwnershipHistoryByEquipment, getEquipmentOwnerships } from './../controller/equipmentController';
+import { createEquipment, createEquipmentOwnership, deleteEquipment, getAllEquipment, getEquipmentById, updateEquipment, getEquipmentOwnerships } from './../controller/equipmentController';
 import  express  from "express";
 
 export const equipmentRouter = express.Router();
@@ -11,7 +11,6 @@ export const equipmentRouter = express.Router();
 equipmentRouter.get('/',authMiddleware, getAllEquipment);
 equipmentRouter.post('/',upload.fields(UPLOAD_FIELDS), createEquipment);
 equipmentRouter.get('/ownership/:id',authMiddleware,getEquipmentOwnerships)
-// equipmentRouter.get('/ownership/:id',authMiddleware,getOwnershipHistoryByEquipment)
 
 
 // // Specific equipment routes
