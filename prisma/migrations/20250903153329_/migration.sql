@@ -91,7 +91,7 @@ CREATE TABLE `operators` (
 -- CreateTable
 CREATE TABLE `equipment_ownerships` (
     `id` VARCHAR(191) NOT NULL,
-    `equipmentChasisNumber` VARCHAR(191) NOT NULL,
+    `equipmentId` VARCHAR(191) NOT NULL,
     `operatorId` VARCHAR(191) NOT NULL,
     `startDate` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `endDate` DATETIME(3) NULL,
@@ -106,8 +106,8 @@ CREATE TABLE `equipment_ownerships` (
     `notes` VARCHAR(191) NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
+    `userId` VARCHAR(191) NOT NULL,
 
-    UNIQUE INDEX `equipment_ownerships_equipmentChasisNumber_operatorId_isCurr_key`(`equipmentChasisNumber`, `operatorId`, `isCurrent`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -256,10 +256,13 @@ CREATE TABLE `user_sessions` (
 ALTER TABLE `operators` ADD CONSTRAINT `operators_equipmentChasisNumber_fkey` FOREIGN KEY (`equipmentChasisNumber`) REFERENCES `equipments`(`chasisNumber`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `equipment_ownerships` ADD CONSTRAINT `equipment_ownerships_equipmentChasisNumber_fkey` FOREIGN KEY (`equipmentChasisNumber`) REFERENCES `equipments`(`chasisNumber`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `equipment_ownerships` ADD CONSTRAINT `equipment_ownerships_equipmentId_fkey` FOREIGN KEY (`equipmentId`) REFERENCES `equipments`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `equipment_ownerships` ADD CONSTRAINT `equipment_ownerships_operatorId_fkey` FOREIGN KEY (`operatorId`) REFERENCES `operators`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `equipment_ownerships` ADD CONSTRAINT `equipment_ownerships_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `equipment_conditions` ADD CONSTRAINT `equipment_conditions_equipmentChasisNumber_fkey` FOREIGN KEY (`equipmentChasisNumber`) REFERENCES `equipments`(`chasisNumber`) ON DELETE RESTRICT ON UPDATE CASCADE;

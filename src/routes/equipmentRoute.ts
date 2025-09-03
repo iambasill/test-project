@@ -18,5 +18,5 @@ equipmentRouter.delete('/:id',authMiddleware, deleteEquipment);
 
 
 equipmentRouter.post('/create-ownership',authMiddleware,createEquipmentOwnership)
-equipmentRouter.get('/ownership',authMiddleware,getOwnershipHistoryByEquipment)
+equipmentRouter.post('/ownership',authMiddleware,getOwnershipHistoryByEquipment)
 

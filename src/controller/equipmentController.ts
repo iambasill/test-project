@@ -2,7 +2,6 @@ import { CreateEquipmentOwnershipSchema, equipmentData } from '../schema/schema'
 import e, {Request,Response} from 'express'
 import { BadRequestError } from '../httpClass/exceptions';
 import { prisma } from '../server';
-import { fileHandler } from '../utils/filerHandler';
 import { API_BASE_URL } from '../../secrets';
 
 
@@ -237,7 +236,7 @@ export const createEquipmentOwnership = async (req: Request, res: Response) => {
     // Convert string dates to Date objects if provided
     const data = {
       ...validatedData,
-      assignedBy: user.id,
+      userId: user.id,
       startDate: validatedData.startDate ? new Date(validatedData.startDate) : new Date(),
       endDate: validatedData.endDate ? new Date(validatedData.endDate) : null,
     };

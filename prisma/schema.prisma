@@ -174,10 +174,9 @@ model EquipmentOwnership {
 
     createdAt  DateTime @default(now())
     updatedAt  DateTime @updatedAt
-    UserId     String
-    assignedBy User     @relation(fields: [UserId], references: [id])
+    userId     String
+    assignedBy User     @relation(fields: [userId], references: [id])
 
-    @@unique([equipmentId, operatorId, isCurrent])
     @@map("equipment_ownerships")
 }
 
