@@ -10,6 +10,7 @@ export const equipmentRouter = express.Router();
 // Base routes
 equipmentRouter.get('/',authMiddleware, getAllEquipment);
 equipmentRouter.post('/', authMiddleware,upload.fields(UPLOAD_FIELDS), createEquipment);
+equipmentRouter.get('/ownership/:id',authMiddleware,getOwnershipHistoryByEquipment)
 
 // // Specific equipment routes
 equipmentRouter.get('/:id', authMiddleware,getEquipmentById);
@@ -18,5 +19,4 @@ equipmentRouter.delete('/:id',authMiddleware, deleteEquipment);
 
 
 equipmentRouter.post('/create-ownership',authMiddleware,createEquipmentOwnership)
-equipmentRouter.post('/ownership/:id',authMiddleware,getOwnershipHistoryByEquipment)
 
