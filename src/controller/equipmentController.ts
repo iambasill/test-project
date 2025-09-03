@@ -310,9 +310,10 @@ export const getOwnershipHistoryByEquipment = async (req: Request, res: Response
 
 
 export const getEquipmentOwnerships = async (req: Request, res: Response) => {
-
+    
     const ownerships = await prisma.equipmentOwnership.findMany({
- include: {
+      where: {equipmentId:"1b9d2d59-2261-4bbf-afa8-a6805250fcbc"},
+      include: {
           assignedBy:{
             select:{
               firstName            :true,
