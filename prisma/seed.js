@@ -214,29 +214,29 @@ async function main() {
   }
 
   // --- Create Equipment Ownerships ---
-  const ownerships = [];
-  for (let i = 0; i < equipments.length; i++) {
-    const equipment = equipments[i];
-    const operator = operators[i % operators.length];
+  // const ownerships = [];
+  // for (let i = 0; i < equipments.length; i++) {
+  //   const equipment = equipments[i];
+  //   const operator = operators[i % operators.length];
     
-    const ownership = await prisma.equipmentOwnership.create({
-      data: {
-        equipment: { connect: { chasisNumber: equipment.chasisNumber } },
-        operator: { connect: { id: operator.id } },
-        startDate: new Date(),
-        isCurrent: true,
-        primaryDuties: "Primary equipment operator",
-        driverLicenseId: `DL-${8000000 + i}`,
-        coFirstName: "Commanding",
-        coLastName: "Officer",
-        coEmail: "commander@police.ng",
-        coPhoneNumber: "+2348012345678",
-        conditionAtAssignment: "EXCELLENT",
-        notes: `Assigned to ${operator.firstName} ${operator.lastName}`,
-      },
-    });
-    ownerships.push(ownership);
-  }
+  //   const ownership = await prisma.equipmentOwnership.create({
+  //     data: {
+  //       equipment: { connect: { chasisNumber: equipment.chasisNumber } },
+  //       operator: { connect: { id: operator.id } },
+  //       startDate: new Date(),
+  //       isCurrent: true,
+  //       primaryDuties: "Primary equipment operator",
+  //       driverLicenseId: `DL-${8000000 + i}`,
+  //       coFirstName: "Commanding",
+  //       coLastName: "Officer",
+  //       coEmail: "commander@police.ng",
+  //       coPhoneNumber: "+2348012345678",
+  //       conditionAtAssignment: "EXCELLENT",
+  //       notes: `Assigned to ${operator.firstName} ${operator.lastName}`,
+  //     },
+  //   });
+  //   ownerships.push(ownership);
+  // }
 
   // --- Create realistic inspections with condition progression ---
   for (const equipment of equipments) {
