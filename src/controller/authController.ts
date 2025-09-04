@@ -341,9 +341,9 @@ export const verifyTokenController = async (req: Request, res: Response) => {
 
 export const getApkController = async (req: Request, res: Response) => {
   const token = req.query.token;
-
+  //TODO verify token
   if (token) {
-    res.redirect("https://expo.dev/accounts/nonsolovescoding/projects/Defence-IVM/builds/0f904a76-d032-4db8-9ef1-8e54ffee30ea");
+    res.redirect(`${API_BASE_URL}/attachment/var/www/defence-ivm-backend/storage/application-0f904a76-d032-4db8-9ef1-8e54ffee30ea.apk`)
   } else {
     res.status(401).send("Invalid token");
   }

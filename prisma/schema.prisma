@@ -152,7 +152,7 @@ model Operator {
 model EquipmentOwnership {
     id              String    @id @default(uuid())
     equipment       Equipment @relation(fields: [equipmentId], references: [id])
-    equipmentId     String // Changed from equipmentId
+    equipmentId     String
     operator        Operator  @relation(fields: [operatorId], references: [id])
     operatorId      String
     startDate       DateTime  @default(now())
