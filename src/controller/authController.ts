@@ -343,7 +343,7 @@ export const getApkController = async (req: Request, res: Response) => {
   const token = req.query.token;
 
   if (token) {
-    res.redirect("https://expo.dev/artifacts/eas/2Vt9L1cbzTLmdSNHJpQvuf.apk");
+    res.redirect("https://expo.dev/accounts/nonsolovescoding/projects/Defence-IVM/builds/0f904a76-d032-4db8-9ef1-8e54ffee30ea");
   } else {
     res.status(401).send("Invalid token");
   }
