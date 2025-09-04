@@ -343,7 +343,7 @@ export const getApkController = async (req: Request, res: Response) => {
   const token = req.query.token;
   //TODO verify token
   if (token) {
-    res.redirect(`${API_BASE_URL}/attachment/var/www/defence-ivm-backend/storage/application-0f904a76-d032-4db8-9ef1-8e54ffee30ea.apk`)
+    res.redirect("https://github.com/404-services01/Defence-IVM-Mobile/releases/download/v1.0.0/DefenceApp.apk")
   } else {
     res.status(401).send("Invalid token");
   }
