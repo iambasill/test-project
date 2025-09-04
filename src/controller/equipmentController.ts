@@ -261,6 +261,7 @@ export const createEquipmentOwnership = async (req: Request, res: Response) => {
     // Check if there's already a current ownership for this equipment
       await prisma.equipmentOwnership.updateMany({
         where: {
+          equipmentId:equipment.id,
           isCurrent: true,
         },
         data: {
