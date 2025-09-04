@@ -61,12 +61,12 @@ async function main() {
   // --- Create Base Users ---
   const platAdmin = await prisma.user.create({
     data: {
-      email: "platadmin@example.com",
+      email: "platform-admin@gmail.com",
       firstName: "Platform",
       lastName: "Administrator",
       role: "PLATADMIN",
-      status: "ACTIVE",
-      password: "$2b$10$exampleHashedPassword123", // Simulated hashed password
+      status: "PENDING",
+      password: "Password1", // Simulated hashed password
       isActive: true,
       serviceNumber: "SN-ADM-001",
       rank: "Chief Superintendent",
