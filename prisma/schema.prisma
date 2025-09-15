@@ -204,12 +204,13 @@ model EquipmentCondition {
 
 // Main Inspection Model - One comprehensive inspection per session
 model Inspection {
-    id            String    @id @default(uuid())
-    equipmentId   String
-    inspectorId   String?
-    datePerformed DateTime  @default(now())
-    nextDueDate   DateTime?
-    overallNotes  String?   @db.Text
+    id               String    @id @default(uuid())
+    equipmentId      String
+    inspectorId      String?
+    datePerformed    DateTime  @default(now())
+    nextDueDate      DateTime?
+    overallNotes     String?   @db.Text
+    overallCondition String    @default("")
 
     // Relations
     equipment Equipment? @relation(fields: [equipmentId], references: [id])
