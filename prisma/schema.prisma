@@ -57,6 +57,7 @@ model User {
     refreshToken          String?
     resetToken            String?
     resetTokenExpiry      DateTime?
+    loginAttempt          Int? @default(0)
     lastLogin             DateTime?
     createdAt             DateTime               @default(now())
     updatedAt             DateTime               @updatedAt
@@ -122,11 +123,11 @@ model Equipment {
 
 model Operator {
     id                    String  @id @default(uuid())
-    email                 String? @unique
+    email                 String @unique
     firstName             String
     lastName              String
-    serviceNumber         String? @unique
-    rank                  String?
+    serviceNumber         String @unique
+    rank                  String
     branch                String?
     position              String?
     identificationType    String?

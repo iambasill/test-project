@@ -1,103 +1,16 @@
 import express, { Request, Response, NextFunction } from "express";
-import { prisma } from "../server";
-import { BadRequestError, unAuthorizedError } from "../httpClass/exceptions";
-import { signUpSchema, loginSchema } from "../schema/schema";
-import { API_BASE_URL, AUTH_JWT_TOKEN, CLIENT_URL } from "../../secrets";
+import { PrismaClient } from "../generated/prisma";
+import { BadRequestError } from "../httpClass/exceptions";
+import { signUpSchema, loginSchema, emailSchema, changePasswordSchema, userIdSchema } from "../schema/schema";
 import bcrypt from 'bcrypt';
-import jwt, { JwtPayload } from "jsonwebtoken";
-import { checkUser } from "../utils/func";
-import { sendVerificationEmail } from "../config/emailService";
+import { checkUser, generateLoginToken, generateToken, generateUserSession, genrateRandomPassword, manageAdminSession, verifyAuthToken } from "../utils/helperFunction";
+import { sendVerificationEmail } from "../services/emailService";
+import { config } from "../config/envConfig";
 
-const generateToken = async (userId: string) => {
-  const token = jwt.sign({ id: userId }, AUTH_JWT_TOKEN as string, {expiresIn:'24h'});
 
-  await prisma.user.update({
-    where: { id: userId },
-    data: { resetToken: token, resetTokenExpiry: new Date(Date.now() + 86400000) }
-  });
 
-  return token;
-};
+const prisma = new PrismaClient()
 
-const generateLoginToken = (userId: string, expiresIn: any ) => {
-  return jwt.sign({ id: userId }, AUTH_JWT_TOKEN as string, { expiresIn:expiresIn });
-};
-
-// Helper function to create user session token
-const generateUserSession = async (userId: string,session_token:string) => {
-  // close all active sessions
-   await prisma.user_sessions.updateMany({
-    where: {
-      user_id: userId,
-      logout_time: null,
-    },
-    data: { logout_time: new Date() }
-  });
-
-  // Store user session
-  await prisma.user_sessions.create({
-    data: {
-      user_id: userId,
-      session_token
-    }
-  });
-
-    // Update last login
-    await prisma.user.update({
-    where: { id: userId },
-    data: { 
-      lastLogin: new Date(),
-      isActive: true
-     }
-  });
-  
-};
-
-const manageAdminSession = async (userId: string) => {
-  // Check if there's already an active admin session from a different admin
-  const existingSession = await prisma.active_admin_sessions.findFirst({
-    where: {
-      admin_id: { not: userId }, 
-      logout_time: {
-        gt: new Date() // Still active
-      },
-      user:{
-        status: "ACTIVE"
-      }
-    }
-  });
-
-  if (existingSession) {
-    throw new BadRequestError("Another admin is currently active. You cannot log in until their session ends");
-  }
-
-    await prisma.active_admin_sessions.deleteMany({
-     where:{
-      admin_id:{not:userId}
-     }
-   })
- 
-
-  const logoutAt = new Date(Date.now() + 2 * 60 * 60 * 1000); 
-  
-  // Use upsert for cleaner code (since admin_id is unique)
-  const session = await prisma.active_admin_sessions.upsert({
-    where: { 
-      admin_id: userId // Use the unique field for lookup
-    },
-    update: { 
-      login_time: new Date(), 
-      logout_time: logoutAt 
-    },
-    create: { 
-      admin_id: userId, 
-      login_time: new Date(), 
-      logout_time: logoutAt 
-    }
-  });
-
-  return session.logout_time;
-};
 
 // ====================== CONTROLLERS ====================== //
 
@@ -105,29 +18,27 @@ const manageAdminSession = async (userId: string) => {
  * Register a new user.
  */
 export const registerController = async (req: Request, res: Response, next: NextFunction) => {
-  const validatedData = signUpSchema.parse(req.body);
-  const { email, firstName, lastName, role } = validatedData;
-
+  const { email, firstName, lastName, role }  = signUpSchema.parse(req.body);
+  
   const existingUser = await prisma.user.findFirst({ where: { email } });
   if (existingUser) {
     throw new BadRequestError('User already exists');
   }
-
-  const hashedPassword = await bcrypt.hash("password", 12); //create a random function for this
-  const user = await prisma.user.create({
-    data: { email, firstName, lastName, role, password: hashedPassword, status: 'PENDING', refreshToken: "null" }
+  const hashedPassword = await bcrypt.hash( await genrateRandomPassword(), 12); 
+  const user:any = await prisma.user.create({
+    data: { email, firstName, lastName, role, password: hashedPassword, status: 'PENDING', refreshToken: null }
   });
 
   const verificationToken = await generateToken(user.id);
-  const verificationLink = `${API_BASE_URL}/download/apk?token=${verificationToken}`;
-
-  // Send verification email
-  const emailSent = await sendVerificationEmail(
+  const verificationLink = `${config.API_BASE_URL}/download/apk?token=${verificationToken}`;
+    // Send verification email
+    await sendVerificationEmail(
     email,
     verificationLink,
     firstName,
     "register"
   );
+
 
   res.status(201).send({
     success: true,
@@ -138,50 +49,48 @@ export const registerController = async (req: Request, res: Response, next: Next
 /**
  * Login user - handles both regular users and admin session management
  */
+const MAX_FAILED_ATTEMPTS = 5
 export const loginController = async (req: Request, res: Response) => {
   const { email, password } = loginSchema.parse(req.body);
 
   const user = await prisma.user.findFirst({ where: { email } });
   if (!user) throw new BadRequestError("Invalid Credentials");
-  if (user.status === 'SUSPENDED') throw new BadRequestError("Account Suspended");
+  if (user.status === 'SUSPENDED') throw new BadRequestError("Account suspended please contact the Admin");
 
   const isPasswordValid = await bcrypt.compare(password, user.password);
   if (!isPasswordValid) throw new BadRequestError("Invalid Credentials");
 
-let tokenExpiry: Date | null = null;
+  let tokenExpiry: String | null = null;
 
-// Generate user session for all users
-if (user.role && ['ADMIN'].includes(user.role)) {
-  tokenExpiry = await manageAdminSession(user.id);
-}
+// Generate user session 
+  if (user.role && ['ADMIN'].includes(user.role)) tokenExpiry = await manageAdminSession(user.id);
 
 const expiresIn =
   tokenExpiry && tokenExpiry instanceof Date
     ? `${Math.floor((tokenExpiry.getTime() - Date.now()) / 1000)}s`
     : "8h";
 
-const token = generateLoginToken(user.id, expiresIn);
+const token = await generateLoginToken(user.id, expiresIn);
 
 await generateUserSession(user.id,token);
 
-  const { password: _, ...userData } = user;
-
+  const { password: _,updatedAt, resetTokenExpiry, ...userData } = user;
 
 
   res.status(200).send({
     success: true,
     token,
-    user
+    userData
   });
 };
 
 /**
  * Logout controller - clears user session and admin session if applicable
  */
+
 export const logoutController = async (req: Request, res: Response) => {
   const user:any = req.user
   const token:any = req.token
-
   
   // Clear user session
   await prisma.user_sessions.updateMany({
@@ -192,7 +101,7 @@ export const logoutController = async (req: Request, res: Response) => {
     data:{logout_time: new Date()}
   });
 
-  // If user is admin and has admin session, clear it
+  // If user is admin and has admin session
   if (user.role && ['ADMIN'].includes(user.role)) {
   
      await prisma.active_admin_sessions.deleteMany({
@@ -215,14 +124,14 @@ export const logoutController = async (req: Request, res: Response) => {
   });
 };
 
+
 /**
  * Check admin status - returns current admin session info
  */
+
 export const getAdminStatusController = async (req: Request, res: Response) => {
-  const activeSession = await prisma.active_admin_sessions.findFirst({
-    
+  const activeSession = await prisma.active_admin_sessions.findMany({
     where: { 
-      // TODO:  revert after development
       user: {
         status: "ACTIVE"
       }
@@ -243,7 +152,7 @@ export const getAdminStatusController = async (req: Request, res: Response) => {
   if (!activeSession) {
     return res.status(200).send({
       success: true,
-      message: "No admin currently active"
+      message: "No admin is currently active"
     });
   }
 
@@ -258,19 +167,22 @@ export const getAdminStatusController = async (req: Request, res: Response) => {
 /**
  * Force terminate admin session - Emergency override for PLATADMIN
  */
+
 export const forceTerminateAdminController = async (req: Request, res: Response) => {
-  const { userId } = req.body;
-  const user = checkUser(userId)
+  const { userId } = userIdSchema.parse(req.body);
+
+  const user = checkUser(userId as string)
+  if (!user) throw new BadRequestError("Invalid User")
 
   await prisma.user_sessions.updateMany({
     where: { 
       user_id: userId,
-      // TODO: session_token:token
+      logout_time:null
     },
     data:{logout_time: new Date()}
   });
   // Terminate target admin session
-  const result = await prisma.active_admin_sessions.deleteMany({
+  await prisma.active_admin_sessions.deleteMany({
      where:{admin_id:userId}
    })
 
@@ -286,9 +198,15 @@ export const forceTerminateAdminController = async (req: Request, res: Response)
   });
 };
 
-export const changePasswordController = async (req: Request, res: Response) => {
-  const { token, newPassword } = req.body;
+/**
+ * Change password
+ */
 
+export const changePasswordController = async (req: Request, res: Response) => {
+
+  const { token, newPassword } = changePasswordSchema.parse(req.body);
+  
+  await verifyAuthToken(token as string,"reset")
   const user = await prisma.user.findFirst({
     where: {
       resetToken: token,
@@ -298,7 +216,7 @@ export const changePasswordController = async (req: Request, res: Response) => {
 
   if (!user) throw new BadRequestError("Invalid or expired token");
 
-  const hashedPassword = await bcrypt.hash(newPassword, 12);
+  const hashedPassword = await bcrypt.hash(newPassword as string, 12);
   await prisma.user.update({
     where: { id: user.id },
     data: { password: hashedPassword, resetToken: null, resetTokenExpiry: null, status: "ACTIVE" }
@@ -307,8 +225,12 @@ export const changePasswordController = async (req: Request, res: Response) => {
   res.status(200).send({ success: true, message: "Password changed successful" });
 };
 
+/**
+ * forgot Password controller 
+ */
+
 export const forgotPasswordController = async (req: Request, res: Response) => {
-  const { email } = req.body;
+  const {email} = emailSchema.parse(req.body)
 
   const user = await prisma.user.findFirst({
     where: {
@@ -319,10 +241,10 @@ export const forgotPasswordController = async (req: Request, res: Response) => {
   if (!user) throw new BadRequestError("Email is incorrect!");
 
   const verificationToken = await generateToken(user.id);
-  const verificationLink = `${CLIENT_URL}/reset/change-password?token=${verificationToken}`;
+  const verificationLink = `${config.CLIENT_URL}/reset/change-password?token=${verificationToken}`;
 
   // Send verification email
-  const emailSent = await sendVerificationEmail(
+  await sendVerificationEmail(
     email,
     verificationLink,
     user.firstName,
@@ -332,25 +254,39 @@ export const forgotPasswordController = async (req: Request, res: Response) => {
   res.status(200).send({ success: true, message: "Verification link sent to email successful" });
 };
 
-export const verifyTokenController = async (req: Request, res: Response) => {
+/**
+ * verify session controller 
+ */
+
+export const verifySessionTokenController = async (req: Request, res: Response) => {
   res.status(200).json({
     success: true,
     message: 'Token verified successfully!',
   });
 };
 
+/**
+ * getAPK controller 
+ */
+
 export const getApkController = async (req: Request, res: Response) => {
-  const token = req.query.token;
-  //TODO verify token
+  const token = (req.query.token)?.toString();
   if (token) {
+    await verifyAuthToken(token,"reset")
     res.redirect("https://github.com/404-services01/Defence-IVM-Mobile/releases/download/v1.0.0/DefenceApp.apk")
   } else {
     res.status(401).send("Invalid token");
   }
 };
 
+
+/**
+ * Verify User controller 
+ */
+
+
 export const verifyUserController = async (req: Request, res: Response) => {
-  const { email } = req.body;
+  const {email} = emailSchema.parse(req.body)
 
   const user = await prisma.user.findFirst({
     where: { email }
@@ -367,8 +303,13 @@ export const verifyUserController = async (req: Request, res: Response) => {
   });
 };
 
+/**
+ * resend verification controller 
+ */
+
+
 export const resendVerficationController = async (req: Request, res: Response, next: NextFunction) => {
-  const {email} = req.body
+  const {email} = emailSchema.parse(req.body)
 
   const existingUser = await prisma.user.findFirst({ where: { email } });
   if (!existingUser) {
@@ -376,10 +317,10 @@ export const resendVerficationController = async (req: Request, res: Response, n
   }
 
   const verificationToken = await generateToken(existingUser.id);
-  const verificationLink = `${API_BASE_URL}/download/apk?token=${verificationToken}`;
+  const verificationLink = `${config.API_BASE_URL}/download/apk?token=${verificationToken}`;
 
   // Send verification email
-  const emailSent = await sendVerificationEmail(
+    await sendVerificationEmail(
     email,
     verificationLink,
     existingUser.firstName,

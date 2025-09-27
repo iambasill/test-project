@@ -1,12 +1,15 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
-import { prisma } from '../server';
 import { BadRequestError, unAuthorizedError } from '../httpClass/exceptions';
-import { User } from '../generated/prisma';
+import { PrismaClient } from '../generated/prisma';
+import { sanitizeInput } from '../utils/helperFunction';
+import { signUpSchema } from '../schema/schema';
+
+
+const prisma = new PrismaClient()
 
 
 export const getAllUsers = async (req: Request, res: Response) => {
-  
   const users = await prisma.user.findMany({
       select: {
         id: true,
@@ -59,35 +62,25 @@ export const getUserById = async (req: Request, res: Response) => {
 // Update user
 export const updateUser = async (req: Request, res: Response) => {
     const user:any = req.user
-    const { id } = req.params;
+    let { id } = req.params;
+    id = sanitizeInput(id)
 
 
-    const { email, firstName, lastName, role, status, password } = req.body;
+    const { email, firstName, lastName, role } = signUpSchema.parse(req.body);
     const existingUser = await prisma.user.findFirst({
      where: { email }
     });
+
+    if (!existingUser) throw new BadRequestError("User not found")
 
     const updateData: any = {};
     if (firstName) updateData.firstName = firstName;
     if (lastName) updateData.lastName = lastName;
     if (role) updateData.role = role;
-    if (status) updateData.status = status;
-    if (password) {
-      updateData.password = await bcrypt.hash(password, 10);
-    }
 
      const updatedUser = await prisma.user.update({
       where: { id },
       data: updateData,
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        role: true,
-        status: true,
-        updatedAt: true,
-      },
     });
 
     res.status(200).json({
@@ -96,24 +89,13 @@ export const updateUser = async (req: Request, res: Response) => {
     });
   }
 
-// // Delete user
-// export const deleteUser = async (req: Request, res: Response) => {
-//     const { id } = req.params;
-//     await prisma.user.delete({
-//       where: { id },
-//     });
-
-//     res.status(200).json({
-//       success: true,
-//       message: 'User deleted successfully',
-//     });
-  
-// };
 
 // Update user status
 export const updateUserStatus = async (req: Request, res: Response) => {
-    const { id } = req.params;
-    const {status} = req.body;
+    let { id } = req.params;
+    let  {status} = req.body;
+    id = sanitizeInput(id)
+    status =sanitizeInput(status)
 
     const updatedUser = await prisma.user.update({
       where: { id },

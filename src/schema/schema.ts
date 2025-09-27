@@ -1,18 +1,58 @@
 import * as z from "zod";
 import { AcquisitionMethod, ConditionStatus, UserRole } from "../generated/prisma";
-export const signUpSchema = z.object({
+import sanitizeHtml from "sanitize-html";
+
+const sanitizeObject = <T extends z.ZodRawShape>(schema: z.ZodObject<T>) => {
+  return z.object(
+    Object.fromEntries(
+      Object.entries(schema.shape).map(([key, value]) => {
+        if (value instanceof z.ZodString) {
+          return [
+            key,
+            value.transform((val) =>
+              sanitizeHtml(val, {
+                allowedTags: [],
+                parser: {
+                  decodeEntities: true,
+                },
+              })
+            ),
+          ];
+        }
+        return [key, value];
+      })
+    ) as T
+  );
+};
+
+
+export const signUpSchema = sanitizeObject(z.object({
     firstName: z.string(),
     lastName: z.string(),
     email:z.string(),
     role: z.enum(UserRole),
-})
+}))
 
-export const loginSchema= z.object({
+export const loginSchema= sanitizeObject(z.object({
     email:z.string(),
     password: z.string()
-})
+}))
 
-export const equipmentData = z.object({
+export const emailSchema= sanitizeObject(z.object({
+    email:z.string()
+}))
+
+export const userIdSchema= sanitizeObject(z.object({
+    userId:z.string()
+}))
+
+export const changePasswordSchema= sanitizeObject(z.object({
+    token:z.string(),
+    newPassword: z.string()
+}))
+
+
+export const equipmentData = sanitizeObject(z.object({
     chasisNumber: z.string(),
     equipmentName:     z.string(),
     model   :          z.string(),
@@ -40,11 +80,11 @@ export const equipmentData = z.object({
     environmentalConditions: z.string().optional(), 
     currentCondition:    z.enum(ConditionStatus).optional(),
     lastConditionCheck: z.string().optional()
-})
+}))
 
 
 
-export const inspectionData = z.object({
+export const inspectionData = sanitizeObject(z.object({
         equipmentId: z.string(),
         nextDueDate:z.string() ,
         overallNotes: z.string(),
@@ -55,12 +95,12 @@ export const inspectionData = z.object({
         documentLegalInspections: z.array(z.object())
     
 
-})
+}))
 export const ConditionStatusEnum = z.enum(['EXCELLENT', 'GOOD', 'FAIR', 'POOR']);
 
 
 
-export const CreateEquipmentOwnershipSchema = z.object({
+export const CreateEquipmentOwnershipSchema = sanitizeObject(z.object({
   equipmentId: z.string(),
   operatorId: z.string(),
   startDate: z.string().optional(),
@@ -77,11 +117,11 @@ export const CreateEquipmentOwnershipSchema = z.object({
   // Equipment condition
   conditionAtAssignment: ConditionStatusEnum.optional().default('EXCELLENT'),
   notes: z.string().optional().nullable(),
-});
+}));
 
 
 
-export const UpdateEquipmentOwnershipSchema = z.object({
+export const UpdateEquipmentOwnershipSchema = sanitizeObject(z.object({
   equipmentChasisNumber: z.string().min(1).optional(),
   operatorId: z.string().uuid().optional(),
   startDate: z.string().optional(),
@@ -99,12 +139,29 @@ export const UpdateEquipmentOwnershipSchema = z.object({
   // Equipment condition
   conditionAtAssignment: ConditionStatusEnum.optional(),
   notes: z.string().optional().nullable(),
-});
+}));
 
-const QuerySchema = z.object({
+export const QuerySchema = sanitizeObject(z.object({
   page: z.string().transform(Number).pipe(z.number().min(1)).optional().default(1),
   limit: z.string().transform(Number).pipe(z.number().min(1).max(100)).optional().default(10),
   equipmentChasisNumber: z.string().optional(),
   operatorId: z.string().uuid().optional(),
   isCurrent: z.string().transform(val => val === 'true').pipe(z.boolean()).optional(),
-});
+}));
+
+export const operatorSchema = sanitizeObject(z.object({
+    email: z.string(),         
+    firstName: z.string(),            
+    lastName: z.string(),             
+    serviceNumber: z.string(),         
+    rank: z.string(),                  
+    branch: z.string().optional(),            
+    position: z.string().optional(),              
+    identificationType: z.string().optional(), 
+    officialEmailAddress : z.string().optional(),  
+    phoneNumber : z.string().optional(),        
+    alternatePhoneNumber1: z.string().optional(),  
+    alternatePhoneNumber2 : z.string().optional(), 
+    alternatePhoneNumber3: z.string().optional(),
+
+}));

@@ -1,8 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
-import { prisma } from '../server';
 import { unAuthorizedError } from '../httpClass/exceptions';
-import { AUTH_JWT_TOKEN } from '../../secrets';
 
 /**
  * Middleware specifically for Platform Admin actions (highest privilege)

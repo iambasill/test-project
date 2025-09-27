@@ -1,5 +1,5 @@
 import  express  from "express";
-import { upload } from '../config/fileUpload';
+import { upload } from '../services/fileUpload';
 import { createInspection, getAllInspections, getInspectionById,  } from "../controller/inspectionController";
 import { authMiddleware } from "../middlewares/authMiddleware";
 

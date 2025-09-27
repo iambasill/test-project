@@ -1,4 +1,4 @@
-import { upload } from '../config/fileUpload';
+import { upload } from '../services/fileUpload';
 import { authMiddleware } from '../middlewares/authMiddleware';
 import { UPLOAD_FIELDS } from '../schema/uploadsSchema';
 import { createEquipment, createEquipmentOwnership, deleteEquipment, getAllEquipment, getEquipmentById, updateEquipment, getEquipmentOwnerships } from './../controller/equipmentController';

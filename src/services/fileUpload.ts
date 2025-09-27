@@ -6,7 +6,6 @@ import { BadRequestError } from '../httpClass/exceptions';
 
 const app = express();
 const upload_path = path.join(__dirname, "../../../storage/document");
-// const upload_path = path.join(__dirname, "../storage/document");
 
             // If the folder does not exist
             if (!fs.existsSync(upload_path)) {
@@ -55,14 +54,3 @@ export const upload = multer(
 }
 );
 
-
-  //  if (req.files) {
-  //   const files = req.files as Record<string, Express.Multer.File[]>;
-  //   const fileData = Object.entries(files).map(([fileName, [file]]) => ({
-  //     fileName,
-  //     url: file.path.toString(),
-  //     equipmentId: equipmentChasisNumber
-  //   }));
-
-  // equipmentRouter.put('/:id', upload.fields(UPLOAD_FIELDS), updateEquipment);
-  

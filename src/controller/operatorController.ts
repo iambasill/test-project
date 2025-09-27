@@ -1,18 +1,15 @@
-import { Operator, User } from './../generated/prisma/index.d';
 import {Request,Response} from 'express'
 import { BadRequestError, unAuthorizedError } from '../httpClass/exceptions';
-import { prisma } from '../server';
+import { PrismaClient } from "../generated/prisma";
+import { sanitizeInput } from '../utils/helperFunction';
+import { operatorSchema } from '../schema/schema';
 
+const prisma = new PrismaClient()
 
 export const getAllOperator = async (req:Request, res:Response) => {
   const user:any = req.user
   if (user.role === "OFFICER") throw new unAuthorizedError
   const operator = await prisma.operator.findMany({
-    include: {
-      ownerships:true,
-      documents: true,
-      equipment:true
-    }
   });
   
   res.status(200).json({
@@ -22,7 +19,8 @@ export const getAllOperator = async (req:Request, res:Response) => {
 };
 
 export const getAllOperatorById = async (req:Request, res:Response) => {
-  const {id} = req.params
+  let {id} = req.params
+  id = sanitizeInput(id)
     const user:any = req.user
   if (user.role === "OFFICER") throw new unAuthorizedError
 
@@ -58,16 +56,16 @@ export const createOperator = async (req:Request, res:Response) => {
     alternatePhoneNumber2,  
     alternatePhoneNumber3  
 
-  } = req.body
+  } = operatorSchema.parse(req.body)
 
     const operator = await prisma.operator.findFirst({
-    where:{email}
+    where:{serviceNumber}
   })
 
   if (operator) throw new BadRequestError('Operator already exist')
 
   
-  const equipment = await prisma.operator.create({
+   await prisma.operator.create({
     data: {
     email,         
     firstName,            
@@ -82,11 +80,6 @@ export const createOperator = async (req:Request, res:Response) => {
     alternatePhoneNumber1,  
     alternatePhoneNumber2,  
     alternatePhoneNumber3 
-    },
-    include: {
-      ownerships: true,
-      documents: true,
-      equipment: true
     }
   });
   
@@ -99,15 +92,14 @@ export const createOperator = async (req:Request, res:Response) => {
 export const updateOperator = async (req:Request, res:Response) => {
   const user:any = req.user
   if (user.role === "OFFICER") throw new unAuthorizedError
-  const {id} = req.params
+  let {id} = req.params
+  id = sanitizeInput(id)
 
   const operator = await prisma.operator.findUnique({
     where:{id}
   })
 
   if (!operator) throw new BadRequestError('Operator not found')
-
-
 
   const {
     email,         
@@ -124,9 +116,9 @@ export const updateOperator = async (req:Request, res:Response) => {
     alternatePhoneNumber2,  
     alternatePhoneNumber3  
 
-  } = req.body
+  } = operatorSchema.parse(req.body)
   
-  const equipment = await prisma.operator.update({
+    await prisma.operator.update({
     where:{id},
     data: {
     email,         
@@ -142,11 +134,6 @@ export const updateOperator = async (req:Request, res:Response) => {
     alternatePhoneNumber1,  
     alternatePhoneNumber2,  
     alternatePhoneNumber3 
-    },
-    include: {
-      ownerships: true,
-      documents: true,
-      equipment: true
     }
   });
   

@@ -1,9 +1,12 @@
 import { Request, Response } from "express";
-import { prisma } from "../server";
 import { BadRequestError, notFoundError, unAuthorizedError } from "../httpClass/exceptions";
-import { API_BASE_URL } from "../../secrets";
+import { PrismaClient } from "../generated/prisma";
+import { config } from "../config/envConfig";
 
-// Create a new inspection (optimized for performance)
+
+
+const prisma = new PrismaClient()
+
 export const createInspection = async (req: Request, res: Response) => {
     const user: any = req.user;
     
@@ -140,15 +143,7 @@ export const createInspection = async (req: Request, res: Response) => {
         // Return response immediately, don't wait for file uploads
         const response = {
             success: true,
-            data: {
-                id: result.id,
-                equipmentId,
-                inspectorId: user.id,
-                datePerformed: result.datePerformed,
-                nextDueDate: result.nextDueDate,
-                overallNotes: result.overallNotes,
                 message: 'Inspection created successfully'
-            }
         };
 
         // If files are being uploaded, handle them asynchronously
@@ -191,7 +186,7 @@ async function handleFileUploads(files: any, inspectionId: string) {
             const file = Array.isArray(fileArray) ? fileArray[0] : fileArray;
             return {
                 fileName,
-                url: `${API_BASE_URL}/attachment/${file.filename}`,
+                url: `${config.API_BASE_URL}/attachment/${file.filename}`,
                 inspectionId,
                 fileSize: file.size,
                 mimeType: file.mimetype,

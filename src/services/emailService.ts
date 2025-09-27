@@ -1,11 +1,8 @@
 import sgMail from '@sendgrid/mail'
-// import { SENDGRID_API_KEY } from '../../secrets'
-import { BadRequestError } from '../httpClass/exceptions'
+import { config } from '../config/envConfig';
 
-// if(!SENDGRID_API_KEY) throw new BadRequestError("Email token key is not provided")
-const SENDGRID_API_KEY="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"
 
-sgMail.setApiKey(SENDGRID_API_KEY)
+sgMail.setApiKey(config.SENDGRID_API_KEY)
 
 
 export const registerVerificationEmailHtml = (verificationLink: string, userName?: string) => {
@@ -79,7 +76,7 @@ export const sendVerificationEmail = async (to: string, verificationLink: string
   
   const verificationMsg = {
     to,
-    from: "admin@404services.com", // Make sure this is verified
+    from: config.MAIL_FROM,
     subject: "Verify Your Email Address",
     text: `Welcome${userName ? ` ${userName}` : ''}! Please verify your email by visiting: ${verificationLink}`,
     html

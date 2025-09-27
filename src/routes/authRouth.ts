@@ -3,7 +3,7 @@ import {
   loginController, 
   registerController, 
   changePasswordController, 
-  verifyTokenController, 
+  verifySessionTokenController, 
   verifyUserController,
   logoutController,
   getAdminStatusController,
@@ -28,7 +28,7 @@ authRoute.post('/resend-verification', resendVerficationController);
 
 
 // General authenticated routes
-authRoute.post('/verify-token', authMiddleware, verifyTokenController);
+authRoute.post('/verify-session-token', authMiddleware, verifySessionTokenController);
 
 authRoute.post('/logout', authMiddleware, logoutController);
 
