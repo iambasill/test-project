@@ -1,9 +1,9 @@
 import express, { Request, Response, NextFunction } from "express";
 import { PrismaClient } from "../generated/prisma";
 import { BadRequestError } from "../httpClass/exceptions";
-import { signUpSchema, loginSchema, emailSchema, changePasswordSchema, userIdSchema } from "../schema/schema";
+import { signUpSchema, loginSchema, emailSchema, changePasswordSchema, userIdSchema, tokenSchema } from "../schema/schema";
 import bcrypt from 'bcrypt';
-import { checkUser, generateLoginToken, generateToken, generateUserSession, genrateRandomPassword, manageAdminSession, verifyAuthToken } from "../utils/helperFunction";
+import { checkUser, generateLoginToken, generateToken, generateUserSession, genrateRandomPassword, manageAdminSession, verifyToken } from "../utils/helperFunction";
 import { sendVerificationEmail } from "../services/emailService";
 import { config } from "../config/envConfig";
 
@@ -49,7 +49,6 @@ export const registerController = async (req: Request, res: Response, next: Next
 /**
  * Login user - handles both regular users and admin session management
  */
-const MAX_FAILED_ATTEMPTS = 5
 export const loginController = async (req: Request, res: Response) => {
   const { email, password } = loginSchema.parse(req.body);
 
@@ -72,7 +71,9 @@ const expiresIn =
 
 const token = await generateLoginToken(user.id, expiresIn);
 
-await generateUserSession(user.id,token);
+  const refreshToken =  await generateLoginToken(user.id, "10h")
+
+  await generateUserSession(user.id,token, refreshToken);
 
   const { password: _,updatedAt, resetTokenExpiry, ...userData } = user;
 
@@ -80,6 +81,7 @@ await generateUserSession(user.id,token);
   res.status(200).send({
     success: true,
     token,
+    refreshToken,
     userData
   });
 };
@@ -206,7 +208,7 @@ export const changePasswordController = async (req: Request, res: Response) => {
 
   const { token, newPassword } = changePasswordSchema.parse(req.body);
   
-  await verifyAuthToken(token as string,"reset")
+  await verifyToken(token as string,"reset")
   const user = await prisma.user.findFirst({
     where: {
       resetToken: token,
@@ -272,7 +274,7 @@ export const verifySessionTokenController = async (req: Request, res: Response) 
 export const getApkController = async (req: Request, res: Response) => {
   const token = (req.query.token)?.toString();
   if (token) {
-    await verifyAuthToken(token,"reset")
+    await verifyToken(token,"reset")
     res.redirect("https://github.com/404-services01/Defence-IVM-Mobile/releases/download/v1.0.0/DefenceApp.apk")
   } else {
     res.status(401).send("Invalid token");
@@ -332,3 +334,35 @@ export const resendVerficationController = async (req: Request, res: Response, n
     message: "User verified successfully. Please check your email.",
   });
 };
+
+
+/**
+ * refresh token controller 
+ */
+
+export const refreshToken = async (req:Request, res:Response) => {
+  const {refreshToken} = tokenSchema.parse(req.body)
+  const decoded = await  verifyToken(refreshToken,"auth")
+
+  const user:any = await checkUser(decoded.userId)
+  let tokenExpiry: String | null = null;
+
+  if (user.role && ['ADMIN'].includes(user.role)) tokenExpiry = await manageAdminSession(user.id);
+
+  const expiresIn =
+  tokenExpiry && tokenExpiry instanceof Date
+    ? `${Math.floor((tokenExpiry.getTime() - Date.now()) / 1000)}s`
+    : "8h";
+
+  const token = await generateLoginToken(user.id, expiresIn);
+  const newrefreshToken =  await generateLoginToken(user.id, "10h")
+
+  await generateUserSession(user.id,token,newrefreshToken);
+
+   res.status(200).send({
+    success: true,
+    token,
+    refreshToken: newrefreshToken,
+  });
+
+}

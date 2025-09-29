@@ -367,6 +367,7 @@ model User_sessions {
     id            String    @id @default(cuid())
     user_id       String
     session_token String
+    refreshToken String @default("")
     login_time    DateTime  @default(now())
     logout_time   DateTime?
     user          User      @relation(fields: [user_id], references: [id], onDelete: Cascade)

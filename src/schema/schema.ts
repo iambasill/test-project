@@ -165,3 +165,7 @@ export const operatorSchema = sanitizeObject(z.object({
     alternatePhoneNumber3: z.string().optional(),
 
 }));
+
+export const tokenSchema= sanitizeObject(z.object({
+    refreshToken:z.string()
+}))

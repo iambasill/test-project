@@ -29,7 +29,7 @@ export const generateLoginToken = async (userId: string, expiresIn: any ) => {
   return jwt.sign({ id: userId }, config.AUTH_JWT_TOKEN as string, { expiresIn:expiresIn });
 };
 
-export const generateUserSession = async (userId: string,session_token:string) => {
+export const generateUserSession = async (userId: string,session_token:string,refreshToken:string) => {
     await prisma.$transaction(async (tx) => {
     // close all active sessions
       tx.user_sessions.updateMany({
@@ -46,7 +46,8 @@ export const generateUserSession = async (userId: string,session_token:string) =
     tx.user_sessions.create({
     data: {
       user_id: userId,
-      session_token
+      session_token,
+      refreshToken
     }
   });
 
@@ -116,7 +117,7 @@ export async function genrateRandomPassword()  {
 }
 
 
-export async function verifyAuthToken(token: string, type: string) {
+export async function verifyToken(token: string, type: string) {
     if (!process.env.AUTH_JWT_TOKEN) throw new unAuthorizedError('JWT SECRET TOKEN UNDEFINED!');
     if (!process.env.AUTH_RESET_TOKEN) throw new unAuthorizedError('JWT SECRET TOKEN UNDEFINED!');
 
