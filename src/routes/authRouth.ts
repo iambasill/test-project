@@ -10,6 +10,7 @@ import {
   forceTerminateAdminController,
   forgotPasswordController,
   resendVerficationController,
+  refreshToken,
 } from '../controller/authController';
 
 import { authMiddleware } from '../middlewares/authMiddleware';
@@ -24,7 +25,7 @@ authRoute.post('/verify-user', verifyUserController);
 authRoute.post('/change-password', changePasswordController);
 authRoute.post('/forgot-password', forgotPasswordController);
 authRoute.post('/resend-verification', resendVerficationController);
-
+authRoute.post('/refresh-token', refreshToken);
 
 
 // General authenticated routes

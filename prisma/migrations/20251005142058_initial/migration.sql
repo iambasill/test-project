@@ -1,4 +1,13 @@
 -- CreateTable
+CREATE TABLE `equipmentCategory` (
+    `id` VARCHAR(191) NOT NULL,
+    `name` VARCHAR(191) NOT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `users` (
     `id` VARCHAR(191) NOT NULL,
     `email` VARCHAR(191) NOT NULL,
@@ -14,6 +23,7 @@ CREATE TABLE `users` (
     `refreshToken` VARCHAR(191) NULL,
     `resetToken` VARCHAR(191) NULL,
     `resetTokenExpiry` DATETIME(3) NULL,
+    `loginAttempt` INTEGER NULL DEFAULT 0,
     `lastLogin` DATETIME(3) NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
@@ -43,6 +53,9 @@ CREATE TABLE `equipments` (
     `costValue` VARCHAR(191) NULL,
     `currency` VARCHAR(191) NOT NULL DEFAULT 'NGN',
     `fundingSource` VARCHAR(191) NULL,
+    `warrantyStartDate` VARCHAR(191) NULL,
+    `warrantyEndDate` VARCHAR(191) NULL,
+    `warrantyCoverageDetails` VARCHAR(191) NULL,
     `weight` VARCHAR(191) NULL,
     `dimensions` VARCHAR(191) NULL,
     `powerRequirements` VARCHAR(191) NULL,
@@ -64,11 +77,11 @@ CREATE TABLE `equipments` (
 -- CreateTable
 CREATE TABLE `operators` (
     `id` VARCHAR(191) NOT NULL,
-    `email` VARCHAR(191) NULL,
+    `email` VARCHAR(191) NOT NULL,
     `firstName` VARCHAR(191) NOT NULL,
     `lastName` VARCHAR(191) NOT NULL,
-    `serviceNumber` VARCHAR(191) NULL,
-    `rank` VARCHAR(191) NULL,
+    `serviceNumber` VARCHAR(191) NOT NULL,
+    `rank` VARCHAR(191) NOT NULL,
     `branch` VARCHAR(191) NULL,
     `position` VARCHAR(191) NULL,
     `identificationType` VARCHAR(191) NULL,
@@ -102,12 +115,16 @@ CREATE TABLE `equipment_ownerships` (
     `coLastName` VARCHAR(191) NULL,
     `coEmail` VARCHAR(191) NULL,
     `coPhoneNumber` VARCHAR(191) NULL,
-    `conditionAtAssignment` ENUM('EXCELLENT', 'GOOD', 'FAIR', 'POOR', 'FAILED', 'NOT_APPLICABLE') NOT NULL DEFAULT 'EXCELLENT',
+    `conditionAtAssignment` VARCHAR(191) NULL DEFAULT '',
     `notes` VARCHAR(191) NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
     `userId` VARCHAR(191) NOT NULL,
 
+    INDEX `equipment_ownerships_equipmentId_idx`(`equipmentId`),
+    INDEX `equipment_ownerships_operatorId_idx`(`operatorId`),
+    INDEX `equipment_ownerships_createdAt_idx`(`createdAt`),
+    INDEX `equipment_ownerships_isCurrent_idx`(`isCurrent`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -115,7 +132,7 @@ CREATE TABLE `equipment_ownerships` (
 CREATE TABLE `equipment_conditions` (
     `id` VARCHAR(191) NOT NULL,
     `equipmentChasisNumber` VARCHAR(191) NOT NULL,
-    `condition` ENUM('EXCELLENT', 'GOOD', 'FAIR', 'POOR', 'FAILED', 'NOT_APPLICABLE') NOT NULL,
+    `condition` VARCHAR(191) NOT NULL,
     `date` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `notes` VARCHAR(191) NULL,
     `recordedById` VARCHAR(191) NULL,
@@ -134,6 +151,7 @@ CREATE TABLE `inspections` (
     `datePerformed` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `nextDueDate` DATETIME(3) NULL,
     `overallNotes` TEXT NULL,
+    `overallCondition` VARCHAR(191) NOT NULL DEFAULT '',
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
 
@@ -145,7 +163,7 @@ CREATE TABLE `exterior_inspections` (
     `id` VARCHAR(191) NOT NULL,
     `inspectionId` VARCHAR(191) NOT NULL,
     `itemName` VARCHAR(191) NOT NULL,
-    `condition` ENUM('EXCELLENT', 'GOOD', 'FAIR', 'POOR', 'FAILED', 'NOT_APPLICABLE') NOT NULL,
+    `condition` VARCHAR(191) NOT NULL,
     `notes` TEXT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
@@ -158,7 +176,7 @@ CREATE TABLE `interior_inspections` (
     `id` VARCHAR(191) NOT NULL,
     `inspectionId` VARCHAR(191) NOT NULL,
     `itemName` VARCHAR(191) NOT NULL,
-    `condition` ENUM('EXCELLENT', 'GOOD', 'FAIR', 'POOR', 'FAILED', 'NOT_APPLICABLE') NOT NULL,
+    `condition` VARCHAR(191) NOT NULL,
     `notes` TEXT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
@@ -171,7 +189,7 @@ CREATE TABLE `mechanical_inspections` (
     `id` VARCHAR(191) NOT NULL,
     `inspectionId` VARCHAR(191) NOT NULL,
     `itemName` VARCHAR(191) NOT NULL,
-    `condition` ENUM('EXCELLENT', 'GOOD', 'FAIR', 'POOR', 'FAILED', 'NOT_APPLICABLE') NOT NULL,
+    `condition` VARCHAR(191) NOT NULL,
     `notes` TEXT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
@@ -184,7 +202,7 @@ CREATE TABLE `functional_inspections` (
     `id` VARCHAR(191) NOT NULL,
     `inspectionId` VARCHAR(191) NOT NULL,
     `itemName` VARCHAR(191) NOT NULL,
-    `condition` ENUM('EXCELLENT', 'GOOD', 'FAIR', 'POOR', 'FAILED', 'NOT_APPLICABLE') NOT NULL,
+    `condition` VARCHAR(191) NOT NULL,
     `notes` TEXT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
@@ -197,7 +215,7 @@ CREATE TABLE `document_legal_inspections` (
     `id` VARCHAR(191) NOT NULL,
     `inspectionId` VARCHAR(191) NOT NULL,
     `itemName` VARCHAR(191) NOT NULL,
-    `condition` ENUM('EXCELLENT', 'GOOD', 'FAIR', 'POOR', 'FAILED', 'NOT_APPLICABLE') NOT NULL,
+    `condition` VARCHAR(191) NOT NULL,
     `notes` TEXT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
@@ -246,6 +264,7 @@ CREATE TABLE `user_sessions` (
     `id` VARCHAR(191) NOT NULL,
     `user_id` VARCHAR(191) NOT NULL,
     `session_token` VARCHAR(191) NOT NULL,
+    `refreshToken` VARCHAR(191) NOT NULL DEFAULT '',
     `login_time` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `logout_time` DATETIME(3) NULL,
 

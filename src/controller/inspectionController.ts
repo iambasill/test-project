@@ -205,7 +205,6 @@ async function handleFileUploads(files: any, inspectionId: string) {
     }
 }
 
-// Get all inspections (optimized with pagination)
 export const getAllInspections = async (req: Request, res: Response) => {
     const user: any = req.user;
     
@@ -396,50 +395,50 @@ export const getInspectionById = async (req: Request, res: Response) => {
         });
     
 };
-
 // Delete inspection (optimized with cascade handling)
-// export const deleteInspection = async (req: Request, res: Response) => {
-//     const { id } = req.params;
+export const deleteInspection = async (req: Request, res: Response) => {
+    const { id } = req.params;
 
-//     try {
-//         // Use transaction to ensure all related data is deleted properly
-//         await prisma.$transaction(async (tx) => {
-//             // Check if inspection exists
-//             const inspection = await tx.inspection.findUnique({
-//                 where: { id },
-//                 select: { id: true }
-//             });
+    try {
+        // Use transaction to ensure all related data is deleted properly
+        await prisma.$transaction(async (tx) => {
+            // Check if inspection exists
+            const inspection = await tx.inspection.findUnique({
+                where: { id },
+                select: { id: true }
+            });
 
-//             if (!inspection) {
-//                 throw new BadRequestError('Inspection not found');
-//             }
+            if (!inspection) {
+                throw new BadRequestError('Inspection not found');
+            }
 
-//             // Delete all related inspection items first (if not handled by cascade)
-//             await Promise.all([
-//                 tx.exteriorInspection.deleteMany({ where: { inspectionId: id } }),
-//                 tx.interiorInspection.deleteMany({ where: { inspectionId: id } }),
-//                 tx.mechanicalInspection.deleteMany({ where: { inspectionId: id } }),
-//                 tx.functionalInspection.deleteMany({ where: { inspectionId: id } }),
-//                 tx.documentLegalInspection.deleteMany({ where: { inspectionId: id } }),
-//                 tx.document.deleteMany({ where: { inspectionId: id } })
-//             ]);
+            // Delete all related inspection items first (if not handled by cascade)
+            await Promise.all([
+                tx.exteriorInspection.deleteMany({ where: { inspectionId: id } }),
+                tx.interiorInspection.deleteMany({ where: { inspectionId: id } }),
+                tx.mechanicalInspection.deleteMany({ where: { inspectionId: id } }),
+                tx.functionalInspection.deleteMany({ where: { inspectionId: id } }),
+                tx.documentLegalInspection.deleteMany({ where: { inspectionId: id } }),
+                tx.document.deleteMany({ where: { inspectionId: id } })
+            ]);
 
-//             // Finally delete the main inspection
-//             await tx.inspection.delete({
-//                 where: { id }
-//             });
-//         });
+            // Finally delete the main inspection
+            await tx.inspection.delete({
+                where: { id }
+            });
+        });
 
-//         res.json({
-//             success: true,
-//             message: 'Inspection and all related data deleted successfully'
-//         });
-//     } catch (error) {
-//         if (error instanceof BadRequestError) {
-//             throw error;
-//         }
-//         console.error('Error deleting inspection:', error);
-//         throw new Error('Failed to delete inspection');
-//     }
-// };
+        res.json({
+            success: true,
+            message: 'Inspection and all related data deleted successfully'
+        });
+    } catch (error) {
+        if (error instanceof BadRequestError) {
+            throw error;
+        }
+        console.error('Error deleting inspection:', error);
+        throw new Error('Failed to delete inspection');
+    }
+};
+
 

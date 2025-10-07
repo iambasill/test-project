@@ -2,6 +2,9 @@ import * as z from "zod";
 import { AcquisitionMethod, ConditionStatus, UserRole } from "../generated/prisma";
 import sanitizeHtml from "sanitize-html";
 
+const status = Object.values(ConditionStatus)
+
+
 const sanitizeObject = <T extends z.ZodRawShape>(schema: z.ZodObject<T>) => {
   return z.object(
     Object.fromEntries(
@@ -78,8 +81,11 @@ export const equipmentData = sanitizeObject(z.object({
     operationalSpecs   :     z.string().optional(),  
     requiredCertifications : z.string().optional(), 
     environmentalConditions: z.string().optional(), 
-    currentCondition:    z.enum(ConditionStatus).optional(),
-    lastConditionCheck: z.string().optional()
+    currentCondition:    z.enum(status).optional(),
+    lastConditionCheck: z.string().optional(),
+    warrantyStartDate: z.string().optional(),
+    warrantyEndDate: z.string().optional(),
+    warrantyCoverageDetails :z.string().optional()
 }))
 
 
@@ -96,7 +102,7 @@ export const inspectionData = sanitizeObject(z.object({
     
 
 }))
-export const ConditionStatusEnum = z.enum(['EXCELLENT', 'GOOD', 'FAIR', 'POOR']);
+
 
 
 
@@ -115,7 +121,7 @@ export const CreateEquipmentOwnershipSchema = sanitizeObject(z.object({
   coPhoneNumber: z.string().optional().nullable(),
   
   // Equipment condition
-  conditionAtAssignment: ConditionStatusEnum.optional().default('EXCELLENT'),
+  conditionAtAssignment: z.enum(status).optional(),
   notes: z.string().optional().nullable(),
 }));
 
@@ -137,9 +143,10 @@ export const UpdateEquipmentOwnershipSchema = sanitizeObject(z.object({
   coPhoneNumber: z.string().optional().nullable(),
   
   // Equipment condition
-  conditionAtAssignment: ConditionStatusEnum.optional(),
+  conditionAtAssignment: z.enum(status).optional(),
   notes: z.string().optional().nullable(),
 }));
+
 
 export const QuerySchema = sanitizeObject(z.object({
   page: z.string().transform(Number).pipe(z.number().min(1)).optional().default(1),

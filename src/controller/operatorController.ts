@@ -3,6 +3,7 @@ import { BadRequestError, unAuthorizedError } from '../httpClass/exceptions';
 import { PrismaClient } from "../generated/prisma";
 import { sanitizeInput } from '../utils/helperFunction';
 import { operatorSchema } from '../schema/schema';
+import { config } from '../config/envConfig';
 
 const prisma = new PrismaClient()
 
@@ -41,21 +42,8 @@ export const createOperator = async (req:Request, res:Response) => {
   const user:any = req.user
   if (user.role === "OFFICER") throw new unAuthorizedError
 
-  const {
-    email,         
-    firstName,            
-    lastName,             
+  const {         
     serviceNumber,         
-    rank,                  
-    branch,                
-    position,              
-    identificationType,    
-    officialEmailAddress,  
-    phoneNumber,           
-    alternatePhoneNumber1,  
-    alternatePhoneNumber2,  
-    alternatePhoneNumber3  
-
   } = operatorSchema.parse(req.body)
 
     const operator = await prisma.operator.findFirst({
@@ -64,25 +52,31 @@ export const createOperator = async (req:Request, res:Response) => {
 
   if (operator) throw new BadRequestError('Operator already exist')
 
-  
-   await prisma.operator.create({
+  await prisma.$transaction(async(tx) => {
+
+  const operator = await tx.operator.create({
     data: {
-    email,         
-    firstName,            
-    lastName,             
-    serviceNumber,         
-    rank,                  
-    branch,                
-    position,              
-    identificationType,    
-    officialEmailAddress,  
-    phoneNumber,           
-    alternatePhoneNumber1,  
-    alternatePhoneNumber2,  
-    alternatePhoneNumber3 
+      ...operatorSchema.parse(req.body)
     }
   });
   
+  // Create documents if files exist
+    if (req.files) {
+      const files = req.files as Record<string, Express.Multer.File[]>;
+      const fileData = Object.entries(files).map(([fileName, [file]]) => ({
+        fileName,
+        url: `${config.API_BASE_URL}/attachment/${file.filename}`,
+        operatorId: operator.id
+      }));
+      
+
+      await tx.document.createMany({
+        data: fileData,
+      });
+    }
+  })
+
+
   res.status(201).json({
     success: true,
     message: 'Operator created successfully',
@@ -101,42 +95,54 @@ export const updateOperator = async (req:Request, res:Response) => {
 
   if (!operator) throw new BadRequestError('Operator not found')
 
-  const {
-    email,         
-    firstName,            
-    lastName,             
-    serviceNumber,         
-    rank,                  
-    branch,                
-    position,              
-    identificationType,    
-    officialEmailAddress,  
-    phoneNumber,           
-    alternatePhoneNumber1,  
-    alternatePhoneNumber2,  
-    alternatePhoneNumber3  
+    await prisma.$transaction(async (tx) => {
 
-  } = operatorSchema.parse(req.body)
-  
-    await prisma.operator.update({
+      
+    await tx.operator.update({
     where:{id},
     data: {
-    email,         
-    firstName,            
-    lastName,             
-    serviceNumber,         
-    rank,                  
-    branch,                
-    position,              
-    identificationType,    
-    officialEmailAddress,  
-    phoneNumber,           
-    alternatePhoneNumber1,  
-    alternatePhoneNumber2,  
-    alternatePhoneNumber3 
+    ...operatorSchema.parse(req.body)  
     }
   });
   
+   // Update documents if files exist
+    if (req.files) {
+      const files = req.files as Record<string, Express.Multer.File[]>;
+      const fileData = Object.entries(files).map(([fileName, [file]]) => ({
+        fileName,
+        url: `${config.API_BASE_URL}/attachment/${file.filename}`,
+        operatorId: operator.id
+      }));
+
+      // Only update/replace the documents that were actually uploaded
+      for (const fileInfo of fileData) {
+        // Check if document with this fileName already exists
+        const existingDocument = await tx.document.findFirst({
+          where: {
+           operatorId: operator.id,
+            fileName: fileInfo.fileName
+          }
+        });
+
+        if (existingDocument) {
+          // Update existing document
+          await tx.document.update({
+            where: { id: existingDocument.id },
+            data: {
+              url: fileInfo.url
+            }
+          });
+        } else {
+          // Create new document if it doesn't exist
+          await tx.document.create({
+            data: fileInfo
+          });
+        }
+      }
+    }
+
+  });
+
   res.status(200).json({
     success: true,
     message: 'Operator updated successfully',
@@ -146,7 +152,8 @@ export const updateOperator = async (req:Request, res:Response) => {
 export const deleteOperator = async (req:Request, res:Response) => {
   const user:any = req.user
   if (user.role === "OFFICER") throw new unAuthorizedError
-  const {id} = req.params
+  let {id} = req.params
+  id = sanitizeInput(id)
 
   const operator = await prisma.operator.findUnique({
     where:{id}

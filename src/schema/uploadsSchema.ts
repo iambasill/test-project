@@ -11,3 +11,8 @@ export const INSPECTION_FIELDS = [
   { name: 'leftView', maxCount: 1 },
   { name: 'rightView', maxCount: 1 }
 ];
+
+export const OPERATOR_FIELDS = [
+  {name: "operatorPassport", maxCount: 1},
+  {name: "operatorID", maxCount: 1}
+]

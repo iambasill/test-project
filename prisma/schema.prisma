@@ -17,21 +17,20 @@ enum UserStatus {
     SUSPENDED
 }
 
+enum ConditionStatus {
+    S
+    O
+    A
+    B
+    C
+}
+
 enum UserRole {
     PLATADMIN
     ADMIN
     MANAGER
     AUDITOR
     OFFICER
-}
-
-enum ConditionStatus {
-    EXCELLENT
-    GOOD
-    FAIR
-    POOR
-    FAILED
-    NOT_APPLICABLE
 }
 
 enum AcquisitionMethod {
@@ -41,6 +40,14 @@ enum AcquisitionMethod {
     TRANSFER
     OTHER
 }
+
+
+model equipmentCategory {
+    id                    String                 @id @default(uuid())
+    name                  String
+    createdAt             DateTime               @default(now())
+}
+
 
 model User {
     id                    String                 @id @default(uuid())
@@ -93,6 +100,12 @@ model Equipment {
     costValue           String?
     currency            String            @default("NGN")
     fundingSource       String?
+    warrantyStartDate String?
+    warrantyEndDate String?
+    warrantyCoverageDetails String?
+
+
+
 
     // Section C: Technical Specifications
     weight                  String?
@@ -169,7 +182,7 @@ model EquipmentOwnership {
     coPhoneNumber String?
 
     // Equipment condition at assignment
-    conditionAtAssignment ConditionStatus @default(EXCELLENT)
+    conditionAtAssignment String? @default("")
     notes                 String?
     documents             Document[]
 
@@ -189,7 +202,7 @@ model EquipmentCondition {
     id                    String          @id @default(uuid())
     equipment             Equipment       @relation(fields: [equipmentChasisNumber], references: [chasisNumber])
     equipmentChasisNumber String
-    condition             ConditionStatus
+    condition             String
     date                  DateTime        @default(now())
     notes                 String?
     recordedBy            User?           @relation(fields: [recordedById], references: [id])
@@ -236,8 +249,8 @@ model Inspection {
 model ExteriorInspection {
     id           String          @id @default(uuid())
     inspectionId String
-    itemName     String // e.g., "Body Paint", "Tires", "Windshield"
-    condition    ConditionStatus
+    itemName     String 
+    condition    String
     notes        String?         @db.Text
 
     inspection Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
@@ -253,7 +266,7 @@ model InteriorInspection {
     id           String          @id @default(uuid())
     inspectionId String
     itemName     String // e.g., "Seats", "Dashboard", "Controls"
-    condition    ConditionStatus
+    condition    String
     notes        String?         @db.Text
 
     inspection Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
@@ -268,8 +281,8 @@ model InteriorInspection {
 model MechanicalInspection {
     id           String          @id @default(uuid())
     inspectionId String
-    itemName     String // e.g., "Engine", "Brakes", "Transmission"
-    condition    ConditionStatus
+    itemName     String 
+    condition    String
     notes        String?         @db.Text
 
     inspection Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
@@ -284,8 +297,8 @@ model MechanicalInspection {
 model FunctionalInspection {
     id           String          @id @default(uuid())
     inspectionId String
-    itemName     String // e.g., "Radio", "GPS", "Air Conditioning"
-    condition    ConditionStatus
+    itemName     String 
+    condition    String
     notes        String?         @db.Text
 
     inspection Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
@@ -301,7 +314,7 @@ model DocumentLegalInspection {
     id           String          @id @default(uuid())
     inspectionId String
     itemName     String // e.g., "Registration", "Insurance", "License"
-    condition    ConditionStatus
+    condition    String
     notes        String?         @db.Text
 
     inspection Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
