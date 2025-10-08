@@ -83,7 +83,6 @@ const token = await generateLoginToken(user.id, expiresIn);
     token,
     refreshToken,
     userData,
-    role : user.role
   });
 };
 
