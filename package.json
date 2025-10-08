@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "rm -rf build && prisma generate && tsc && cp -r src/generated build/src/",
+    "build": "rm -rf build && prisma generate && tsc && cp -r src/generated build/",
     "test": "echo \"Error: no test specified\" && exit 1",
     "db:seed": "prisma db seed",
     "db:reset": "prisma migrate reset --force",
