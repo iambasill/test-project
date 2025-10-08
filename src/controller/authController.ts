@@ -82,7 +82,8 @@ const token = await generateLoginToken(user.id, expiresIn);
     success: true,
     token,
     refreshToken,
-    userData
+    userData,
+    role : user.role
   });
 };
 
