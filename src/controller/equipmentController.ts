@@ -60,17 +60,12 @@ export const getEquipmentById = async (req:Request, res:Response) => {
       inspections: {
         include: {
           inspector: true,
-          exteriorInspections: true,
-          interiorInspections: true,
-          mechanicalInspections: true,
-          functionalInspections: true,
-          documentLegalInspections: true
         },
         orderBy: { datePerformed: 'desc' }
       },
       documents: {select:{
         fileName:true,
-        url:true
+        fileUrl:true
       }},
       operators: {
         select:{
@@ -114,7 +109,7 @@ export const createEquipment = async (req:Request, res:Response) => {
       const files = req.files as Record<string, Express.Multer.File[]>;
       const fileData = Object.entries(files).map(([fileName, [file]]) => ({
         fileName,
-        url: `${config.API_BASE_URL}/attachment/${file.filename}`,
+        fileUrl: `${config.API_BASE_URL}/attachment/${file.filename}`,
         equipmentId: equipment.id
       }));
       
@@ -159,7 +154,7 @@ export const updateEquipment = async (req:Request, res:Response) => {
       const files = req.files as Record<string, Express.Multer.File[]>;
       const fileData = Object.entries(files).map(([fileName, [file]]) => ({
         fileName,
-        url: `${config.API_BASE_URL}/attachment/${file.filename}`,
+        fileUrl: `${config.API_BASE_URL}/attachment/${file.filename}`,
         equipmentId: equipment.id
       }));
 
@@ -178,7 +173,7 @@ export const updateEquipment = async (req:Request, res:Response) => {
           await tx.document.update({
             where: { id: existingDocument.id },
             data: {
-              url: fileInfo.url
+              fileUrl: fileInfo.fileUrl
             }
           });
         } else {
@@ -304,7 +299,7 @@ export const getEquipmentOwnerships = async (req: Request, res: Response) => {
             select:{
             id: true,
             fileName: true,
-            url: true,
+            fileUrl: true,
             createdAt: true
             }
           },

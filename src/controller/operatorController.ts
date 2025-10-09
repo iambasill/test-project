@@ -65,7 +65,7 @@ export const createOperator = async (req:Request, res:Response) => {
       const files = req.files as Record<string, Express.Multer.File[]>;
       const fileData = Object.entries(files).map(([fileName, [file]]) => ({
         fileName,
-        url: `${config.API_BASE_URL}/attachment/${file.filename}`,
+        fileUrl: `${config.API_BASE_URL}/attachment/${file.filename}`,
         operatorId: operator.id
       }));
       
@@ -110,7 +110,7 @@ export const updateOperator = async (req:Request, res:Response) => {
       const files = req.files as Record<string, Express.Multer.File[]>;
       const fileData = Object.entries(files).map(([fileName, [file]]) => ({
         fileName,
-        url: `${config.API_BASE_URL}/attachment/${file.filename}`,
+        fileUrl: `${config.API_BASE_URL}/attachment/${file.filename}`,
         operatorId: operator.id
       }));
 
@@ -129,7 +129,7 @@ export const updateOperator = async (req:Request, res:Response) => {
           await tx.document.update({
             where: { id: existingDocument.id },
             data: {
-              url: fileInfo.url
+              fileUrl: fileInfo.fileUrl
             }
           });
         } else {
