@@ -1,12 +1,33 @@
-import { Request, Response } from "express";
+import { PrismaClient } from "@prisma/client";
+import { config } from "../config/envConfig";
 
-export const fileHandler = (uploads:any) => {
-          //  const files = uploads as Record<string, Express.Multer.File[]>;
-          //   const fileData = Object.entries(files).map(([fileName, [file]]) => ({
-          // fileName,
-          // url: `${API_BASE_UR}/attachment/${file.filename}`,
-          // equipmentId:equipment.id
-          
-      // }))
-  
+const prisma = new PrismaClient();
+
+// Optimized helper function to handle file uploads
+export async function handleFileUploads(files: any, inspectionId: string) {
+    try {
+        if (!files || Object.keys(files).length === 0) return;
+
+        const fileEntries = Object.entries(files);
+        const fileData = fileEntries.map(([fileName, fileArray]) => {
+            const file = Array.isArray(fileArray) ? fileArray[0] : fileArray;
+            return {
+                fileName,
+                fileUrl: `${config.API_BASE_URL}/attachment/${file.filename}`,
+                fileType: file.mimetype,
+                fileSize: file.size,
+                inspectionId
+            };
+        });
+
+        await prisma.document.createMany({
+            data: fileData,
+            skipDuplicates: true
+        });
+
+        console.log(`Successfully uploaded ${fileData.length} files for inspection ${inspectionId}`);
+    } catch (error) {
+        console.error('File upload error:', error);
+        throw error;
+    }
 }

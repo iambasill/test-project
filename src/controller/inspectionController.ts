@@ -1,41 +1,37 @@
 import { Request, Response } from "express";
 import { BadRequestError, notFoundError, unAuthorizedError } from "../httpClass/exceptions";
 import { PrismaClient } from "../generated/prisma";
-import { config } from "../config/envConfig";
 
+import { z } from 'zod';
+import { CreateInspectionSchema } from "../schema/schema";
+import { sanitizeInput } from "../utils/helperFunction";
+import { handleFileUploads } from "../utils/filerHandler";
 
-
-const prisma = new PrismaClient()
+const prisma = new PrismaClient();
 
 export const createInspection = async (req: Request, res: Response) => {
     const user: any = req.user;
     
-    if (!req.body) {
-        throw new BadRequestError('Request body is missing');
-    }
-
     // Parse the JSON string if it exists
-    let inspectionData;
+    let rawData;
     if (typeof req.body.data === 'string') {
         try {
-            inspectionData = JSON.parse(req.body.data);
+            rawData = JSON.parse(req.body.data);
         } catch (error) {
             throw new BadRequestError('Invalid JSON data in request body');
         }
     } else {
-        inspectionData = req.body.data || {};
+        rawData = req.body.data || req.body;
     }
+
 
     const {
         equipmentId,
         nextDueDate,
-        overallNotes = null,
-        exteriorInspections = [],
-        interiorInspections = [],
-        mechanicalInspections = [],
-        functionalInspections = [],
-        documentLegalInspections = []
-    } = inspectionData;
+        overallNotes,
+        overallCondition,
+        items
+    } = CreateInspectionSchema.parse(rawData);
 
     // Verify equipment exists
     const equipment = await prisma.equipment.findUnique({
@@ -47,8 +43,6 @@ export const createInspection = async (req: Request, res: Response) => {
         throw new BadRequestError(`Equipment with ID ${equipmentId} not found`);
     }
 
-    try {
-        // Use transaction for better performance and data integrity
         const result = await prisma.$transaction(async (tx) => {
             // Create the main inspection first
             const inspection = await tx.inspection.create({
@@ -56,80 +50,40 @@ export const createInspection = async (req: Request, res: Response) => {
                     equipment: { connect: { id: equipmentId } },
                     inspector: { connect: { id: user.id } },
                     nextDueDate: nextDueDate ? new Date(nextDueDate) : null,
-                    overallNotes,
+                    overallNotes: overallNotes || null,
+                    overallCondition
                 }
             });
 
-            // Prepare all inspection items for batch creation
-            const inspectionPromises = [];
+            // Create inspection items
+            if (items.length > 0) {
+                const itemsData = items.map(item => ({
+                    inspectionId: inspection.id,
+                    category: item.category,
+                    itemName: item.itemName,
+                    itemType: item.itemType,
+                    position: item.position || null,
+                    condition: item.condition || null,
+                    pressure: item.pressure || null,
+                    value: item.value || null,
+                    booleanValue: item.booleanValue ?? null,
+                    unit: item.unit || null,
+                    stumpLastDate: item.stumpLastDate ? new Date(item.stumpLastDate) : null,
+                    oilfilterLastDate: item.oilfilterLastDate ? new Date(item.oilfilterLastDate) : null,
+                    fuelpumpLastDate: item.fuelpumpLastDate ? new Date(item.fuelpumpLastDate) : null,
+                    airfilterLastDate: item.airfilterLastDate ? new Date(item.airfilterLastDate) : null,
+                    HubLastPackedDate: item.HubLastPackedDate ? new Date(item.HubLastPackedDate) : null,
+                    lastDrainDate: item.lastDrainDate ? new Date(item.lastDrainDate) : null,
+                    odometerReading: item.odometerReading || null,
+                    levelOfHydraulicFluid: item.levelOfHydraulicFluid || null,
+                    notes: item.notes || null
+                }));
 
-            // Create exterior inspections if any
-            if (exteriorInspections.length > 0) {
-                inspectionPromises.push(
-                    tx.exteriorInspection.createMany({
-                        data: validateInspectionItems(exteriorInspections).map(item => ({
-                            ...item,
-                            inspectionId: inspection.id
-                        })),
-                        skipDuplicates: true
-                    })
-                );
+                await tx.inspectionItem.createMany({
+                    data: itemsData,
+                    skipDuplicates: true
+                });
             }
-
-            // Create interior inspections if any
-            if (interiorInspections.length > 0) {
-                inspectionPromises.push(
-                    tx.interiorInspection.createMany({
-                        data: validateInspectionItems(interiorInspections).map(item => ({
-                            ...item,
-                            inspectionId: inspection.id
-                        })),
-                        skipDuplicates: true
-                    })
-                );
-            }
-
-            // Create mechanical inspections if any
-            if (mechanicalInspections.length > 0) {
-                inspectionPromises.push(
-                    tx.mechanicalInspection.createMany({
-                        data: validateInspectionItems(mechanicalInspections).map(item => ({
-                            ...item,
-                            inspectionId: inspection.id
-                        })),
-                        skipDuplicates: true
-                    })
-                );
-            }
-
-            // Create functional inspections if any
-            if (functionalInspections.length > 0) {
-                inspectionPromises.push(
-                    tx.functionalInspection.createMany({
-                        data: validateInspectionItems(functionalInspections).map(item => ({
-                            ...item,
-                            inspectionId: inspection.id
-                        })),
-                        skipDuplicates: true
-                    })
-                );
-            }
-
-            // Create document/legal inspections if any
-            if (documentLegalInspections.length > 0) {
-                inspectionPromises.push(
-                    tx.documentLegalInspection.createMany({
-                        data: validateInspectionItems(documentLegalInspections).map(item => ({
-                            ...item,
-                            inspectionId: inspection.id
-                        })),
-                        skipDuplicates: true
-                    })
-                );
-            }
-
-            // Execute all inspection creations in parallel
-            await Promise.all(inspectionPromises);
 
             return inspection;
         });
@@ -143,7 +97,12 @@ export const createInspection = async (req: Request, res: Response) => {
         // Return response immediately, don't wait for file uploads
         const response = {
             success: true,
-                message: 'Inspection created successfully'
+            message: 'Inspection created successfully',
+            data: {
+                id: result.id,
+                equipmentId: result.equipmentId,
+                datePerformed: result.datePerformed
+            }
         };
 
         // If files are being uploaded, handle them asynchronously
@@ -156,251 +115,179 @@ export const createInspection = async (req: Request, res: Response) => {
 
         return res.status(201).json(response);
 
-    } catch (error) {
-        console.error('Inspection creation failed:', error);
-        if (error instanceof Error) {
-            throw new Error(`Failed to create inspection: ${error.message}`);
-        }
-        throw new Error('Failed to create inspection');
-    }
 };
 
-// Helper function to validate inspection items
-function validateInspectionItems(items: any[]) {
-    if (!Array.isArray(items)) return [];
-    
-    return items.map(item => ({
-        itemName: item.itemName || 'Unspecified',
-        condition: item.condition || 'NOT_APPLICABLE',
-        notes: item.notes || null
-    }));
-}
 
-// Optimized helper function to handle file uploads
-async function handleFileUploads(files: any, inspectionId: string) {
-    try {
-        if (!files || Object.keys(files).length === 0) return;
-
-        const fileEntries = Object.entries(files);
-        const fileData = fileEntries.map(([fileName, fileArray]) => {
-            const file = Array.isArray(fileArray) ? fileArray[0] : fileArray;
-            return {
-                fileName,
-                url: `${config.API_BASE_URL}/attachment/${file.filename}`,
-                inspectionId,
-                fileSize: file.size,
-                mimeType: file.mimetype,
-            };
-        });
-
-        await prisma.document.createMany({
-            data: fileData,
-            skipDuplicates: true
-        });
-
-        console.log(`Successfully uploaded ${fileData.length} files for inspection ${inspectionId}`);
-    } catch (error) {
-        console.error('File upload error:', error);
-        throw error;
-    }
-}
 
 export const getAllInspections = async (req: Request, res: Response) => {
     const user: any = req.user;
-    
 
-    // Build where clause based on user role
-    const where = (user.role === "ADMIN" || user.role === "PLATADMIN") 
+
+    // Build where clause based on user role and filters
+    const where: any = (user.role === "ADMIN" || user.role === "PLATADMIN") 
         ? {} 
         : { inspectorId: user.id };
 
 
-        // Fetch inspections with optimized includes
-        const inspections = await prisma.inspection.findMany({
-            where,
-            include: {
-                exteriorInspections: {
-                    select: {
-                        id: true,
-                        itemName: true,
-                        condition: true,
-                        notes: true
-                    }
+    // Get total count for pagination
+    const totalCount = await prisma.inspection.count({ where });
+
+    // Fetch inspections with optimized includes
+    const inspections = await prisma.inspection.findMany({
+        where,
+        include: {
+            items: {
+                select: {
+                    id: true,
+                    category: true,
+                    itemName: true,
+                    itemType: true,
+                    position: true,
+                    condition: true,
+                    pressure: true,
+                    value: true,
+                    booleanValue: true,
+                    unit: true,
+                    odometerReading: true,
+                    levelOfHydraulicFluid: true,
+                    notes: true
                 },
-                interiorInspections: {
-                    select: {
-                        id: true,
-                        itemName: true,
-                        condition: true,
-                        notes: true
-                    }
-                },
-                mechanicalInspections: {
-                    select: {
-                        id: true,
-                        itemName: true,
-                        condition: true,
-                        notes: true
-                    }
-                },
-                functionalInspections: {
-                    select: {
-                        id: true,
-                        itemName: true,
-                        condition: true,
-                        notes: true
-                    }
-                },
-                documentLegalInspections: {
-                    select: {
-                        id: true,
-                        itemName: true,
-                        condition: true,
-                        notes: true
-                    }
-                },
-                documents: {
-                    select: {
-                        id: true,
-                        fileName: true,
-                        url: true,
-                        fileSize: true,
-                        mimeType: true
-                    }
-                },
-                equipment: {
-                    select: { 
-                        id: true,
-                        chasisNumber: true, 
-                        equipmentName: true, 
-                        model: true 
-                    }
-                },
-                inspector: {
-                    select: { 
-                        id: true, 
-                        firstName: true, 
-                        lastName: true, 
-                        serviceNumber: true, 
-                        email: true 
-                    }
+                orderBy: [
+                    { category: 'asc' },
+                    { itemName: 'asc' }
+                ]
+            },
+            documents: {
+                select: {
+                    id: true,
+                    fileName: true,
+                    fileUrl: true,
+                    fileSize: true,
+                    fileType: true
                 }
             },
-            orderBy: { datePerformed: 'desc' },
-      
-        });
+            equipment: {
+                select: { 
+                    id: true,
+                    chasisNumber: true, 
+                    equipmentName: true, 
+                    model: true 
+                }
+            },
+            inspector: {
+                select: { 
+                    id: true, 
+                    firstName: true, 
+                    lastName: true, 
+                    serviceNumber: true, 
+                    email: true 
+                }
+            }
+        },
+        orderBy: { datePerformed: 'desc' },
 
-        res.status(200).json({
-            success: true,
-            data: inspections,
-   
-        });
-    
-};
+    });
 
-// Get single inspection by equipment ID (optimized)
+    res.status(200).json({
+        success: true,
+        data: inspections,
+        total: totalCount,
+        });
+    };
+
+// Get inspections by equipment ID
 export const getInspectionById = async (req: Request, res: Response) => {
-    
-    const { id } = req.params;
-        const user: any = req.user;
-    
+    const user: any = req.user;
+
+    let { id } = req.params;
+    if (!id ) {
+        throw new BadRequestError('Invalid or missing ID');
+    }
+     id  = sanitizeInput(id)
 
     // Build where clause based on user role
     const where = (user.role === "ADMIN" || user.role === "PLATADMIN" || user.role === "AUDITOR") 
-        ? {equipmentId: id } 
-        : { inspectorId: user.id,equipmentId: id  };
+        ? { equipmentId: id } 
+        : { inspectorId: user.id, equipmentId: id };
 
-
-    
-        const inspections = await prisma.inspection.findMany({
-            where,
-            include: {
-                exteriorInspections: {
-                    select: {
-                        id: true,
-                        itemName: true,
-                        condition: true,
-                        notes: true
-                    }
+    const inspections = await prisma.inspection.findMany({
+        where,
+        include: {
+            items: {
+                select: {
+                    id: true,
+                    category: true,
+                    itemName: true,
+                    itemType: true,
+                    position: true,
+                    condition: true,
+                    pressure: true,
+                    value: true,
+                    booleanValue: true,
+                    unit: true,
+                    stumpLastDate: true,
+                    oilfilterLastDate: true,
+                    fuelpumpLastDate: true,
+                    airfilterLastDate: true,
+                    HubLastPackedDate: true,
+                    lastDrainDate: true,
+                    odometerReading: true,
+                    levelOfHydraulicFluid: true,
+                    notes: true
                 },
-                interiorInspections: {
-                    select: {
-                        id: true,
-                        itemName: true,
-                        condition: true,
-                        notes: true
-                    }
-                },
-                mechanicalInspections: {
-                    select: {
-                        id: true,
-                        itemName: true,
-                        condition: true,
-                        notes: true
-                    }
-                },
-                functionalInspections: {
-                    select: {
-                        id: true,
-                        itemName: true,
-                        condition: true,
-                        notes: true
-                    }
-                },
-                documentLegalInspections: {
-                    select: {
-                        id: true,
-                        itemName: true,
-                        condition: true,
-                        notes: true
-                    }
-                },
-                documents: {
-                    select: {
-                        id: true,
-                        fileName: true,
-                        url: true,
-                        fileSize: true,
-                        mimeType: true
-                    }
-                },
-                equipment: {
-                    select: { 
-                        id: true,
-                        chasisNumber: true, 
-                        equipmentName: true, 
-                        model: true 
-                    }
-                },
-                inspector: {
-                    select: { 
-                        id: true, 
-                        firstName: true, 
-                        lastName: true, 
-                        serviceNumber: true, 
-                        email: true 
-                    }
+                orderBy: [
+                    { category: 'asc' },
+                    { itemName: 'asc' }
+                ]
+            },
+            documents: {
+                select: {
+                    id: true,
+                    fileName: true,
+                    fileUrl: true,
+                    fileSize: true,
+                    fileType: true
                 }
             },
-            orderBy: { datePerformed: 'desc' }
-        });
+            equipment: {
+                select: { 
+                    id: true,
+                    chasisNumber: true, 
+                    equipmentName: true, 
+                    model: true 
+                }
+            },
+            inspector: {
+                select: { 
+                    id: true, 
+                    firstName: true, 
+                    lastName: true, 
+                    serviceNumber: true, 
+                    email: true 
+                }
+            }
+        },
+        orderBy: { datePerformed: 'desc' }
+    });
 
-        if (!inspections || inspections.length === 0) {
-            throw new notFoundError('No inspections found for this equipment');
-        }
+    if (!inspections || inspections.length === 0) {
+        throw new notFoundError('No inspections found for this equipment');
+    }
 
-        res.status(200).json({
-            success: true,
-            data: inspections
-        });
-    
+    res.status(200).json({
+        success: true,
+        data: inspections
+    });
 };
-// Delete inspection (optimized with cascade handling)
-export const deleteInspection = async (req: Request, res: Response) => {
-    const { id } = req.params;
 
-    try {
-        // Use transaction to ensure all related data is deleted properly
+// Delete inspection
+export const deleteInspection = async (req: Request, res: Response) => {
+
+    
+    let { id } = req.params;
+    if (!id )  throw new BadRequestError('Invalid or missing ID');
+    
+     id  = sanitizeInput(id)
         await prisma.$transaction(async (tx) => {
             // Check if inspection exists
             const inspection = await tx.inspection.findUnique({
@@ -412,15 +299,15 @@ export const deleteInspection = async (req: Request, res: Response) => {
                 throw new BadRequestError('Inspection not found');
             }
 
-            // Delete all related inspection items first (if not handled by cascade)
-            await Promise.all([
-                tx.exteriorInspection.deleteMany({ where: { inspectionId: id } }),
-                tx.interiorInspection.deleteMany({ where: { inspectionId: id } }),
-                tx.mechanicalInspection.deleteMany({ where: { inspectionId: id } }),
-                tx.functionalInspection.deleteMany({ where: { inspectionId: id } }),
-                tx.documentLegalInspection.deleteMany({ where: { inspectionId: id } }),
-                tx.document.deleteMany({ where: { inspectionId: id } })
-            ]);
+            // Delete all related inspection items (cascade should handle this, but explicit for safety)
+            await tx.inspectionItem.deleteMany({ 
+                where: { inspectionId: id } 
+            });
+
+            // Delete related documents
+            await tx.document.deleteMany({ 
+                where: { inspectionId: id } 
+            });
 
             // Finally delete the main inspection
             await tx.inspection.delete({
@@ -428,17 +315,10 @@ export const deleteInspection = async (req: Request, res: Response) => {
             });
         });
 
-        res.json({
+        res.status(200).json({
             success: true,
             message: 'Inspection and all related data deleted successfully'
         });
-    } catch (error) {
-        if (error instanceof BadRequestError) {
-            throw error;
-        }
-        console.error('Error deleting inspection:', error);
-        throw new Error('Failed to delete inspection');
-    }
-};
 
+}
 

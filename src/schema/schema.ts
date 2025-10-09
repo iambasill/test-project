@@ -1,8 +1,8 @@
 import * as z from "zod";
-import { AcquisitionMethod, ConditionStatus, UserRole } from "../generated/prisma";
+import { AcquisitionMethod, InspectionStatus, UserRole } from "../generated/prisma";
 import sanitizeHtml from "sanitize-html";
 
-const status = Object.values(ConditionStatus)
+const status = Object.values(InspectionStatus)
 
 
 const sanitizeObject = <T extends z.ZodRawShape>(schema: z.ZodObject<T>) => {
@@ -89,23 +89,6 @@ export const equipmentData = sanitizeObject(z.object({
 }))
 
 
-
-export const inspectionData = sanitizeObject(z.object({
-        equipmentId: z.string(),
-        nextDueDate:z.string() ,
-        overallNotes: z.string(),
-        exteriorInspections: z.array(z.object()),
-        interiorInspections: z.array(z.object()),
-        mechanicalInspections: z.array(z.object()),
-        functionalInspections: z.array(z.object()),
-        documentLegalInspections: z.array(z.object())
-    
-
-}))
-
-
-
-
 export const CreateEquipmentOwnershipSchema = sanitizeObject(z.object({
   equipmentId: z.string(),
   operatorId: z.string(),
@@ -176,4 +159,83 @@ export const operatorSchema = sanitizeObject(z.object({
 export const tokenSchema= sanitizeObject(z.object({
     refreshToken:z.string()
 }))
+
+
+
+
+
+// Schema for individual inspection items
+export const InspectionItemSchema = sanitizeObject(z.object({
+  templateItemId: z.string().uuid().optional().nullable(),
+  category: z.string().min(1, 'Category is required'),
+  itemName: z.string().min(1, 'Item name is required'),
+  itemType: z.string().min(1, 'Item type is required'),
+  position: z.string().optional().nullable(),
+  
+  // Inspection data fields
+  condition: z.string().optional().nullable(),
+  pressure: z.string().optional().nullable(),
+  value: z.string().optional().nullable(),
+  booleanValue: z.boolean().optional().nullable(),
+  unit: z.string().optional().nullable(),
+  
+  // Date fields for maintenance tracking
+  stumpLastDate: z.string().datetime().optional().nullable()
+    .or(z.date().optional().nullable()),
+  oilfilterLastDate: z.string().datetime().optional().nullable()
+    .or(z.date().optional().nullable()),
+  fuelpumpLastDate: z.string().datetime().optional().nullable()
+    .or(z.date().optional().nullable()),
+  airfilterLastDate: z.string().datetime().optional().nullable()
+    .or(z.date().optional().nullable()),
+  HubLastPackedDate: z.string().datetime().optional().nullable()
+    .or(z.date().optional().nullable()),
+  lastDrainDate: z.string().datetime().optional().nullable()
+    .or(z.date().optional().nullable()),
+  
+  // Additional fields
+  odometerReading: z.string().optional().nullable(),
+  levelOfHydraulicFluid: z.string().optional().nullable(),
+  notes: z.string().optional().nullable()
+}).refine(
+  (data) => {
+    // At least one data field should be provided
+    return data.condition || data.pressure || data.value || 
+           data.booleanValue !== null || data.notes;
+  },
+  {
+    message: 'At least one inspection data field (condition, pressure, value, booleanValue, or notes) must be provided'
+  }
+));
+
+// Schema for creating an inspection
+export const CreateInspectionSchema = sanitizeObject(z.object({
+  equipmentId: z.string().uuid('Invalid equipment ID format'),
+  nextDueDate: z.string().datetime().optional().nullable()
+    .or(z.date().optional().nullable()),
+  overallNotes: z.string().optional().nullable(),
+  overallCondition: z.enum(status),
+  items: z.array(InspectionItemSchema).min(1, 'At least one inspection item is required')
+}));
+
+// Schema for updating an inspection
+export const UpdateInspectionSchema = sanitizeObject(z.object({
+  nextDueDate: z.string().datetime().optional().nullable()
+    .or(z.date().optional().nullable()),
+  overallNotes: z.string().optional().nullable(),
+  overallCondition: z.enum(status).optional(),
+  items: z.array(InspectionItemSchema).optional()
+}).refine(
+  (data) => {
+    // At least one field should be provided for update
+    return data.nextDueDate !== undefined || 
+           data.overallNotes !== undefined || 
+           data.overallCondition !== undefined || 
+           data.items !== undefined;
+  },
+  {
+    message: 'At least one field must be provided for update'
+  }
+));
+
 

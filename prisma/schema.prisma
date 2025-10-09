@@ -17,7 +17,7 @@ enum UserStatus {
     SUSPENDED
 }
 
-enum ConditionStatus {
+enum InspectionStatus {
     S
     O
     A
@@ -218,147 +218,136 @@ model EquipmentCondition {
 
 // Main Inspection Model - One comprehensive inspection per session
 model Inspection {
-    id               String    @id @default(uuid())
-    equipmentId      String
-    inspectorId      String?
-    datePerformed    DateTime  @default(now())
-    nextDueDate      DateTime?
-    overallNotes     String?   @db.Text
-    overallCondition String    @default("")
+  id               String   @id @default(uuid())
+  equipmentId      String
+  inspectorId      String?
+  templateId       String?  // Link to template if this inspection was created from one
+  datePerformed    DateTime @default(now())
+  nextDueDate      DateTime?
+  overallNotes     String?  @db.Text
+  overallCondition          InspectionStatus @default(S)
+  
+  // Relations
+  equipment Equipment? @relation(fields: [equipmentId], references: [id])
+  inspector User?      @relation(fields: [inspectorId], references: [id])
+//   template  InspectionTemplate? @relation(fields: [templateId], references: [id])
+  
+  // All inspection items in one table
+  items InspectionItem[]
+  
+  // Documents
+  documents Document[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-    // Relations
-    equipment Equipment? @relation(fields: [equipmentId], references: [id])
-    inspector User?      @relation(fields: [inspectorId], references: [id])
-
-    // Inspection Categories - All part of one comprehensive inspection
-    exteriorInspections      ExteriorInspection[]
-    interiorInspections      InteriorInspection[]
-    mechanicalInspections    MechanicalInspection[]
-    functionalInspections    FunctionalInspection[]
-    documentLegalInspections DocumentLegalInspection[]
-
-    // General documents for the inspection
-    documents Document[]
-
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    @@map("inspections")
+  @@map("inspections")
 }
 
-model ExteriorInspection {
-    id           String          @id @default(uuid())
-    inspectionId String
-    itemName     String 
-    condition    String
-    notes        String?         @db.Text
+// Inspection Template for reusable inspection formats
+// model InspectionTemplate {
+//   id          String   @id @default(uuid())
+//   name        String
+//   description String?
+//   category    String   // vehicle, equipment, safety, etc.
+  
+//   // Template defines what items should be inspected
+//   items InspectionTemplateItem[]
+  
+//   // Inspections created from this template
+//   inspections Inspection[]
+  
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
 
-    inspection Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
-    documents  Document[]
+//   @@map("inspection_templates")
+// }
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+// Template Items - defines the structure of an inspection
+// model InspectionTemplateItem {
+//   id           String   @id @default(uuid())
+//   templateId   String
+//   category     String   // engine, steering, brakes, etc.
+//   itemName     String
+//   itemType     String   // condition, measurement, boolean, text
+//   position     String?  // for wheels, axles, etc.
+//   required     Boolean  @default(false)
+//   sortOrder    Int      @default(0)
+  
+//   // Validation rules
+//   minValue     Float?
+//   maxValue     Float?
+//   allowedValues String? // JSON array for dropdown options
+  
+// //   template InspectionTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+//   inspectionItems InspectionItem[] // Opposite relation field added
 
-    @@map("exterior_inspections")
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+
+//   @@map("inspection_template_items")
+// }
+
+// Unified Inspection Items - actual inspection data
+model InspectionItem {
+  id           String   @id @default(uuid())
+  inspectionId String
+  
+  // Item identification
+  category     String   // engine, steering, brakes, etc.
+  itemName     String
+  itemType     String   // condition, measurement, boolean, text
+  position     String?  // Front-L, Rear-R, etc.
+  
+  // Inspection data
+  condition    String?  // Good, Fair, Poor, etc.
+  pressure  String?  // For tires
+  value        String?  // For measurements
+  booleanValue Boolean? // For yes/no checks
+  unit         String?  // psi, mm, etc.
+  stumpLastDate DateTime? // For items that need regular replacement
+  oilfilterLastDate DateTime? // For items that need regular replacement
+  fuelpumpLastDate DateTime? // For items that need regular replacement
+  airfilterLastDate DateTime? // For items that need regular replacement
+  HubLastPackedDate DateTime? // For items that need regular replacement
+  lastDrainDate DateTime? // For items that need regular replacement
+  odometerReading String? // For vehicle inspections
+  levelOfHydraulicFluid String? // For hydraulic systems
+  notes        String?  @db.Text
+  
+  
+  inspection Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+    // templateItem InspectionTemplateItem? @relation(fields: [templateItemId], references: [id])  
+  // Documents specific to this inspection item
+  documents Document[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([inspectionId, category])
+  @@map("inspection_items")
 }
 
-model InteriorInspection {
-    id           String          @id @default(uuid())
-    inspectionId String
-    itemName     String // e.g., "Seats", "Dashboard", "Controls"
-    condition    String
-    notes        String?         @db.Text
-
-    inspection Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
-    documents  Document[]
-
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    @@map("interior_inspections")
-}
-
-model MechanicalInspection {
-    id           String          @id @default(uuid())
-    inspectionId String
-    itemName     String 
-    condition    String
-    notes        String?         @db.Text
-
-    inspection Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
-    documents  Document[]
-
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    @@map("mechanical_inspections")
-}
-
-model FunctionalInspection {
-    id           String          @id @default(uuid())
-    inspectionId String
-    itemName     String 
-    condition    String
-    notes        String?         @db.Text
-
-    inspection Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
-    documents  Document[]
-
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    @@map("functional_inspections")
-}
-
-model DocumentLegalInspection {
-    id           String          @id @default(uuid())
-    inspectionId String
-    itemName     String // e.g., "Registration", "Insurance", "License"
-    condition    String
-    notes        String?         @db.Text
-
-    inspection Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
-    documents  Document[]
-
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    @@map("document_legal_inspections")
-}
 
 model Document {
-    id          String  @id @default(uuid())
-    url         String
-    description String?
-    metadata    Json?
-    fileName    String?
-    fileSize    Int?
-    mimeType    String?
-
-    // Relations - A document can belong to multiple entities
-    equipment    Equipment?          @relation(fields: [equipmentId], references: [id])
-    equipmentId  String?
-    operator     Operator?           @relation(fields: [operatorId], references: [id])
-    operatorId   String?
-    inspection   Inspection?         @relation(fields: [inspectionId], references: [id])
-    inspectionId String?
-    ownership    EquipmentOwnership? @relation(fields: [ownershipId], references: [id])
-    ownershipId  String?
-    condition    EquipmentCondition? @relation(fields: [conditionId], references: [id])
-    conditionId  String?
-
-    // Relations to specific inspection categories
-    exteriorInspectionId      String?
-    interiorInspectionId      String?
-    mechanicalInspectionId    String?
-    functionalInspectionId    String?
-    documentLegalInspectionId String?
-
-    exteriorInspection      ExteriorInspection?      @relation(fields: [exteriorInspectionId], references: [id])
-    interiorInspection      InteriorInspection?      @relation(fields: [interiorInspectionId], references: [id])
-    mechanicalInspection    MechanicalInspection?    @relation(fields: [mechanicalInspectionId], references: [id])
-    functionalInspection    FunctionalInspection?    @relation(fields: [functionalInspectionId], references: [id])
-    documentLegalInspection DocumentLegalInspection? @relation(fields: [documentLegalInspectionId], references: [id])
+    id                 String    @id @default(uuid())
+    fileName           String
+    fileType           String
+    fileSize           Int
+    fileUrl            String
+    uploadedAt         DateTime  @default(now())
+    equipmentId       String?
+    equipment         Equipment? @relation(fields: [equipmentId], references: [id])
+    operatorId        String?
+    operator          Operator?  @relation(fields: [operatorId], references: [id])
+    ownershipId      String?
+    ownership        EquipmentOwnership? @relation(fields: [ownershipId], references: [id])
+    conditionRecordId String?
+    conditionRecord   EquipmentCondition? @relation(fields: [conditionRecordId], references: [id])
+    inspectionId     String?
+    inspection       Inspection? @relation(fields: [inspectionId], references: [id])
+    inspectionItemId String?
+    inspectionItem   InspectionItem? @relation(fields: [inspectionItemId], references: [id])
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
