@@ -67,11 +67,11 @@ export const loginController = async (req: Request, res: Response) => {
 const expiresIn =
   tokenExpiry && tokenExpiry instanceof Date
     ? `${Math.floor((tokenExpiry.getTime() - Date.now()) / 1000)}s`
-    : "8h";
+    : "15m";
 
 const token = await generateLoginToken(user.id, expiresIn);
 
-  const refreshToken =  await generateLoginToken(user.id, "10h")
+  const refreshToken =  await generateLoginToken(user.id, "8h")
 
   await generateUserSession(user.id,token, refreshToken);
 
@@ -342,6 +342,14 @@ export const resendVerficationController = async (req: Request, res: Response, n
 
 export const refreshToken = async (req:Request, res:Response) => {
   const {refreshToken} = tokenSchema.parse(req.body)
+
+  const valid = await prisma.user_sessions.findFirst({
+    where:{
+      refreshToken
+    }
+  })
+  if (!valid) throw new BadRequestError("Invalid refresh token")
+  
   const decoded = await  verifyToken(refreshToken,"auth")
 
   const user:any = await checkUser(decoded.userId)
@@ -352,7 +360,7 @@ export const refreshToken = async (req:Request, res:Response) => {
   const expiresIn =
   tokenExpiry && tokenExpiry instanceof Date
     ? `${Math.floor((tokenExpiry.getTime() - Date.now()) / 1000)}s`
-    : "8h";
+    : "15m";
 
   const token = await generateLoginToken(user.id, expiresIn);
   const newrefreshToken =  await generateLoginToken(user.id, "10h")

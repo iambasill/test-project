@@ -90,7 +90,7 @@ export const manageAdminSession = async (userId: string) => {
    })
  
    // 2hours from now
-  const logoutAt = new Date(Date.now() + 2 * 60 * 60 * 1000); 
+  const logoutAt = new Date(Date.now() + 15 * 60 * 1000); 
   
   const session = await prisma.active_admin_sessions.upsert({
     where: { 
@@ -107,7 +107,7 @@ export const manageAdminSession = async (userId: string) => {
     }
   });
 
-  return "2h";
+  return "15m";
 
 };
 
