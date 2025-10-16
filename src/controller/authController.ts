@@ -303,12 +303,12 @@ export const verifyUserController = async (req: Request, res: Response) => {
 
   if (!user) throw new BadRequestError("User does not exist!");
 
-  // const token = await generateToken(user.id);
+  const token = await generateToken(user.id);
 
   res.status(200).json({
     success: "true",
     UserStatus: user.status,
-    // token: token TODO: WORK ON ANOTHER EMAIL TOKE GENERATION STRATEGY
+    token: token
   });
 };
 
