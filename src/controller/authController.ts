@@ -75,14 +75,21 @@ const token = await generateLoginToken(user.id, expiresIn);
 
   await generateUserSession(user.id,token, refreshToken);
 
-  const { password: _,updatedAt, resetTokenExpiry, ...userData } = user;
+  // const { password: _,updatedAt, resetTokenExpiry, ...userData } = user;
 
 
   res.status(200).send({
     success: true,
     token,
     refreshToken,
-    userData,
+    userData : {
+      role : user.role,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      status: user.status,
+      lastLogin: user.lastLogin
+    },
   });
 };
 
