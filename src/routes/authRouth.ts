@@ -29,7 +29,7 @@ authRoute.post('/refresh-token', refreshToken);
 
 
 // General authenticated routes
-authRoute.post('/verify-session-token', authMiddleware, verifySessionTokenController);
+authRoute.post('/verify-session-token', verifySessionTokenController);
 
 authRoute.post('/logout', authMiddleware, logoutController);
 
