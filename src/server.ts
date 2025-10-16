@@ -9,12 +9,12 @@ import slowDown from 'express-slow-down';
 
 const app = express()
 
-app.use(cors({
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  origin: config.CLIENT_URL,
-  credentials: true,
-}));
+// app.use(cors({
+//   methods: ['GET', 'POST', 'PUT', 'DELETE'],
+//   allowedHeaders: ['Content-Type', 'Authorization'],
+//   origin: config.CLIENT_URL,
+//   credentials: true,
+// }));
 
 // Rate limiting
 const limiter = rateLimit({
