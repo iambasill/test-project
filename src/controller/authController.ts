@@ -26,7 +26,7 @@ export const registerController = async (req: Request, res: Response, next: Next
   }
   const hashedPassword = await bcrypt.hash( await genrateRandomPassword(), 12); 
   const user:any = await prisma.user.create({
-    data: { email, firstName, lastName, role, password: hashedPassword, status: 'PENDING', refreshToken: null }
+    data: { email, firstName, lastName, role, password: hashedPassword, refreshToken: null }
   });
 
   const verificationToken = await generateToken(user.id);

@@ -58,7 +58,7 @@ model User {
     rank                  String?
     unit                  String?
     role                  UserRole?
-    status                UserStatus             @default(PENDING)
+    status                UserStatus?           @default(PENDING)            
     password              String
     isActive              Boolean                @default(false)
     refreshToken          String?
