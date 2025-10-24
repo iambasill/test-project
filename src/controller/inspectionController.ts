@@ -1,13 +1,13 @@
 import { Request, Response } from "express";
 import { BadRequestError, notFoundError, unAuthorizedError } from "../httpClass/exceptions";
-import { PrismaClient } from "../generated/prisma";
 
 import { z } from 'zod';
 import { CreateInspectionSchema } from "../schema/schema";
 import { sanitizeInput } from "../utils/helperFunction";
 import { handleFileUploads } from "../utils/filerHandler";
+import { prismaclient } from "../lib/prisma-connect";
 
-const prisma = new PrismaClient();
+const prisma = prismaclient
 
 export const createInspection = async (req: Request, res: Response) => {
     const user: any = req.user;

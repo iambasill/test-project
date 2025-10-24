@@ -1,10 +1,11 @@
-import { PrismaClient } from "../generated/prisma";
+
 import jwt from "jsonwebtoken"
 import { BadRequestError, unAuthorizedError } from "../httpClass/exceptions";
 import sanitiseHtml from "sanitize-html";
 import { config } from "../config/envConfig";
+import { prismaclient } from "../lib/prisma-connect";
 
-const prisma = new PrismaClient()
+const prisma = prismaclient
 
 
 export async function checkUser(id:string){

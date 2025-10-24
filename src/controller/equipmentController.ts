@@ -1,12 +1,13 @@
 import { CreateEquipmentOwnershipSchema, equipmentData } from '../schema/schema';
 import e, {Request,Response} from 'express'
 import { BadRequestError } from '../httpClass/exceptions';
-import { PrismaClient } from '../generated/prisma';
 import { sanitizeInput } from '../utils/helperFunction';
 import sanitize from 'sanitize-html';
 import { config } from '../config/envConfig';
+import { prismaclient } from '../lib/prisma-connect';
 
-const prisma = new PrismaClient()
+const prisma = prismaclient
+
 
 // Get all equipment
 export const getAllEquipment = async (req:Request, res:Response) => {

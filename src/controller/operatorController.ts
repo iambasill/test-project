@@ -1,11 +1,11 @@
 import {Request,Response} from 'express'
 import { BadRequestError, unAuthorizedError } from '../httpClass/exceptions';
-import { PrismaClient } from "../generated/prisma";
 import { sanitizeInput } from '../utils/helperFunction';
 import { operatorSchema } from '../schema/schema';
 import { config } from '../config/envConfig';
+import { prismaclient } from '../lib/prisma-connect';
 
-const prisma = new PrismaClient()
+const prisma = prismaclient
 
 export const getAllOperator = async (req:Request, res:Response) => {
   const user:any = req.user

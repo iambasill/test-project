@@ -1,8 +1,9 @@
-import { PrismaClient } from '../generated/prisma';
+
 
 import { config } from "../config/envConfig";
+import { prismaclient } from '../lib/prisma-connect';
 
-const prisma = new PrismaClient();
+const prisma = prismaclient
 
 // Optimized helper function to handle file uploads
 export async function handleFileUploads(files: any, inspectionId: string) {

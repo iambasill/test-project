@@ -1,13 +1,12 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import { BadRequestError, unAuthorizedError } from '../httpClass/exceptions';
-import { PrismaClient } from '../generated/prisma';
 import { sanitizeInput } from '../utils/helperFunction';
 import { signUpSchema } from '../schema/schema';
+import { prismaclient } from '../lib/prisma-connect';
 
 
-const prisma = new PrismaClient()
-
+const prisma = prismaclient
 
 export const getAllUsers = async (req: Request, res: Response) => {
   const users = await prisma.user.findMany({

@@ -1,15 +1,15 @@
 import express, { Request, Response, NextFunction } from "express";
-import { PrismaClient } from "../generated/prisma";
 import { BadRequestError } from "../httpClass/exceptions";
 import { signUpSchema, loginSchema, emailSchema, changePasswordSchema, userIdSchema, tokenSchema } from "../schema/schema";
 import bcrypt from 'bcrypt';
 import { checkUser, generateLoginToken, generateToken, generateUserSession, genrateRandomPassword, manageAdminSession, verifyToken } from "../utils/helperFunction";
 import { sendVerificationEmail } from "../services/emailService";
 import { config } from "../config/envConfig";
+import { prismaclient } from "../lib/prisma-connect";
 
 
 
-const prisma = new PrismaClient()
+const prisma = prismaclient
 
 
 // ====================== CONTROLLERS ====================== //
