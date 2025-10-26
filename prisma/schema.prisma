@@ -221,7 +221,7 @@ model Inspection {
   id               String   @id @default(uuid())
   equipmentId      String
   inspectorId      String?
-  templateId       String?  // Link to template if this inspection was created from one
+//   templateId       String?  // Link to template if this inspection was created from one
   datePerformed    DateTime @default(now())
   nextDueDate      DateTime?
   overallNotes     String?  @db.Text
