@@ -108,7 +108,7 @@ export const manageAdminSession = async (userId: string) => {
     }
   });
 
-  return "15m";
+  return "30m";
 
 };
 

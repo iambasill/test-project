@@ -6,6 +6,7 @@
   "scripts": {
     "build": "rm -rf build && prisma generate && tsc && cp -r src/generated build/",
     "test": "echo \"Error: no test specified\" && exit 1",
+    "dev" : "nodemon --legacy-watch",
     "db:seed": "prisma db seed",
     "db:reset": "prisma migrate reset --force",
     "db:reset-seed": "prisma migrate reset --force && prisma db seed"
