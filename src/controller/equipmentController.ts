@@ -39,7 +39,7 @@ export const getAllEquipment = async (req:Request, res:Response) => {
 export const getEquipmentById = async (req:Request, res:Response) => {
   let { id } = req.params;
   id = sanitizeInput(id)
-  const equipment = await prisma.equipment.findFirst({
+  const equipment = await prisma.equipment.findUnique({
     where: { id },
     include: {
       ownerships: {
