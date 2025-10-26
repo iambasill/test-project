@@ -36,21 +36,20 @@ export const getAllEquipment = async (req:Request, res:Response) => {
 };
 
 // Get equipment by ID
-export const getEquipmentById = async (req:Request, res:Response) => {
+export const getEquipmentById = async (req: Request, res: Response) => {
   let { id } = req.params;
-  id = sanitizeInput(id)
+  id = sanitizeInput(id);
+
   const equipment = await prisma.equipment.findUnique({
     where: { id },
     include: {
       ownerships: {
-        select:{
+        select: {
           startDate: true,
-          conditionAtAssignment:true,
-          primaryDuties:true
-        },
-        include: {
-          operator: true,
-          documents: true
+          conditionAtAssignment: true,
+          primaryDuties: true,
+          operator: true,     
+          documents: true      
         }
       },
       conditionHistory: {
@@ -61,22 +60,19 @@ export const getEquipmentById = async (req:Request, res:Response) => {
       },
       inspections: {
         include: {
-          inspector: true,
+          inspector: true
         },
         orderBy: { datePerformed: 'desc' }
       },
-      documents: {select:{
-        fileName:true,
-        fileUrl:true
-      }},
-      operators: {
-        select:{
-
+      documents: {
+        select: {
+          fileName: true,
+          fileUrl: true
         }
-      }
+      },
+      operators: true  
     }
-  });
-  
+  });  
   if (!equipment)  throw new BadRequestError('Equipment not found')
   
   res.status(200).json({
