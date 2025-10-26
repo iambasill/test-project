@@ -12,7 +12,8 @@ const prisma = prismaclient
 // Get all equipment
 export const getAllEquipment = async (req:Request, res:Response) => {
   const equipment = await prisma.equipment.findMany({
-    select:{
+
+    include:{
       ownerships:{
         where: { isCurrent: true },
         select:{
