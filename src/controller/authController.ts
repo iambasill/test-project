@@ -356,6 +356,7 @@ export const refreshToken = async (req:Request, res:Response) => {
     where:{
       refreshToken,
       user_id: user.id,
+      logout_time:null
     }
   })
   if (!valid || user.status !== "ACTIVE") throw new BadRequestError("Invalid refresh token")
