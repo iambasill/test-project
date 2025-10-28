@@ -348,18 +348,20 @@ export const resendVerficationController = async (req: Request, res: Response, n
  */
 
 export const refreshToken = async (req:Request, res:Response) => {
+  const user:any = req.user
   const {refreshToken} = tokenSchema.parse(req.body)
 
   const valid = await prisma.user_sessions.findFirst({
     where:{
-      refreshToken
+      refreshToken,
+      user_id: user.id,
     }
   })
   if (!valid) throw new BadRequestError("Invalid refresh token")
   
   const decoded = await  verifyToken(refreshToken,"auth")
 
-  const user:any = await checkUser(decoded.userId)
+  await checkUser(decoded.userId)
   let tokenExpiry: String | null = null;
 
   if (user.role && ['ADMIN'].includes(user.role))  await manageAdminSession(user.id);
