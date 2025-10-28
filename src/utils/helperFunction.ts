@@ -11,6 +11,14 @@ const prisma = prismaclient
 export async function checkUser(id:string){
     const user = prisma.user.findUnique({
         where:{id},
+        select:{
+          id:true,
+          role:true,
+          status:true,
+          email:true,
+          firstName:true,
+          lastName:true
+        }
     })
 return user
 }
