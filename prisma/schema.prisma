@@ -367,7 +367,7 @@ model Active_admin_sessions {
 model User_sessions {
     id            String    @id @default(cuid())
     user_id       String
-    session_token String
+    session_token String?
     refreshToken String @default("")
     login_time    DateTime  @default(now())
     logout_time   DateTime?

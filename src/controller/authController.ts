@@ -68,13 +68,13 @@ export const loginController = async (req: Request, res: Response) => {
 const expiresIn =
   tokenExpiry && tokenExpiry instanceof Date
     ? `${Math.floor((tokenExpiry.getTime() - Date.now()) / 1000)}s`
-    : "15m";
+    : "8hrs";
 
-const token = await generateLoginToken(user.id, expiresIn);
+const token = await generateLoginToken(user.id, "1hr");
 
-  const refreshToken =  await generateLoginToken(user.id, "8h")
+  const refreshToken =  await generateLoginToken(user.id, expiresIn)
 
-  await generateUserSession(user.id,token, refreshToken);
+  await generateUserSession(user.id,refreshToken);
 
   // const { password: _,updatedAt, resetTokenExpiry, ...userData } = user;
 
@@ -364,14 +364,8 @@ export const refreshToken = async (req:Request, res:Response) => {
   const decoded = await verifyToken(refreshToken,"auth")
 
   await checkUser(decoded.id)
-  let tokenExpiry: String | null = null;
 
-  if (user.role && ['ADMIN'].includes(user.role))  await manageAdminSession(user.id);
-
-  const token = await generateLoginToken(user.id, "30m");
-  const newrefreshToken =  await generateLoginToken(user.id, "8h")
-
-  await generateUserSession(user.id,token,newrefreshToken);
+  const token = await generateLoginToken(user.id, "1hr");
 
    res.status(200).send({
     success: true,

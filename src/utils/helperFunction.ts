@@ -40,7 +40,6 @@ export const generateLoginToken = async (userId: string, expiresIn: any ) => {
 
 export const generateUserSession = async (
   userId: string,
-  session_token: string,
   refreshToken: string
 ) => {
   await prisma.$transaction(async (tx) => {
@@ -57,8 +56,7 @@ export const generateUserSession = async (
     await tx.user_sessions.create({
       data: {
         user_id: userId,
-        session_token,
-        refreshToken,
+        refreshToken
       },
     });
 
@@ -116,7 +114,7 @@ export const manageAdminSession = async (userId: string) => {
     }
   });
 
-  return "30m";
+  return "4hrs";
 
 };
 
