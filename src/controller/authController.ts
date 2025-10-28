@@ -70,7 +70,7 @@ const expiresIn =
     ? `${Math.floor((tokenExpiry.getTime() - Date.now()) / 1000)}s`
     : "8hrs";
 
-const token = await generateLoginToken(user.id, "1hr");
+const token = await generateLoginToken(user.id, "2m");
 
   const refreshToken =  await generateLoginToken(user.id, expiresIn)
 
@@ -373,7 +373,7 @@ export const refreshToken = async (req:Request, res:Response) => {
 const expiresIn =
   tokenExpiry ||  "8hrs";
 
-const newToken = await generateLoginToken(user.id, "1hr");
+const newToken = await generateLoginToken(user.id, "2m");
 
   const newRefreshToken =  await generateLoginToken(user.id, expiresIn)
 
