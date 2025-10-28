@@ -46,8 +46,7 @@ export const generateUserSession = async (
     // Close all active sessions
     await tx.user_sessions.deleteMany({
       where: {
-        user_id: userId,
-        logout_time: null,
+        user_id: userId
       },
     });
 
