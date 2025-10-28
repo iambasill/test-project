@@ -361,7 +361,7 @@ export const refreshToken = async (req:Request, res:Response) => {
   
   const decoded = await verifyToken(refreshToken,"auth")
 
-  await checkUser(decoded.userId)
+  await checkUser(decoded.id)
   let tokenExpiry: String | null = null;
 
   if (user.role && ['ADMIN'].includes(user.role))  await manageAdminSession(user.id);
