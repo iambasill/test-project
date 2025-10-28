@@ -44,10 +44,12 @@ export const generateUserSession = async (
 ) => {
   await prisma.$transaction(async (tx) => {
     // Close all active sessions
-    await tx.user_sessions.deleteMany({
+    await tx.user_sessions.updateMany({
       where: {
-        user_id: userId
+        user_id: userId,
+        logout_time: null
       },
+      data: { logout_time: new Date() }
     });
 
     // Store new user session
@@ -95,7 +97,7 @@ export const manageAdminSession = async (userId: string) => {
    })
  
    // 2hours from now
-  const logoutAt = new Date(Date.now() + 15 * 60 * 1000); 
+  const logoutAt = new Date(Date.now() + 4 * 60 * 60 * 1000); 
   
   const session = await prisma.active_admin_sessions.upsert({
     where: { 
