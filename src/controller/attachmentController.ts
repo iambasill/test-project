@@ -13,7 +13,7 @@ const mimeTypes: Record<string, string> = {
 
 export const attachmentController = (req: Request, res: Response) => {
     const filename = req.params.filename;
-    const imagePath = path.join(__dirname,'../../../storage/document', filename);
+    const imagePath = path.join(__dirname,'../../storage/document', filename);
     
     // Get file extension and determine Content-Type
     const ext = path.extname(filename).toLowerCase();

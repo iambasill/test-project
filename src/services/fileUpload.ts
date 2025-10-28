@@ -5,7 +5,7 @@ import * as fs from 'fs'
 import { BadRequestError } from '../httpClass/exceptions';
 
 const app = express();
-const upload_path = path.join(__dirname, "../../../storage/document");
+const upload_path = path.join(__dirname, "../../storage/document");
 
             // If the folder does not exist
             if (!fs.existsSync(upload_path)) {
