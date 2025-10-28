@@ -25,7 +25,7 @@ authRoute.post('/verify-user', verifyUserController);
 authRoute.post('/change-password', changePasswordController);
 authRoute.post('/forgot-password', forgotPasswordController);
 authRoute.post('/resend-verification', resendVerficationController);
-authRoute.post('/refresh-token', refreshToken);
+authRoute.post('/refresh-token',authMiddleware, refreshToken);
 
 
 // General authenticated routes
