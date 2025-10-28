@@ -364,12 +364,27 @@ export const refreshToken = async (req:Request, res:Response) => {
   const decoded = await verifyToken(refreshToken,"auth")
 
   await checkUser(decoded.id)
+  let tokenExpiry: String | null = null;
 
-  const token = await generateLoginToken(user.id, "1hr");
+
+  // Generate user session 
+  if (user.role && ['ADMIN'].includes(user.role)) tokenExpiry = await manageAdminSession(user.id);
+
+const expiresIn =
+  tokenExpiry && tokenExpiry instanceof Date
+    ? `${Math.floor((tokenExpiry.getTime() - Date.now()) / 1000)}s`
+    : "8hrs";
+
+const newToken = await generateLoginToken(user.id, "1hr");
+
+  const newRefreshToken =  await generateLoginToken(user.id, expiresIn)
+
+  await generateUserSession(user.id,refreshToken);
 
    res.status(200).send({
     success: true,
-    token,
+    newToken,
+    newRefreshToken,
   });
 
 }
