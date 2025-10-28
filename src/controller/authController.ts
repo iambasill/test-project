@@ -6,6 +6,7 @@ import { checkUser, generateLoginToken, generateToken, generateUserSession, genr
 import { sendVerificationEmail } from "../services/emailService";
 import { config } from "../config/envConfig";
 import { prismaclient } from "../lib/prisma-connect";
+import { User } from "../generated/prisma";
 
 
 
@@ -357,7 +358,7 @@ export const refreshToken = async (req:Request, res:Response) => {
       user_id: user.id,
     }
   })
-  if (!valid) throw new BadRequestError("Invalid refresh token")
+  if (!valid || user.status !== "ACTIVE") throw new BadRequestError("Invalid refresh token")
   
   const decoded = await verifyToken(refreshToken,"auth")
 
@@ -374,7 +375,6 @@ export const refreshToken = async (req:Request, res:Response) => {
    res.status(200).send({
     success: true,
     token,
-    refreshToken: newrefreshToken,
   });
 
 }
