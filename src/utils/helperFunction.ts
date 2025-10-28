@@ -30,41 +30,41 @@ export const generateLoginToken = async (userId: string, expiresIn: any ) => {
   return jwt.sign({ id: userId }, config.AUTH_JWT_TOKEN as string, { expiresIn:expiresIn });
 };
 
-export const generateUserSession = async (userId: string,session_token:string,refreshToken:string) => {
-    await prisma.$transaction(async (tx) => {
-    // close all active sessions
-      tx.user_sessions.updateMany({
-       where: {
-      user_id: userId,
-      logout_time: null,
-    },
-    data: { logout_time: new Date() }
-  });
+export const generateUserSession = async (
+  userId: string,
+  session_token: string,
+  refreshToken: string
+) => {
+  await prisma.$transaction(async (tx) => {
+    // Close all active sessions
+    await tx.user_sessions.updateMany({
+      where: {
+        user_id: userId,
+        logout_time: null,
+      },
+      data: { logout_time: new Date() },
+    });
 
-
-
-  // Store user session
-    tx.user_sessions.create({
-    data: {
-      user_id: userId,
-      session_token,
-      refreshToken
-    }
-  });
+    // Store new user session
+    await tx.user_sessions.create({
+      data: {
+        user_id: userId,
+        session_token,
+        refreshToken,
+      },
+    });
 
     // Update last login
-    tx.user.update({
-    where: { id: userId },
-    data: { 
-      lastLogin: new Date(),
-      isActive: true
-     }
+    await tx.user.update({
+      where: { id: userId },
+      data: {
+        lastLogin: new Date(),
+        isActive: true,
+      },
+    });
   });
-
-    })
-
-  
 };
+
 
 export const manageAdminSession = async (userId: string) => {
   // Check if there's already an active admin session from a different admin

@@ -359,7 +359,7 @@ export const refreshToken = async (req:Request, res:Response) => {
   })
   if (!valid) throw new BadRequestError("Invalid refresh token")
   
-  const decoded = await  verifyToken(refreshToken,"auth")
+  const decoded = await verifyToken(refreshToken,"auth")
 
   await checkUser(decoded.userId)
   let tokenExpiry: String | null = null;
