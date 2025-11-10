@@ -244,49 +244,6 @@ model Inspection {
   @@map("inspections")
 }
 
-// Inspection Template for reusable inspection formats
-// model InspectionTemplate {
-//   id          String   @id @default(uuid())
-//   name        String
-//   description String?
-//   category    String   // vehicle, equipment, safety, etc.
-  
-//   // Template defines what items should be inspected
-//   items InspectionTemplateItem[]
-  
-//   // Inspections created from this template
-//   inspections Inspection[]
-  
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
-
-//   @@map("inspection_templates")
-// }
-
-// Template Items - defines the structure of an inspection
-// model InspectionTemplateItem {
-//   id           String   @id @default(uuid())
-//   templateId   String
-//   category     String   // engine, steering, brakes, etc.
-//   itemName     String
-//   itemType     String   // condition, measurement, boolean, text
-//   position     String?  // for wheels, axles, etc.
-//   required     Boolean  @default(false)
-//   sortOrder    Int      @default(0)
-  
-//   // Validation rules
-//   minValue     Float?
-//   maxValue     Float?
-//   allowedValues String? // JSON array for dropdown options
-  
-// //   template InspectionTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
-//   inspectionItems InspectionItem[] // Opposite relation field added
-
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
-
-//   @@map("inspection_template_items")
-// }
 
 // Unified Inspection Items - actual inspection data
 model InspectionItem {

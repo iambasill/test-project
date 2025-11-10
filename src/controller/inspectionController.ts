@@ -3,13 +3,14 @@ import { BadRequestError, notFoundError } from "../logger/exceptions";
 import { CreateInspectionSchema } from "../validator/authValidator";
 import { prismaclient } from "../lib/prisma-connect";
 import { handleFileUploads } from "../utils/helperFunction";
+import { User } from "../generated/prisma";
 
 
 /**
  * Create an inspection
  */
 export const createInspection = async (req: Request, res: Response) => {
-  const user: any = req.user;
+  const user = req.user as User;
 
   // Parse JSON string if exists
   let rawData;
@@ -33,7 +34,7 @@ export const createInspection = async (req: Request, res: Response) => {
   });
 
   if (!equipment) {
-    throw new BadRequestError(`Equipment with ID ${equipmentId} not found`);
+    throw new BadRequestError(`Equipment not found!`);
   }
 
   // Create inspection and items
@@ -94,7 +95,7 @@ export const createInspection = async (req: Request, res: Response) => {
   // Handle file uploads (non-blocking)
   let fileUploadPromise = null;
   if (req.files && Object.keys(req.files).length > 0) {
-    fileUploadPromise = handleFileUploads(req.files, result.id, "inspection");
+    fileUploadPromise = handleFileUploads(req.files, result.id, "inspectionId");
   }
 
   // Respond immediately
