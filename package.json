@@ -6,7 +6,7 @@
   "scripts": {
     "build": "rm -rf build && prisma generate && tsc && cp -r src/generated build/",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev" : "nodemon --legacy-watch",
+    "dev": "nodemon --legacy-watch",
     "db:seed": "prisma db seed",
     "db:reset": "prisma migrate reset --force",
     "db:reset-seed": "prisma migrate reset --force && prisma db seed"
@@ -16,6 +16,7 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.927.0",
     "@prisma/client": "^6.14.0",
     "@sendgrid/mail": "^8.1.5",
     "bcrypt": "^6.0.0",
@@ -30,6 +31,7 @@
     "logger": "^0.0.1",
     "morgan": "^1.10.1",
     "multer": "^2.0.2",
+    "multer-s3": "^3.0.1",
     "nodemailer": "^7.0.5",
     "nodemon": "^3.1.10",
     "prisma": "^6.13.0",
@@ -46,6 +48,7 @@
     "@types/logger": "^0.0.5",
     "@types/morgan": "^1.9.10",
     "@types/multer": "^2.0.0",
+    "@types/multer-s3": "^3.0.3",
     "@types/nodemailer": "^6.4.17",
     "@types/sanitize-html": "^2.16.0",
     "cpx": "^1.5.0"

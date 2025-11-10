@@ -1,8 +1,8 @@
 import {Request,Response} from 'express'
-import { BadRequestError, unAuthorizedError } from '../httpClass/exceptions';
+import { BadRequestError, unAuthorizedError } from '../logger/exceptions';
 import { sanitizeInput } from '../utils/helperFunction';
-import { operatorSchema } from '../schema/schema';
-import { config } from '../config/envConfig';
+import { operatorSchema } from '../validator/authValidator';
+import { config } from '../config/baseConfig';
 import { prismaclient } from '../lib/prisma-connect';
 
 const prisma = prismaclient

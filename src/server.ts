@@ -4,8 +4,8 @@ import { errorHandler } from './utils/errorHandler';
 import cors from 'cors'
 import { morganMiddleware } from './utils/logger';
 import rateLimit from 'express-rate-limit';
-import { config } from './config/envConfig';
 import slowDown from 'express-slow-down';
+import { config } from './config';
 
 const app = express()
 
@@ -54,16 +54,7 @@ app.use('/', rootRoute)
 
 
 
-
-
-
-
-
-
-
-
-
 app.use(errorHandler)
-app.listen(8000,()=>{
-    console.log('connected to port 8000')
+app.listen(config.PORT,()=>{
+    console.log(`connected to port ${config.PORT}`)
 })

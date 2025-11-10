@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
-import { BadRequestError, unAuthorizedError } from '../httpClass/exceptions';
+import { BadRequestError, unAuthorizedError } from '../logger/exceptions';
 import { sanitizeInput } from '../utils/helperFunction';
-import { signUpSchema } from '../schema/schema';
+import { signUpSchema } from '../validator/authValidator';
 import { prismaclient } from '../lib/prisma-connect';
 
 

@@ -3,7 +3,7 @@ import { createOperator, deleteOperator, getAllOperator, getAllOperatorById, upd
 import  express  from "express";
 import { authMiddleware } from '../middlewares/authMiddleware';
 import { upload } from '../services/fileUpload';
-import { OPERATOR_FIELDS } from '../schema/uploadsSchema';
+import { OPERATOR_FIELDS } from '../validator/uploadsValidator';
 
 export const operatorRouter = express.Router();
 

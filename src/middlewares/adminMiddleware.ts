@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { unAuthorizedError } from '../httpClass/exceptions';
+import { unAuthorizedError } from '../logger/exceptions';
 
 /**
  * Middleware specifically for Platform Admin actions (highest privilege)

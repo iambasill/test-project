@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
-import { http_Exception } from '../httpClass/extendHttp';
+import { http_Exception } from '../logger/extendHttp';
 import logger from './logger';
 
 

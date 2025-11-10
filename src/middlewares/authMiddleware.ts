@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import jwt, { JwtPayload } from 'jsonwebtoken'
 import { NextFunction } from "express";
-import { unAuthorizedError } from "../httpClass/exceptions";
+import { unAuthorizedError } from "../logger/exceptions";
 import { checkUser, verifyToken } from "../utils/helperFunction";
 
 // Extend the Request interface to include user

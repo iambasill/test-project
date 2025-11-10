@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import path from "path";
-import { notFoundError } from "../httpClass/exceptions";
+import { notFoundError } from "../logger/exceptions";
 
 // MIME type mapping object (extension -> content type)
 const mimeTypes: Record<string, string> = {

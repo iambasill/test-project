@@ -5,7 +5,7 @@ import fs from 'fs';
 import path from 'path';
 
 // Create logs directory if it doesn't exist
-const logDir = 'logs';
+const logDir = 'src/logs';
 if (!fs.existsSync(logDir)) {
   fs.mkdirSync(logDir);
 }
@@ -20,7 +20,7 @@ const consoleFormat = printf(({ level, message, timestamp, stack }) => {
 
 // Create logger instance
 const logger = winston.createLogger({
-  level: 'http', // This is important for Morgan logs
+  level: "debug", // This is important for Morgan logs
   format: combine(
     timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
     json(),

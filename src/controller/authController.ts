@@ -1,10 +1,10 @@
 import express, { Request, Response, NextFunction } from "express";
-import { BadRequestError } from "../httpClass/exceptions";
-import { signUpSchema, loginSchema, emailSchema, changePasswordSchema, userIdSchema, tokenSchema } from "../schema/schema";
+import { BadRequestError } from "../logger/exceptions";
+import { signUpSchema, loginSchema, emailSchema, changePasswordSchema, userIdSchema, tokenSchema } from "../validator/authValidator";
 import bcrypt from 'bcrypt';
 import { checkUser, generateLoginToken, generateToken, generateUserSession, genrateRandomPassword, manageAdminSession, verifyToken } from "../utils/helperFunction";
 import { sendVerificationEmail } from "../services/emailService";
-import { config } from "../config/envConfig";
+import { config } from "../config/baseConfig";
 import { prismaclient } from "../lib/prisma-connect";
 import { User } from "../generated/prisma";
 

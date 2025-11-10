@@ -1,32 +1,9 @@
 import * as z from "zod";
 import { AcquisitionMethod, InspectionStatus, UserRole } from "../generated/prisma";
 import sanitizeHtml from "sanitize-html";
+import { sanitizeObject } from "../utils/zodHandler";
 
 const status = Object.values(InspectionStatus)
-
-
-const sanitizeObject = <T extends z.ZodRawShape>(schema: z.ZodObject<T>) => {
-  return z.object(
-    Object.fromEntries(
-      Object.entries(schema.shape).map(([key, value]) => {
-        if (value instanceof z.ZodString) {
-          return [
-            key,
-            value.transform((val) =>
-              sanitizeHtml(val, {
-                allowedTags: [],
-                parser: {
-                  decodeEntities: true,
-                },
-              })
-            ),
-          ];
-        }
-        return [key, value];
-      })
-    ) as T
-  );
-};
 
 
 export const signUpSchema = sanitizeObject(z.object({

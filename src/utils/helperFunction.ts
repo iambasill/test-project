@@ -1,8 +1,8 @@
 
 import jwt from "jsonwebtoken"
-import { BadRequestError, unAuthorizedError } from "../httpClass/exceptions";
+import { BadRequestError, unAuthorizedError } from "../logger/exceptions";
 import sanitiseHtml from "sanitize-html";
-import { config } from "../config/envConfig";
+import { config } from "../config/baseConfig";
 import { prismaclient } from "../lib/prisma-connect";
 
 const prisma = prismaclient
