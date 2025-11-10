@@ -120,6 +120,8 @@ model Equipment {
     // Condition Tracking
     currentCondition   String?
     lastConditionCheck String?
+    idempotency_tracker  Idempotency_tracker[]
+
 
     // Relations
     ownerships       EquipmentOwnership[]
@@ -185,6 +187,7 @@ model EquipmentOwnership {
     conditionAtAssignment String? @default("")
     notes                 String?
     documents             Document[]
+    idempotency_tracker Idempotency_tracker[]
 
     createdAt  DateTime @default(now())
     updatedAt  DateTime @updatedAt
@@ -240,6 +243,7 @@ model Inspection {
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  idempotency_tracker  Idempotency_tracker[]
 
   @@map("inspections")
 }
@@ -331,4 +335,22 @@ model User_sessions {
     user          User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
     @@map("user_sessions")
+}
+
+model Idempotency_tracker {
+    id              String    @id @default(cuid())
+    key             String
+    equipment_id    String?
+    inspection_id   String?
+    equipment_ownership_id String?
+
+    equipment Equipment?    @relation(fields: [equipment_id], references: [id], onDelete: Cascade)
+    inspection Inspection?  @relation(fields: [inspection_id], references: [id], onDelete: Cascade)
+    equipment_ownership EquipmentOwnership?  @relation(fields: [equipment_ownership_id], references: [id], onDelete: Cascade)
+
+
+
+    @@index([key])
+    @@map("idempotency-tracker")
+
 }

@@ -5,12 +5,12 @@ import { prismaclient } from "../lib/prisma-connect";
 import { handleFileUploads } from "../utils/helperFunction";
 import { User } from "../generated/prisma";
 
-
 /**
- * Create an inspection
+ * Create an inspection (with idempotency)
  */
 export const createInspection = async (req: Request, res: Response) => {
   const user = req.user as User;
+  const idempotencyKey = req.headers["idempotency-key"] as string;
 
   // Parse JSON string if exists
   let rawData;
@@ -26,6 +26,33 @@ export const createInspection = async (req: Request, res: Response) => {
 
   const { equipmentId, nextDueDate, overallNotes, overallCondition, items } =
     CreateInspectionSchema.parse(rawData);
+
+  // Check idempotency
+  if (idempotencyKey) {
+    const existingInspection = await prismaclient.inspection.findFirst({
+      where: {
+        equipmentId,
+        idempotency_tracker: { some: { key: idempotencyKey } },
+      },
+      select: {
+        id: true,
+        equipmentId: true,
+        datePerformed: true,
+      },
+    });
+
+    if (existingInspection) {
+      return res.status(200).json({
+        success: true,
+        message: "Inspection created successfully",
+        data: {
+          id: existingInspection.id,
+          equipmentId: existingInspection.equipmentId,
+          datePerformed: existingInspection.datePerformed,
+        },
+      });
+    }
+  }
 
   // Verify equipment exists
   const equipment = await prismaclient.equipment.findUnique({
@@ -89,6 +116,16 @@ export const createInspection = async (req: Request, res: Response) => {
       });
     }
 
+    // Create idempotency tracker if key provided
+    if (idempotencyKey) {
+      await tx.idempotency_tracker.create({
+        data: {
+          key: idempotencyKey,
+          inspection_id: inspection.id,
+        },
+      });
+    }
+
     return inspection;
   });
 
@@ -117,4 +154,3 @@ export const createInspection = async (req: Request, res: Response) => {
 
   return res.status(201).json(response);
 };
-
