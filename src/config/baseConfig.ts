@@ -27,7 +27,7 @@ export const baseConfig: BaseConfig = {
     DB_PROVIDER: process.env.DB_PROVIDER!,
     DATABASE_URL: process.env.DATABASE_URL!,
     OTP_SECRET: process.env.OTP_SECRET!,
-    PORT: process.env.PORT || '5000',
+    PORT: process.env.PORT || '8000',
     STORAGE_ENV: process.env.STORAGE_ENV || 'local',
 };
 
