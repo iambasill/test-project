@@ -1,173 +1,179 @@
-import {Request,Response} from 'express'
-import { BadRequestError, unAuthorizedError } from '../logger/exceptions';
-import { sanitizeInput } from '../utils/helperFunction';
-import { operatorSchema } from '../validator/authValidator';
-import { config } from '../config/baseConfig';
-import { prismaclient } from '../lib/prisma-connect';
+import { Request, Response } from "express";
+import { BadRequestError, unAuthorizedError } from "../logger/exceptions";
+import { sanitizeInput } from "../utils/helperFunction";
+import { operatorSchema } from "../validator/authValidator";
+import { prismaclient } from "../lib/prisma-connect";
+import { getFileUrls } from "../utils/fileHandler";
 
-const prisma = prismaclient
+const prisma = prismaclient;
 
-export const getAllOperator = async (req:Request, res:Response) => {
-  const user:any = req.user
-  if (user.role === "OFFICER") throw new unAuthorizedError
-  const operator = await prisma.operator.findMany({
+/**
+ * Get all operators
+ */
+export const getAllOperator = async (req: Request, res: Response) => {
+  const user: any = req.user;
+  if (user.role === "OFFICER") throw new unAuthorizedError();
+
+  const operators = await prisma.operator.findMany({
+    orderBy: { createdAt: "desc" },
   });
-  
+
   res.status(200).json({
     success: true,
-    data: operator
+    data: operators,
   });
 };
 
-export const getAllOperatorById = async (req:Request, res:Response) => {
-  let {id} = req.params
-  id = sanitizeInput(id)
-    const user:any = req.user
-  if (user.role === "OFFICER") throw new unAuthorizedError
+/**
+ * Get operator by ID
+ */
+export const getAllOperatorById = async (req: Request, res: Response) => {
+  let { id } = req.params;
+  id = sanitizeInput(id);
+
+  const user: any = req.user;
+  if (user.role === "OFFICER") throw new unAuthorizedError();
 
   const operator = await prisma.operator.findUnique({
-    where:{id}
-  })
+    where: { id },
+    include: {
+      documents: {
+        select: {
+          id: true,
+          fileName: true,
+          fileUrl: true,
+          fileType: true,
+          fileSize: true,
+          createdAt: true,
+        },
+      },
+    },
+  });
 
-  if (!operator) throw new BadRequestError('Operator not found')
-  
+  if (!operator) throw new BadRequestError("Operator not found");
+
   res.status(200).json({
     success: true,
-    operator: operator
+    operator,
   });
 };
 
+/**
+ * Create a new operator
+ */
+export const createOperator = async (req: Request, res: Response) => {
+  const user: any = req.user;
+  if (user.role === "OFFICER") throw new unAuthorizedError();
 
-export const createOperator = async (req:Request, res:Response) => {
-  const user:any = req.user
-  if (user.role === "OFFICER") throw new unAuthorizedError
+  const validated = operatorSchema.parse(req.body);
 
-  const {         
-    serviceNumber,         
-  } = operatorSchema.parse(req.body)
-
-    const operator = await prisma.operator.findFirst({
-    where:{serviceNumber}
-  })
-
-  if (operator) throw new BadRequestError('Operator already exist')
-
-  await prisma.$transaction(async(tx) => {
-
-  const operator = await tx.operator.create({
-    data: {
-      ...operatorSchema.parse(req.body)
-    }
+  // Check for duplicates
+  const existing = await prisma.operator.findFirst({
+    where: { serviceNumber: validated.serviceNumber },
   });
-  
-  // Create documents if files exist
-    if (req.files) {
-      const files = req.files as Record<string, Express.Multer.File[]>;
-      const fileData = Object.entries(files).map(([fileName, [file]]) => ({
-        fileName,
-        fileUrl: `${config.API_BASE_URL}/attachment/${file.filename}`,
-        operatorId: operator.id
-      }));
-      
+  if (existing) throw new BadRequestError("Operator already exists");
+
+  await prisma.$transaction(async (tx) => {
+    const operator = await tx.operator.create({
+      data: validated,
+    });
+
+    // Handle uploaded documents
+    if (req.files && Object.keys(req.files).length > 0) {
+      const uploadedFiles = Object.values(req.files).flat();
+      const structuredFiles = getFileUrls(
+        uploadedFiles as Express.Multer.File[],
+        "operatorId",
+        operator.id
+      );
 
       await tx.document.createMany({
-        data: fileData,
+        data: structuredFiles.map((file) => ({
+          ...file,
+          fileType: file.fileType || "unknown",
+          fileSize: file.fileSize || 0,
+        })),
       });
     }
-  })
-
+  });
 
   res.status(201).json({
     success: true,
-    message: 'Operator created successfully',
+    message: "Operator created successfully",
   });
 };
 
-export const updateOperator = async (req:Request, res:Response) => {
-  const user:any = req.user
-  if (user.role === "OFFICER") throw new unAuthorizedError
-  let {id} = req.params
-  id = sanitizeInput(id)
+/**
+ * Update operator details
+ */
+export const updateOperator = async (req: Request, res: Response) => {
+  const user: any = req.user;
+  if (user.role === "OFFICER") throw new unAuthorizedError();
 
-  const operator = await prisma.operator.findUnique({
-    where:{id}
-  })
+  let { id } = req.params;
+  id = sanitizeInput(id);
 
-  if (!operator) throw new BadRequestError('Operator not found')
+  const operator = await prisma.operator.findUnique({ where: { id } });
+  if (!operator) throw new BadRequestError("Operator not found");
 
-    await prisma.$transaction(async (tx) => {
-
-      
+  await prisma.$transaction(async (tx) => {
+    // Update operator info
     await tx.operator.update({
-    where:{id},
-    data: {
-    ...operatorSchema.parse(req.body)  
-    }
-  });
-  
-   // Update documents if files exist
-    if (req.files) {
-      const files = req.files as Record<string, Express.Multer.File[]>;
-      const fileData = Object.entries(files).map(([fileName, [file]]) => ({
-        fileName,
-        fileUrl: `${config.API_BASE_URL}/attachment/${file.filename}`,
-        operatorId: operator.id
-      }));
+      where: { id },
+      data: operatorSchema.parse(req.body),
+    });
 
-      // Only update/replace the documents that were actually uploaded
-      for (const fileInfo of fileData) {
-        // Check if document with this fileName already exists
-        const existingDocument = await tx.document.findFirst({
-          where: {
-           operatorId: operator.id,
-            fileName: fileInfo.fileName
-          }
+    // Handle file updates
+    if (req.files && Object.keys(req.files).length > 0) {
+      const uploadedFiles = Object.values(req.files).flat();
+      const structuredFiles = getFileUrls(
+        uploadedFiles as Express.Multer.File[],
+        "operatorId",
+        operator.id
+      );
+
+      for (const file of structuredFiles) {
+        const existing = await tx.document.findFirst({
+          where: { operatorId: operator.id, fileName: file.fileName },
         });
 
-        if (existingDocument) {
-          // Update existing document
+        if (existing) {
           await tx.document.update({
-            where: { id: existingDocument.id },
-            data: {
-              fileUrl: fileInfo.fileUrl
-            }
+            where: { id: existing.id },
+            data: { fileUrl: file.fileUrl, fileType: file.fileType, fileSize: file.fileSize },
           });
         } else {
-          // Create new document if it doesn't exist
           await tx.document.create({
-            data: fileInfo
+            data: file,
           });
         }
       }
     }
-
   });
 
   res.status(200).json({
     success: true,
-    message: 'Operator updated successfully',
+    message: "Operator updated successfully",
   });
 };
 
-export const deleteOperator = async (req:Request, res:Response) => {
-  const user:any = req.user
-  if (user.role === "OFFICER") throw new unAuthorizedError
-  let {id} = req.params
-  id = sanitizeInput(id)
+/**
+ * Delete operator
+ */
+export const deleteOperator = async (req: Request, res: Response) => {
+  const user: any = req.user;
+  if (user.role === "OFFICER") throw new unAuthorizedError();
 
-  const operator = await prisma.operator.findUnique({
-    where:{id}
-  })
+  let { id } = req.params;
+  id = sanitizeInput(id);
 
-  if (!operator) throw new BadRequestError('Operator not found')
-  
-  await prisma.operator.delete({
-    where:{id}
-  })
+  const operator = await prisma.operator.findUnique({ where: { id } });
+  if (!operator) throw new BadRequestError("Operator not found");
 
-    res.status(200).json({
+  await prisma.operator.delete({ where: { id } });
+
+  res.status(200).json({
     success: true,
-    message: 'Operator deleted successfully',
+    message: "Operator deleted successfully",
   });
-
-}
+};

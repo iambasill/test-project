@@ -1,5 +1,5 @@
 import { baseConfig, BaseConfig } from './baseConfig';
-import { cloudConfig, CloudConfig, validateCloudConfig } from "./cloudConfig";
+import { cloudConfig, CloudConfig, validateCloudConfig } from "../config/cloudConfig";
 
 
 export interface AppConfig extends BaseConfig {
@@ -25,4 +25,4 @@ const buildConfig = (): AppConfig => {
 export const config = buildConfig();
 
 // Export individual configs for direct access if needed
-export { cloudConfig } from './cloudConfig';
+export { cloudConfig } from '../config/cloudConfig';

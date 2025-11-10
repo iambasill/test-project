@@ -4,9 +4,9 @@ import { signUpSchema, loginSchema, emailSchema, changePasswordSchema, userIdSch
 import bcrypt from 'bcrypt';
 import { checkUser, generateLoginToken, generateToken, generateUserSession, genrateRandomPassword, manageAdminSession, verifyToken } from "../utils/helperFunction";
 import { sendVerificationEmail } from "../services/emailService";
-import { config } from "../config/baseConfig";
 import { prismaclient } from "../lib/prisma-connect";
 import { User } from "../generated/prisma";
+import { config } from "../config";
 
 
 
@@ -32,13 +32,14 @@ export const registerController = async (req: Request, res: Response, next: Next
 
   const verificationToken = await generateToken(user.id);
   const verificationLink = `${config.API_BASE_URL}/download/apk?token=${verificationToken}`;
-    // Send verification email
-    await sendVerificationEmail(
-    email,
-    verificationLink,
-    firstName,
-    "register"
-  );
+  
+    //TODO:queue Send verification email
+  //   await sendVerificationEmail(
+  //   email,
+  //   verificationLink,
+  //   firstName,
+  //   "register"
+  // );
 
 
   res.status(201).send({

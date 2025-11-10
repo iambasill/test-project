@@ -4,7 +4,6 @@ import { CreateInspectionSchema } from "../validator/authValidator";
 import { sanitizeInput } from "../utils/helperFunction";
 import { getFileUrls } from "../utils/fileHandler";
 import { prismaclient } from "../lib/prisma-connect";
-import { config } from "../config";
 
 const prisma = prismaclient;
 

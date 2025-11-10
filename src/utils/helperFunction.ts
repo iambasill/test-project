@@ -2,7 +2,7 @@
 import jwt from "jsonwebtoken"
 import { BadRequestError, unAuthorizedError } from "../logger/exceptions";
 import sanitiseHtml from "sanitize-html";
-import { config } from "../config/baseConfig";
+import { config } from "../config";
 import { prismaclient } from "../lib/prisma-connect";
 
 const prisma = prismaclient
@@ -24,7 +24,7 @@ return user
 }
 
 export const generateToken = async (userId: string) => {
-  const token = jwt.sign({ id: userId }, config.AUTH_RESET_TOKEN as string, {expiresIn:'24h'});
+  const token = jwt.sign({ id: userId }, config.AUTH_JWT_RESET_TOKEN as string, {expiresIn:'24h'});
 
   await prisma.user.update({
     where: { id: userId },
@@ -132,7 +132,7 @@ export async function verifyToken(token: string, type: string) {
     if (type === "auth") {
         secret = config.AUTH_JWT_TOKEN as string;
     } else {
-        secret = config.AUTH_RESET_TOKEN as string;
+        secret = config.AUTH_JWT_RESET_TOKEN as string;
     }
 
     try {
