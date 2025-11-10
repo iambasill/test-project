@@ -3,10 +3,9 @@ import { BadRequestError, unAuthorizedError } from '../logger/exceptions';
 import { sanitizeInput } from '../utils/helperFunction';
 import { prismaclient } from '../lib/prisma-connect';
 
-const prisma = prismaclient
 
 export const getAllCategory = async (req:Request, res:Response) => {
-  const category = await prisma.equipmentCategory.findMany({
+  const category = await prismaclient.equipmentCategory.findMany({
   });
   
   res.status(200).json({
@@ -21,13 +20,13 @@ export const createCategory = async (req:Request, res:Response) => {
 
     const {name} = sanitizeInput(req.body.name)
 
-    const category = await prisma.equipmentCategory.findFirst({
+    const category = await prismaclient.equipmentCategory.findFirst({
     where:{name}
   })
 
   if (category) throw new BadRequestError('Catgory already exist')
 
-  await prisma.equipmentCategory.create({
+  await prismaclient.equipmentCategory.create({
     data:{
         name
     }
@@ -46,7 +45,7 @@ export const updateCategory = async (req:Request, res:Response) => {
   const {name} = sanitizeInput(req.body.name)
 
 
-  const category = await prisma.equipmentCategory.findFirst({
+  const category = await prismaclient.equipmentCategory.findFirst({
     where:{
         id
     }
@@ -54,7 +53,7 @@ export const updateCategory = async (req:Request, res:Response) => {
 
   if (!category) throw new BadRequestError("category does not exist")
 
- await prisma.equipmentCategory.update({
+ await prismaclient.equipmentCategory.update({
     where:{
         id
     },
@@ -72,13 +71,13 @@ export const updateCategory = async (req:Request, res:Response) => {
 export const deleteCategory = async (req:Request, res:Response) => {
   let {id} = req.params
   id = sanitizeInput(id)
-  const category = await prisma.equipmentCategory.findUnique({
+  const category = await prismaclient.equipmentCategory.findUnique({
     where:{id}
   })
 
   if (!category) throw new BadRequestError('Category not found')
   
-  await prisma.equipmentCategory.delete({
+  await prismaclient.equipmentCategory.delete({
     where:{id}
   })
 

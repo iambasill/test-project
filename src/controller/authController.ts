@@ -4,13 +4,11 @@ import { signUpSchema, loginSchema, emailSchema, changePasswordSchema, userIdSch
 import bcrypt from 'bcrypt';
 import { checkUser, generateLoginToken, generateToken, generateUserSession, genrateRandomPassword, manageAdminSession, verifyToken } from "../utils/helperFunction";
 import { sendVerificationEmail } from "../services/emailService";
-import { prismaclient } from "../lib/prisma-connect";
-import { User } from "../generated/prisma";
 import { config } from "../config";
+import { prismaclient } from "../lib/prisma-connect";
 
 
 
-const prisma = prismaclient
 
 
 // ====================== CONTROLLERS ====================== //
@@ -21,12 +19,12 @@ const prisma = prismaclient
 export const registerController = async (req: Request, res: Response, next: NextFunction) => {
   const { email, firstName, lastName, role }  = signUpSchema.parse(req.body);
   
-  const existingUser = await prisma.user.findFirst({ where: { email } });
+  const existingUser = await prismaclient.user.findFirst({ where: { email } });
   if (existingUser) {
     throw new BadRequestError('User already exists');
   }
   const hashedPassword = await bcrypt.hash( await genrateRandomPassword(), 12); 
-  const user:any = await prisma.user.create({
+  const user:any = await prismaclient.user.create({
     data: { email, firstName, lastName, role, password: hashedPassword, refreshToken: null }
   });
 
@@ -54,7 +52,7 @@ export const registerController = async (req: Request, res: Response, next: Next
 export const loginController = async (req: Request, res: Response) => {
   const { email, password } = loginSchema.parse(req.body);
 
-  const user = await prisma.user.findFirst({ where: { email } });
+  const user = await prismaclient.user.findFirst({ where: { email } });
   if (!user) throw new BadRequestError("Invalid Credentials");
   if (user.status === 'SUSPENDED') throw new BadRequestError("Account suspended please contact the Admin");
 
@@ -71,9 +69,8 @@ const expiresIn =
     ? `${Math.floor((tokenExpiry.getTime() - Date.now()) / 1000)}s`
     : "8hrs";
 
-const token = await generateLoginToken(user.id, "1hr");
-
-  const refreshToken =  await generateLoginToken(user.id, expiresIn)
+  const token =  generateLoginToken(user.id, "1hr");
+  const refreshToken =   generateLoginToken(user.id, expiresIn)
 
   await generateUserSession(user.id,refreshToken);
 
@@ -104,7 +101,7 @@ export const logoutController = async (req: Request, res: Response) => {
   const token:any = req.token
   
   // Clear user session
-  await prisma.user_sessions.updateMany({
+  await prismaclient.user_sessions.updateMany({
     where: { 
       user_id: user.id,
       session_token:token
@@ -115,13 +112,13 @@ export const logoutController = async (req: Request, res: Response) => {
   // If user is admin and has admin session
   if (user.role && ['ADMIN'].includes(user.role)) {
   
-     await prisma.active_admin_sessions.deleteMany({
+     await prismaclient.active_admin_sessions.deleteMany({
      where:{admin_id:user.id}
    })
  
   }
 
-    await prisma.user.update({
+    await prismaclient.user.update({
     where:{id:user.id},
     data:{
       isActive:false
@@ -141,7 +138,7 @@ export const logoutController = async (req: Request, res: Response) => {
  */
 
 export const getAdminStatusController = async (req: Request, res: Response) => {
-  const activeSession = await prisma.active_admin_sessions.findMany({
+  const activeSession = await prismaclient.active_admin_sessions.findMany({
     where: { 
       user: {
         status: "ACTIVE"
@@ -185,7 +182,7 @@ export const forceTerminateAdminController = async (req: Request, res: Response)
   const user = checkUser(userId as string)
   if (!user) throw new BadRequestError("Invalid User")
 
-  await prisma.user_sessions.updateMany({
+  await prismaclient.user_sessions.updateMany({
     where: { 
       user_id: userId,
       logout_time:null
@@ -193,11 +190,11 @@ export const forceTerminateAdminController = async (req: Request, res: Response)
     data:{logout_time: new Date()}
   });
   // Terminate target admin session
-  await prisma.active_admin_sessions.deleteMany({
+  await prismaclient.active_admin_sessions.deleteMany({
      where:{admin_id:userId}
    })
 
-   await prisma.user.update({
+   await prismaclient.user.update({
     where:{id:userId},
     data:{
       isActive:false
@@ -218,7 +215,7 @@ export const changePasswordController = async (req: Request, res: Response) => {
   const { token, newPassword } = changePasswordSchema.parse(req.body);
   
   await verifyToken(token as string,"reset")
-  const user = await prisma.user.findFirst({
+  const user = await prismaclient.user.findFirst({
     where: {
       resetToken: token,
       resetTokenExpiry: { gt: new Date() }
@@ -228,7 +225,7 @@ export const changePasswordController = async (req: Request, res: Response) => {
   if (!user) throw new BadRequestError("Invalid or expired token");
 
   const hashedPassword = await bcrypt.hash(newPassword as string, 12);
-  await prisma.user.update({
+  await prismaclient.user.update({
     where: { id: user.id },
     data: { password: hashedPassword, resetToken: null, resetTokenExpiry: null, status: "ACTIVE" }
   });
@@ -243,7 +240,7 @@ export const changePasswordController = async (req: Request, res: Response) => {
 export const forgotPasswordController = async (req: Request, res: Response) => {
   const {email} = emailSchema.parse(req.body)
 
-  const user = await prisma.user.findFirst({
+  const user = await prismaclient.user.findFirst({
     where: {
       email
     }
@@ -299,7 +296,7 @@ export const getApkController = async (req: Request, res: Response) => {
 export const verifyUserController = async (req: Request, res: Response) => {
   const {email} = emailSchema.parse(req.body)
 
-  const user = await prisma.user.findFirst({
+  const user = await prismaclient.user.findFirst({
     where: { email }
   });
 
@@ -322,7 +319,7 @@ export const verifyUserController = async (req: Request, res: Response) => {
 export const resendVerficationController = async (req: Request, res: Response, next: NextFunction) => {
   const {email} = emailSchema.parse(req.body)
 
-  const existingUser = await prisma.user.findFirst({ where: { email } });
+  const existingUser = await prismaclient.user.findFirst({ where: { email } });
   if (!existingUser) {
     throw new BadRequestError('User does not exists');
   }
@@ -353,7 +350,7 @@ export const refreshToken = async (req:Request, res:Response) => {
   const user:any = req.user
   const {refreshToken} = tokenSchema.parse(req.body)
 
-  const valid = await prisma.user_sessions.findFirst({
+  const valid = await prismaclient.user_sessions.findFirst({
     where:{
       refreshToken,
       user_id: user.id,

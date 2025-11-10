@@ -1,4 +1,4 @@
-import upload  from '../services/fileUpload';
+import upload  from '../services/multerService';
 import { authMiddleware } from '../middlewares/authMiddleware';
 import { UPLOAD_FIELDS } from '../validator/uploadsValidator';
 import { createEquipment, createEquipmentOwnership, deleteEquipment, getAllEquipment, getEquipmentById, updateEquipment, getEquipmentOwnerships } from './../controller/equipmentController';

@@ -13,6 +13,9 @@ export interface BaseConfig {
     DB_PROVIDER: string;
     DATABASE_URL: string;
     OTP_SECRET: string;
+    SENDGRID_API_KEY :string;
+    MAIL_FROM :string;
+
     PORT: string;
     STORAGE_ENV?: string;
 }
@@ -25,8 +28,10 @@ export const baseConfig: BaseConfig = {
     API_BASE_URL: process.env.API_BASE_URL!,
     CLIENT_URL: process.env.CLIENT_URL!,
     DB_PROVIDER: process.env.DB_PROVIDER!,
+    SENDGRID_API_KEY:  process.env.SENDGRID_API_KEY || "",
     DATABASE_URL: process.env.DATABASE_URL!,
     OTP_SECRET: process.env.OTP_SECRET!,
+    MAIL_FROM: process.env.MAIL_FROM!,
     PORT: process.env.PORT || '8000',
     STORAGE_ENV: process.env.STORAGE_ENV || 'local',
 };

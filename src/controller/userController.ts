@@ -1,15 +1,13 @@
 import { Request, Response } from 'express';
-import bcrypt from 'bcrypt';
 import { BadRequestError, unAuthorizedError } from '../logger/exceptions';
 import { sanitizeInput } from '../utils/helperFunction';
 import { signUpSchema } from '../validator/authValidator';
 import { prismaclient } from '../lib/prisma-connect';
 
 
-const prisma = prismaclient
 
 export const getAllUsers = async (req: Request, res: Response) => {
-  const users = await prisma.user.findMany({
+  const users = await prismaclient.user.findMany({
       select: {
         id: true,
         email: true,
@@ -33,7 +31,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
 // Get user by ID
 export const getUserById = async (req: Request, res: Response) => {
     const {email} = req.body;
-    const user = await prisma.user.findUnique({
+    const user = await prismaclient.user.findUnique({
       where: { email},
       select: {
         id: true,
@@ -66,7 +64,7 @@ export const updateUser = async (req: Request, res: Response) => {
 
 
     const { email, firstName, lastName, role } = signUpSchema.parse(req.body);
-    const existingUser = await prisma.user.findFirst({
+    const existingUser = await prismaclient.user.findFirst({
      where: { email }
     });
 
@@ -77,7 +75,7 @@ export const updateUser = async (req: Request, res: Response) => {
     if (lastName) updateData.lastName = lastName;
     if (role) updateData.role = role;
 
-     const updatedUser = await prisma.user.update({
+     const updatedUser = await prismaclient.user.update({
       where: { id },
       data: updateData,
     });
@@ -96,7 +94,7 @@ export const updateUserStatus = async (req: Request, res: Response) => {
     id = sanitizeInput(id)
     status =sanitizeInput(status)
 
-    const updatedUser = await prisma.user.update({
+    const updatedUser = await prismaclient.user.update({
       where: { id },
       data: {status}
     });

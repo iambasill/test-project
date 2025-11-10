@@ -1,11 +1,9 @@
 import { Request, Response } from "express";
 import { BadRequestError, notFoundError } from "../logger/exceptions";
 import { CreateInspectionSchema } from "../validator/authValidator";
-import { sanitizeInput } from "../utils/helperFunction";
-import { getFileUrls } from "../utils/fileHandler";
 import { prismaclient } from "../lib/prisma-connect";
+import { handleFileUploads } from "../utils/helperFunction";
 
-const prisma = prismaclient;
 
 /**
  * Create an inspection
@@ -29,7 +27,7 @@ export const createInspection = async (req: Request, res: Response) => {
     CreateInspectionSchema.parse(rawData);
 
   // Verify equipment exists
-  const equipment = await prisma.equipment.findUnique({
+  const equipment = await prismaclient.equipment.findUnique({
     where: { id: equipmentId },
     select: { id: true },
   });
@@ -39,7 +37,7 @@ export const createInspection = async (req: Request, res: Response) => {
   }
 
   // Create inspection and items
-  const result = await prisma.$transaction(async (tx) => {
+  const result = await prismaclient.$transaction(async (tx) => {
     const inspection = await tx.inspection.create({
       data: {
         equipment: { connect: { id: equipmentId } },
@@ -117,32 +115,5 @@ export const createInspection = async (req: Request, res: Response) => {
   }
 
   return res.status(201).json(response);
-};
-
-/**
- * Handle file uploads for any entity type
- */
-const handleFileUploads = async (
-  files: any,
-  keyValue: string,
-  keyId: string
-) => {
-  // Convert multer file map to array
-  const uploadedFiles = Object.values(files).flat();
-
-  // Get file info (URL + meta)
-  const structuredFiles = getFileUrls(uploadedFiles as Express.Multer.File[], keyId, keyValue);
-
-  // Store in DB
-  await prisma.document.createMany({
-    data: structuredFiles.map((file) => ({
-      fileName: file.fileName,
-      fileUrl: file.fileUrl,
-      keyId: file.keyId,
-      keyValue: file.keyValue,
-      fileType: file.fileType || "unknown",
-      fileSize: file.fileSize || 0,
-    })),
-  });
 };
 

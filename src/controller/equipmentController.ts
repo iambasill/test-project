@@ -5,13 +5,12 @@ import { sanitizeInput } from "../utils/helperFunction";
 import { getFileUrls } from "../utils/fileHandler";
 import { prismaclient } from "../lib/prisma-connect";
 
-const prisma = prismaclient;
 
 // =======================================================
 // GET ALL EQUIPMENT
 // =======================================================
 export const getAllEquipment = async (req: Request, res: Response) => {
-  const equipment = await prisma.equipment.findMany({
+  const equipment = await prismaclient.equipment.findMany({
     include: {
       ownerships: {
         where: { isCurrent: true },
@@ -37,7 +36,7 @@ export const getEquipmentById = async (req: Request, res: Response) => {
   let { id } = req.params;
   id = sanitizeInput(id);
 
-  const equipment = await prisma.equipment.findUnique({
+  const equipment = await prismaclient.equipment.findUnique({
     where: { id },
     include: {
       ownerships: {
@@ -79,7 +78,7 @@ export const createEquipment = async (req: Request, res: Response) => {
   const data = equipmentData.parse(req.body);
 
   // Check if equipment already exists
-  const existingEquipment = await prisma.equipment.findFirst({
+  const existingEquipment = await prismaclient.equipment.findFirst({
     where: { chasisNumber: data.chasisNumber },
   });
 
@@ -87,7 +86,7 @@ export const createEquipment = async (req: Request, res: Response) => {
     throw new BadRequestError("Equipment with this chassis number already exists");
   }
 
-  const result = await prisma.$transaction(async (tx) => {
+  const result = await prismaclient.$transaction(async (tx) => {
     // Create the equipment
     const equipment = await tx.equipment.create({
       data: { ...data },
@@ -127,10 +126,10 @@ export const updateEquipment = async (req: Request, res: Response) => {
   id = sanitizeInput(id);
   const data = equipmentData.parse(req.body);
 
-  const equipment = await prisma.equipment.findFirst({ where: { id } });
+  const equipment = await prismaclient.equipment.findFirst({ where: { id } });
   if (!equipment) throw new BadRequestError("Equipment not found");
 
-  await prisma.$transaction(async (tx) => {
+  await prismaclient.$transaction(async (tx) => {
     // Update equipment info
     await tx.equipment.update({
       where: { id },
@@ -172,10 +171,10 @@ export const deleteEquipment = async (req: Request, res: Response) => {
   let { id } = req.params;
   id = sanitizeInput(id);
 
-  const equipment = await prisma.equipment.findFirst({ where: { id } });
+  const equipment = await prismaclient.equipment.findFirst({ where: { id } });
   if (!equipment) throw new BadRequestError("Equipment not found");
 
-  await prisma.equipment.delete({ where: { id } });
+  await prismaclient.equipment.delete({ where: { id } });
 
   res.status(200).json({
     success: true,
@@ -197,13 +196,13 @@ export const createEquipmentOwnership = async (req: Request, res: Response) => {
     endDate: validatedData.endDate ? new Date(validatedData.endDate) : null,
   };
 
-  const equipment = await prisma.equipment.findFirst({ where: { id: data.equipmentId } });
+  const equipment = await prismaclient.equipment.findFirst({ where: { id: data.equipmentId } });
   if (!equipment) throw new BadRequestError("No equipment found");
 
-  const operator = await prisma.operator.findFirst({ where: { id: data.operatorId } });
+  const operator = await prismaclient.operator.findFirst({ where: { id: data.operatorId } });
   if (!operator) throw new BadRequestError("No operator found");
 
-  await prisma.$transaction(async (tx) => {
+  await prismaclient.$transaction(async (tx) => {
     await tx.equipmentOwnership.updateMany({
       where: { equipmentId: equipment.id, isCurrent: true },
       data: { isCurrent: false, endDate: new Date() },
@@ -238,10 +237,10 @@ export const createEquipmentOwnership = async (req: Request, res: Response) => {
 export const getEquipmentOwnerships = async (req: Request, res: Response) => {
   const { id } = req.params;
 
-  const equipment = await prisma.equipment.findUnique({ where: { id } });
+  const equipment = await prismaclient.equipment.findUnique({ where: { id } });
   if (!equipment) throw new BadRequestError("Equipment not found");
 
-  const ownerships = await prisma.equipmentOwnership.findMany({
+  const ownerships = await prismaclient.equipmentOwnership.findMany({
     where: { equipmentId: id },
     include: {
       assignedBy: {

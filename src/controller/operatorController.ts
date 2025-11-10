@@ -2,10 +2,9 @@ import { Request, Response } from "express";
 import { BadRequestError, unAuthorizedError } from "../logger/exceptions";
 import { sanitizeInput } from "../utils/helperFunction";
 import { operatorSchema } from "../validator/authValidator";
-import { prismaclient } from "../lib/prisma-connect";
 import { getFileUrls } from "../utils/fileHandler";
+import { prismaclient } from "../lib/prisma-connect";
 
-const prisma = prismaclient;
 
 /**
  * Get all operators
@@ -14,7 +13,7 @@ export const getAllOperator = async (req: Request, res: Response) => {
   const user: any = req.user;
   if (user.role === "OFFICER") throw new unAuthorizedError();
 
-  const operators = await prisma.operator.findMany({
+  const operators = await prismaclient.operator.findMany({
     orderBy: { createdAt: "desc" },
   });
 
@@ -34,7 +33,7 @@ export const getAllOperatorById = async (req: Request, res: Response) => {
   const user: any = req.user;
   if (user.role === "OFFICER") throw new unAuthorizedError();
 
-  const operator = await prisma.operator.findUnique({
+  const operator = await prismaclient.operator.findUnique({
     where: { id },
     include: {
       documents: {
@@ -68,12 +67,12 @@ export const createOperator = async (req: Request, res: Response) => {
   const validated = operatorSchema.parse(req.body);
 
   // Check for duplicates
-  const existing = await prisma.operator.findFirst({
+  const existing = await prismaclient.operator.findFirst({
     where: { serviceNumber: validated.serviceNumber },
   });
   if (existing) throw new BadRequestError("Operator already exists");
 
-  await prisma.$transaction(async (tx) => {
+  await prismaclient.$transaction(async (tx) => {
     const operator = await tx.operator.create({
       data: validated,
     });
@@ -113,10 +112,10 @@ export const updateOperator = async (req: Request, res: Response) => {
   let { id } = req.params;
   id = sanitizeInput(id);
 
-  const operator = await prisma.operator.findUnique({ where: { id } });
+  const operator = await prismaclient.operator.findUnique({ where: { id } });
   if (!operator) throw new BadRequestError("Operator not found");
 
-  await prisma.$transaction(async (tx) => {
+  await prismaclient.$transaction(async (tx) => {
     // Update operator info
     await tx.operator.update({
       where: { id },
@@ -167,10 +166,10 @@ export const deleteOperator = async (req: Request, res: Response) => {
   let { id } = req.params;
   id = sanitizeInput(id);
 
-  const operator = await prisma.operator.findUnique({ where: { id } });
+  const operator = await prismaclient.operator.findUnique({ where: { id } });
   if (!operator) throw new BadRequestError("Operator not found");
 
-  await prisma.operator.delete({ where: { id } });
+  await prismaclient.operator.delete({ where: { id } });
 
   res.status(200).json({
     success: true,

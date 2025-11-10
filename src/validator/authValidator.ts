@@ -1,6 +1,5 @@
 import * as z from "zod";
 import { AcquisitionMethod, InspectionStatus, UserRole } from "../generated/prisma";
-import sanitizeHtml from "sanitize-html";
 import { sanitizeObject } from "../utils/zodHandler";
 
 const status = Object.values(InspectionStatus)

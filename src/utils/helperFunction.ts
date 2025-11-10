@@ -4,12 +4,12 @@ import { BadRequestError, unAuthorizedError } from "../logger/exceptions";
 import sanitiseHtml from "sanitize-html";
 import { config } from "../config";
 import { prismaclient } from "../lib/prisma-connect";
+import { getFileUrls } from "./fileHandler";
 
-const prisma = prismaclient
 
 
-export async function checkUser(id:string){
-    const user = prisma.user.findUnique({
+export  function checkUser(id:string){
+    const user = prismaclient.user.findUnique({
         where:{id},
         select:{
           id:true,
@@ -23,10 +23,10 @@ export async function checkUser(id:string){
 return user
 }
 
-export const generateToken = async (userId: string) => {
+export const generateToken =  (userId: string) => {
   const token = jwt.sign({ id: userId }, config.AUTH_JWT_RESET_TOKEN as string, {expiresIn:'24h'});
 
-  await prisma.user.update({
+   prismaclient.user.update({
     where: { id: userId },
     data: { resetToken: token, resetTokenExpiry: new Date(Date.now() + 86400000) }
   });
@@ -34,7 +34,7 @@ export const generateToken = async (userId: string) => {
   return token;
 };
 
-export const generateLoginToken = async (userId: string, expiresIn: any ) => {
+export const generateLoginToken =  (userId: string, expiresIn: any ) => {
   return jwt.sign({ id: userId }, config.AUTH_JWT_TOKEN as string, { expiresIn:expiresIn });
 };
 
@@ -42,7 +42,7 @@ export const generateUserSession = async (
   userId: string,
   refreshToken: string
 ) => {
-  await prisma.$transaction(async (tx) => {
+  await prismaclient.$transaction(async (tx) => {
     // Close all active sessions
     await tx.user_sessions.updateMany({
       where: {
@@ -74,7 +74,7 @@ export const generateUserSession = async (
 
 export const manageAdminSession = async (userId: string) => {
   // Check if there's already an active admin session from a different admin
-  const existingSession = await prisma.active_admin_sessions.findFirst({
+  const existingSession = await prismaclient.active_admin_sessions.findFirst({
     where: {
       admin_id: { not: userId }, 
       logout_time: {
@@ -90,7 +90,7 @@ export const manageAdminSession = async (userId: string) => {
     throw new BadRequestError("Another admin is currently active. You cannot log in until their session ends");
   }
 
-    await prisma.active_admin_sessions.deleteMany({
+    await prismaclient.active_admin_sessions.deleteMany({
      where:{
       admin_id:{not:userId}
      }
@@ -99,7 +99,7 @@ export const manageAdminSession = async (userId: string) => {
    // 2hours from now
   const logoutAt = new Date(Date.now() + 4 * 60 * 60 * 1000); 
   
-  const session = await prisma.active_admin_sessions.upsert({
+  const session = await prismaclient.active_admin_sessions.upsert({
     where: { 
       admin_id: userId // Use the unique field for lookup
     },
@@ -118,13 +118,13 @@ export const manageAdminSession = async (userId: string) => {
 
 };
 
-export async function genrateRandomPassword()  {
+export  function genrateRandomPassword()  {
     const timestamp = Date.now().toString(36).toString()
     return timestamp + Math.random().toString(36).substring(2,5)
 }
 
 
-export async function verifyToken(token: string, type: string) {
+export  function verifyToken(token: string, type: string) {
     if (!process.env.AUTH_JWT_TOKEN) throw new unAuthorizedError('JWT SECRET TOKEN UNDEFINED!');
     if (!process.env.AUTH_RESET_TOKEN) throw new unAuthorizedError('JWT SECRET TOKEN UNDEFINED!');
 
@@ -161,3 +161,32 @@ export function sanitizeInput(input: Record<string, any> | string): any {
   });
   return sanitized;
 }
+
+
+/**
+ * Handle file uploads for any entity type
+ */
+export const handleFileUploads = async (
+  files: any,
+  keyValue: string,
+  keyId: string
+) => {
+  // Convert multer file map to array
+  const uploadedFiles = Object.values(files).flat();
+
+  // Get file info (URL + meta)
+  const structuredFiles = getFileUrls(uploadedFiles as Express.Multer.File[], keyId, keyValue);
+
+  // Store in DB
+  await prismaclient.document.createMany({
+    data: structuredFiles.map((file) => ({
+      fileName: file.fileName,
+      fileUrl: file.fileUrl,
+      keyId: file.keyId,
+      keyValue: file.keyValue,
+      fileType: file.fileType || "unknown",
+      fileSize: file.fileSize || 0,
+    })),
+  });
+};
+

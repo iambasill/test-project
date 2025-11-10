@@ -2,7 +2,7 @@ import { deleteEquipment } from '../controller/equipmentController';
 import { createOperator, deleteOperator, getAllOperator, getAllOperatorById, updateOperator } from '../controller/operatorController';
 import  express  from "express";
 import { authMiddleware } from '../middlewares/authMiddleware';
-import upload  from '../services/fileUpload';
+import upload  from '../services/multerService';
 import { OPERATOR_FIELDS } from '../validator/uploadsValidator';
 
 export const operatorRouter = express.Router();
