@@ -82,7 +82,7 @@ export const createInspection = async (req: Request, res: Response) => {
         inspectionId: inspection.id,
         category: item.category,
         itemName: item.itemName,
-        itemType: item.itemType,
+        method: item.method,
         position: item.position || null,
         condition: item.condition || null,
         pressure: item.pressure || null,

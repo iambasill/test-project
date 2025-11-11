@@ -145,7 +145,7 @@ export const InspectionItemSchema = sanitizeObject(z.object({
   templateItemId: z.string().uuid().optional().nullable(),
   category: z.string().min(1, 'Category is required'),
   itemName: z.string().min(1, 'Item name is required'),
-  itemType: z.string().min(1, 'Item type is required'),
+  method: z.string().min(1, 'Item type is required'),
   position: z.string().optional().nullable(),
   
   // Inspection data fields

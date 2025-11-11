@@ -257,8 +257,8 @@ model InspectionItem {
   
   // Item identification
   category     String   // engine, steering, brakes, etc.
-  groupName     String
-  itemType     String   // condition, measurement, boolean, text
+  itemName     String
+  method     String   // condition, measurement, boolean, text
   position     String?  // Front-L, Rear-R, etc.
   
   // Inspection data
