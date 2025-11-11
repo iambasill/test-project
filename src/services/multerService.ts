@@ -58,7 +58,7 @@ if (config.STORAGE_ENV === "cloud") {
 //
 
 else {
-  const uploadDir = path.join(__dirname, "../../public/uploads'");
+  const uploadDir = path.join(__dirname, "../../public/uploads");
 
   // Ensure the directory exists
   if (!fs.existsSync(uploadDir)) {
