@@ -2,7 +2,7 @@ import express from 'express';
 import { rootRoute } from './routes/rootRoute';
 import { errorHandler } from './utils/errorHandler';
 import cors from 'cors'
-import { morganMiddleware } from './utils/logger';
+import { morganMiddleware } from './logger/logger';
 import rateLimit from 'express-rate-limit';
 import slowDown from 'express-slow-down';
 import { config } from './config';

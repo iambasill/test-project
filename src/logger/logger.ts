@@ -5,7 +5,7 @@ import fs from 'fs';
 import path from 'path';
 
 // Create logs directory if it doesn't exist
-const logDir = 'src/logs';
+const logDir = '../logs';
 if (!fs.existsSync(logDir)) {
   fs.mkdirSync(logDir);
 }
