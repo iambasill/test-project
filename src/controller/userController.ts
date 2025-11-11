@@ -123,16 +123,6 @@ export const getUserById = async (req: Request, res: Response) => {
           User_sessions: true,
         },
       },
-      User_sessions: {
-        where: { logout_time: null },
-        select: {
-          id: true,
-          login_time: true,
-          session_token: true,
-        },
-        orderBy: { login_time: 'desc' },
-        take: 5,
-      },
     },
   });
 
