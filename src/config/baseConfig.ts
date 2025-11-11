@@ -12,7 +12,6 @@ export interface BaseConfig {
     CLIENT_URL: string;
     DB_PROVIDER: string;
     DATABASE_URL: string;
-    OTP_SECRET: string;
     SENDGRID_API_KEY :string;
     MAIL_FROM :string;
 
@@ -30,7 +29,6 @@ export const baseConfig: BaseConfig = {
     DB_PROVIDER: process.env.DB_PROVIDER!,
     SENDGRID_API_KEY:  process.env.SENDGRID_API_KEY || "",
     DATABASE_URL: process.env.DATABASE_URL!,
-    OTP_SECRET: process.env.OTP_SECRET!,
     MAIL_FROM: process.env.MAIL_FROM!,
     PORT: process.env.PORT || '8000',
     STORAGE_ENV: process.env.STORAGE_ENV || 'local',
@@ -44,7 +42,6 @@ const validateConfig = (cfg: BaseConfig) => {
         'CLIENT_URL',
         'DB_PROVIDER',
         'DATABASE_URL',
-        'OTP_SECRET',
     ];
 
     requiredFields.forEach((key) => {
