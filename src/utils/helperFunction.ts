@@ -1,4 +1,3 @@
-
 import jwt from "jsonwebtoken"
 import { BadRequestError, unAuthorizedError } from "../logger/exceptions";
 import sanitiseHtml from "sanitize-html";
@@ -6,27 +5,25 @@ import { config } from "../config";
 import { prismaclient } from "../lib/prisma-connect";
 import { getFileUrls } from "./fileHandler";
 
-
-
-export  function checkUser(id:string){
-    const user = prismaclient.user.findUnique({
-        where:{id},
-        select:{
-          id:true,
-          role:true,
-          status:true,
-          email:true,
-          firstName:true,
-          lastName:true
-        }
-    })
-return user
+export function checkUser(id: string) {
+  const user = prismaclient.user.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      role: true,
+      status: true,
+      email: true,
+      firstName: true,
+      lastName: true
+    }
+  })
+  return user
 }
 
-export const generateToken =  (userId: string) => {
-  const token = jwt.sign({ id: userId }, config.AUTH_JWT_RESET_TOKEN as string, {expiresIn:'24h'});
+export const generateToken = (userId: string) => {
+  const token = jwt.sign({ id: userId }, config.AUTH_JWT_RESET_TOKEN as string, { expiresIn: '24h' });
 
-   prismaclient.user.update({
+  prismaclient.user.update({
     where: { id: userId },
     data: { resetToken: token, resetTokenExpiry: new Date(Date.now() + 86400000) }
   });
@@ -34,8 +31,8 @@ export const generateToken =  (userId: string) => {
   return token;
 };
 
-export const generateLoginToken =  (userId: string, expiresIn: any ) => {
-  return jwt.sign({ id: userId }, config.AUTH_JWT_TOKEN as string, { expiresIn:expiresIn });
+export const generateLoginToken = (userId: string, expiresIn: any) => {
+  return jwt.sign({ id: userId }, config.AUTH_JWT_TOKEN as string, { expiresIn: expiresIn });
 };
 
 export const generateUserSession = async (
@@ -71,16 +68,15 @@ export const generateUserSession = async (
   });
 };
 
-
 export const manageAdminSession = async (userId: string) => {
   // Check if there's already an active admin session from a different admin
   const existingSession = await prismaclient.active_admin_sessions.findFirst({
     where: {
-      admin_id: { not: userId }, 
+      admin_id: { not: userId },
       logout_time: {
         gt: new Date() // Still active
       },
-      user:{
+      user: {
         status: "ACTIVE"
       }
     }
@@ -90,59 +86,56 @@ export const manageAdminSession = async (userId: string) => {
     throw new BadRequestError("Another admin is currently active. You cannot log in until their session ends");
   }
 
-    await prismaclient.active_admin_sessions.deleteMany({
-     where:{
-      admin_id:{not:userId}
-     }
-   })
- 
-   // 2hours from now
-  const logoutAt = new Date(Date.now() + 4 * 60 * 60 * 1000); 
-  
+  await prismaclient.active_admin_sessions.deleteMany({
+    where: {
+      admin_id: { not: userId }
+    }
+  })
+
+  // 4 hours from now
+  const logoutAt = new Date(Date.now() + 4 * 60 * 60 * 1000);
+
   const session = await prismaclient.active_admin_sessions.upsert({
-    where: { 
-      admin_id: userId // Use the unique field for lookup
+    where: {
+      admin_id: userId
     },
-    update: { 
-      login_time: new Date(), 
-      logout_time: logoutAt 
+    update: {
+      login_time: new Date(),
+      logout_time: logoutAt
     },
-    create: { 
-      admin_id: userId, 
-      login_time: new Date(), 
-      logout_time: logoutAt 
+    create: {
+      admin_id: userId,
+      login_time: new Date(),
+      logout_time: logoutAt
     }
   });
 
   return "4hrs";
-
 };
 
-export  function genrateRandomPassword()  {
-    const timestamp = Date.now().toString(36).toString()
-    return timestamp + Math.random().toString(36).substring(2,5)
+export function genrateRandomPassword() {
+  const timestamp = Date.now().toString(36).toString()
+  return timestamp + Math.random().toString(36).substring(2, 5)
 }
 
+export function verifyToken(token: string, type: string) {
+  if (!process.env.AUTH_JWT_TOKEN) throw new unAuthorizedError('JWT SECRET TOKEN UNDEFINED!');
+  if (!process.env.AUTH_RESET_TOKEN) throw new unAuthorizedError('JWT SECRET TOKEN UNDEFINED!');
 
-export  function verifyToken(token: string, type: string) {
-    if (!process.env.AUTH_JWT_TOKEN) throw new unAuthorizedError('JWT SECRET TOKEN UNDEFINED!');
-    if (!process.env.AUTH_RESET_TOKEN) throw new unAuthorizedError('JWT SECRET TOKEN UNDEFINED!');
+  let secret: string;
+  if (type === "auth") {
+    secret = config.AUTH_JWT_TOKEN as string;
+  } else {
+    secret = config.AUTH_JWT_RESET_TOKEN as string;
+  }
 
-    let secret: string;
-    if (type === "auth") {
-        secret = config.AUTH_JWT_TOKEN as string;
-    } else {
-        secret = config.AUTH_JWT_RESET_TOKEN as string;
-    }
-
-    try {
-        const decoded = jwt.verify(token, secret) as jwt.JwtPayload;
-        return decoded;
-    } catch (err) {
-        throw new unAuthorizedError("INVALID OR EXPIRED TOKEN");
-    }
+  try {
+    const decoded = jwt.verify(token, secret) as jwt.JwtPayload;
+    return decoded;
+  } catch (err) {
+    throw new unAuthorizedError("INVALID OR EXPIRED TOKEN");
+  }
 }
-
 
 export function sanitizeInput(input: Record<string, any> | string): any {
   if (typeof input === "string") {
@@ -162,17 +155,23 @@ export function sanitizeInput(input: Record<string, any> | string): any {
   return sanitized;
 }
 
-
 /**
  * Handle file uploads for any entity type
+ * @param files - Multer files object or array
+ * @param keyValue - The ID of the parent entity (inspection ID or item ID)
+ * @param keyId - The field name in the Document table (inspectionId or inspectionItemId)
  */
 export const handleFileUploads = async (
   files: any,
   keyValue: string,
   keyId: string
-) => {
+): Promise<void> => {
   // Convert multer file map to array
   const uploadedFiles = Object.values(files).flat();
+
+  if (!uploadedFiles || uploadedFiles.length === 0) {
+    return;
+  }
 
   // Get file info (URL + meta)
   const structuredFiles = getFileUrls(uploadedFiles as Express.Multer.File[], keyId, keyValue);
@@ -189,4 +188,3 @@ export const handleFileUploads = async (
     })),
   });
 };
-

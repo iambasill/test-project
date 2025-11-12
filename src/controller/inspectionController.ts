@@ -44,7 +44,7 @@ export const createInspection = async (req: Request, res: Response) => {
     if (existingInspection) {
       return res.status(200).json({
         success: true,
-        message: "Inspection created successfully",
+        message: "Inspection created successfully (idempotent)",
         data: {
           id: existingInspection.id,
           equipmentId: existingInspection.equipmentId,
@@ -77,43 +77,44 @@ export const createInspection = async (req: Request, res: Response) => {
     });
 
     // Create inspection items if available
-    if (items.length > 0) {
-      const itemsData = items.map((item) => ({
-        inspectionId: inspection.id,
-        category: item.category,
-        itemName: item.itemName,
-        method: item.method,
-        position: item.position || null,
-        condition: item.condition || null,
-        pressure: item.pressure || null,
-        value: item.value || null,
-        booleanValue: item.booleanValue ?? null,
-        unit: item.unit || null,
-        stumpLastDate: item.stumpLastDate
-          ? new Date(item.stumpLastDate)
-          : null,
-        oilfilterLastDate: item.oilfilterLastDate
-          ? new Date(item.oilfilterLastDate)
-          : null,
-        fuelpumpLastDate: item.fuelpumpLastDate
-          ? new Date(item.fuelpumpLastDate)
-          : null,
-        airfilterLastDate: item.airfilterLastDate
-          ? new Date(item.airfilterLastDate)
-          : null,
-        HubLastPackedDate: item.HubLastPackedDate
-          ? new Date(item.HubLastPackedDate)
-          : null,
-        lastDrainDate: item.lastDrainDate ? new Date(item.lastDrainDate) : null,
-        odometerReading: item.odometerReading || null,
-        levelOfHydraulicFluid: item.levelOfHydraulicFluid || null,
-        notes: item.notes || null,
-      }));
-
-      await tx.inspectionItem.createMany({
-        data: itemsData,
-        skipDuplicates: true,
-      });
+    const createdItems = [];
+    if (items && items.length > 0) {
+      for (const item of items) {
+        const createdItem = await tx.inspectionItem.create({
+          data: {
+            inspectionId: inspection.id,
+            category: item.category,
+            itemName: item.itemName,
+            method: item.method,
+            position: item.position || null,
+            condition: item.condition || null,
+            pressure: item.pressure || null,
+            value: item.value || null,
+            booleanValue: item.booleanValue ?? null,
+            unit: item.unit || null,
+            stumpLastDate: item.stumpLastDate
+              ? new Date(item.stumpLastDate)
+              : null,
+            oilfilterLastDate: item.oilfilterLastDate
+              ? new Date(item.oilfilterLastDate)
+              : null,
+            fuelpumpLastDate: item.fuelpumpLastDate
+              ? new Date(item.fuelpumpLastDate)
+              : null,
+            airfilterLastDate: item.airfilterLastDate
+              ? new Date(item.airfilterLastDate)
+              : null,
+            HubLastPackedDate: item.HubLastPackedDate
+              ? new Date(item.HubLastPackedDate)
+              : null,
+            lastDrainDate: item.lastDrainDate ? new Date(item.lastDrainDate) : null,
+            odometerReading: item.odometerReading || null,
+            levelOfHydraulicFluid: item.levelOfHydraulicFluid || null,
+            notes: item.notes || null,
+          },
+        });
+        createdItems.push(createdItem);
+      }
     }
 
     // Create idempotency tracker if key provided
@@ -126,31 +127,55 @@ export const createInspection = async (req: Request, res: Response) => {
       });
     }
 
-    return inspection;
+    return { inspection, createdItems };
   });
 
   // Handle file uploads (non-blocking)
-  let fileUploadPromise = null;
+  const fileUploadPromises: Promise<void>[] = [];
+
   if (req.files && Object.keys(req.files).length > 0) {
-    fileUploadPromise = handleFileUploads(req.files, result.id, "inspectionId");
-  }
+    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
-  // Respond immediately
-  const response = {
-    success: true,
-    message: "Inspection created successfully",
-    data: {
-      id: result.id,
-      equipmentId: result.equipmentId,
-      datePerformed: result.datePerformed,
-    },
-  };
+    // Handle inspection-level images
+    if (files["inspectionImages"]) {
+      fileUploadPromises.push(
+        handleFileUploads(
+          { inspectionImages: files["inspectionImages"] },
+          result.inspection.id,
+          "inspectionId"
+        )
+      );
+    }
 
-  if (fileUploadPromise) {
-    fileUploadPromise.catch((error) => {
+    // Handle item-level images (item_0_images, item_1_images, etc.)
+    result.createdItems.forEach((item, index) => {
+      const itemImageKey = `item_${index}_images`;
+      if (files[itemImageKey]) {
+        fileUploadPromises.push(
+          handleFileUploads(
+            { [itemImageKey]: files[itemImageKey] },
+            item.id,
+            "inspectionItemId"
+          )
+        );
+      }
+    });
+
+    // Execute all uploads in background
+    Promise.all(fileUploadPromises).catch((error) => {
       console.error("File upload failed:", error);
     });
   }
 
-  return res.status(201).json(response);
+  // Respond immediately
+  return res.status(201).json({
+    success: true,
+    message: "Inspection created successfully",
+    data: {
+      id: result.inspection.id,
+      equipmentId: result.inspection.equipmentId,
+      datePerformed: result.inspection.datePerformed,
+      itemsCreated: result.createdItems.length,
+    },
+  });
 };
