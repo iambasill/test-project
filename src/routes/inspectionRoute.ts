@@ -1,13 +1,12 @@
 import  express  from "express";
 import upload  from '../services/multerService';
-import { createInspection } from "../controller/inspectionController";
+import { createInspection, getAllInspectionByEquipmentId,  } from "../controller/inspectionController";
 import { authMiddleware } from "../middlewares/authMiddleware";
 import { requirePlatformAdmin } from "../middlewares/adminMiddleware";
 
 export const inspectionRouter = express.Router();
 
-// inspectionRouter.get('/', authMiddleware, getAllInspections);
-// inspectionRouter.get('/:id', authMiddleware, getInspectionById);
+inspectionRouter.get('/equipment/:id', authMiddleware, getAllInspectionByEquipmentId);
 inspectionRouter.post('/', authMiddleware, upload.any(), createInspection);
 // inspectionRouter.delete('/:id',authMiddleware,requirePlatformAdmin,deleteInspection)
 

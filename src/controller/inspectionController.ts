@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { BadRequestError, notFoundError } from "../logger/exceptions";
 import { CreateInspectionSchema } from "../validator/authValidator";
 import { prismaclient } from "../lib/prisma-connect";
-import { handleFileUploads } from "../utils/helperFunction";
+import { handleFileUploads, sanitizeInput } from "../utils/helperFunction";
 import { User } from "../generated/prisma";
 
 /**
@@ -179,3 +179,132 @@ export const createInspection = async (req: Request, res: Response) => {
     },
   });
 };
+
+
+export const getAllInspectionByEquipmentId = async (req: Request, res: Response) => {
+  const equipmentId  = sanitizeInput(req.params.equipmentId)
+
+ // Extract pagination and filter parameters from query
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 10;
+  const sortBy = (req.query.sortBy as string) || 'createdAt';
+  const sortOrder = (req.query.sortOrder as string) || 'desc';
+  const condition = req.query.condition as string; // Filter by overallCondition: 'S' or 'B'
+  const startDate = req.query.startDate as string; // Filter by date range
+  const endDate = req.query.endDate as string;
+  
+    // Build where clause with filters
+    const whereClause: any = { equipmentId };
+    
+    // Add condition filter if provided
+    if (condition && (condition === 'S' || condition === 'B')) {
+      whereClause.overallCondition = condition;
+    }
+    
+    // Add date range filter if provided
+    if (startDate || endDate) {
+      whereClause.datePerformed = {};
+      if (startDate) {
+        whereClause.datePerformed.gte = new Date(startDate);
+      }
+      if (endDate) {
+        whereClause.datePerformed.lte = new Date(endDate);
+      }
+    }
+    
+    // Calculate skip for pagination
+    const skip = (page - 1) * limit;
+    
+    // Get total count for pagination metadata
+    const totalCount = await prismaclient.inspection.count({
+      where: whereClause,
+    });
+    
+    // Get paginated inspections
+    const inspections = await prismaclient.inspection.findMany({
+      where: whereClause,
+      include: {
+        equipment: {
+          select: {
+            id: true,
+            equipmentName: true,
+            equipmentType: true,
+            chasisNumber: true,
+            manufacturer: true,
+            model: true,
+            yearOfManufacture: true,
+            currentCondition: true,
+          },
+        },
+        inspector: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            role: true,
+          },
+        },
+        documents: {
+          orderBy: {
+            createdAt: 'asc',
+          },
+        },
+        items: {
+          include: {
+            documents: {
+              orderBy: {
+                createdAt: 'asc',
+              },
+            },
+          },
+          orderBy: {
+            createdAt: 'asc',
+          },
+        },
+      },
+      orderBy: {
+        [sortBy]: sortOrder,
+      },
+      skip,
+      take: limit,
+    });
+    
+    // Handle not found
+    if (!inspections || inspections.length === 0) {
+      throw new notFoundError("No inspections found for this equipment");
+    }
+    
+    // Clean null fields in each inspection and its items
+    const cleanedInspections = inspections.map((inspection) => {
+      const cleanedItems = inspection.items.map((item) => {
+        const cleanedItem: any = {};
+        for (const [key, value] of Object.entries(item)) {
+          if (value !== null) cleanedItem[key] = value;
+        }
+        return cleanedItem;
+      });
+      return {
+        ...inspection,
+        items: cleanedItems,
+      };
+    });
+    
+    // Calculate pagination metadata
+    const totalPages = Math.ceil(totalCount / limit);
+
+    
+        // Send response with pagination metadata
+        return res.status(200).json({
+          success: true,
+          message: "Inspections retrieved successfully",
+          data: cleanedInspections,
+          pagination: {
+            currentPage: page,
+            totalPages,
+            totalCount,
+            limit,
+          },
+        });
+  
+    };

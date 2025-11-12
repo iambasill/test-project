@@ -16,3 +16,8 @@ export const OPERATOR_FIELDS = [
   {name: "operatorPassport", maxCount: 1},
   {name: "operatorID", maxCount: 1}
 ]
+
+// upload.fields([
+//   { name: 'documents', maxCount: 5 },
+//   { name: 'images', maxCount: 3 }
+// ]);
