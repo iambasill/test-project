@@ -182,7 +182,7 @@ export const createInspection = async (req: Request, res: Response) => {
 
 
 export const getAllInspectionByEquipmentId = async (req: Request, res: Response) => {
-  const equipmentId  = sanitizeInput(req.params.equipmentId)
+  const equipmentId  = sanitizeInput(req.params.id)
 
  // Extract pagination and filter parameters from query
   const page = parseInt(req.query.page as string) || 1;
