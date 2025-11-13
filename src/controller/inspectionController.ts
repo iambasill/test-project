@@ -256,15 +256,7 @@ export const getAllInspectionByEquipmentId = async (req: Request, res: Response)
             role: true,
           },
         },
-        documents: {
-          select:{
-          id:true,
-          fileName:true,          
-          fileType:true,  
-          fileSize:true,          
-          fileUrl :true           
-          }
-        },
+        documents: true,
         items: {
           include: {
             documents: {
