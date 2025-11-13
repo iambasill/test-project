@@ -246,9 +246,12 @@ export const getAllInspectionByEquipmentId = async (req: Request, res: Response)
           },
         },
         documents: {
-          orderBy: {
-            createdAt: 'asc',
-          },
+          select:{
+          fileName:true,          
+          fileType:true,  
+          fileSize:true,          
+          fileUrl :true           
+          }
         },
         items: {
           include: {
