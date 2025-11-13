@@ -159,9 +159,10 @@ model Operator {
     ownerships            EquipmentOwnership[]
     equipment             Equipment?           @relation(fields: [equipmentChasisNumber], references: [chasisNumber])
     equipmentChasisNumber String? // Changed from equipmentId to equipmentChasisNumber
-
+    idempotency_tracker  Idempotency_tracker[]
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
+    
 
     @@map("operators")
 }
@@ -342,9 +343,12 @@ model Idempotency_tracker {
     equipment_id    String?
     inspection_id   String?
     equipment_ownership_id String?
+    operator_id     String?
 
     equipment Equipment?    @relation(fields: [equipment_id], references: [id], onDelete: Cascade)
     inspection Inspection?  @relation(fields: [inspection_id], references: [id], onDelete: Cascade)
+    operator Operator?  @relation(fields: [operator_id], references: [id], onDelete: Cascade)
+
     equipment_ownership EquipmentOwnership?  @relation(fields: [equipment_ownership_id], references: [id], onDelete: Cascade)
 
 

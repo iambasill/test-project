@@ -44,7 +44,7 @@ export const createInspection = async (req: Request, res: Response) => {
     });
 
     if (existingInspection) {
-      return res.status(200).json({ // ✅ Added return
+      return res.status(200).json({ 
         success: true,
         message: "Inspection created successfully (idempotent)",
         data: {
@@ -125,8 +125,7 @@ export const createInspection = async (req: Request, res: Response) => {
     if (req.files && Array.isArray(req.files) && req.files.length > 0) {
       const filesArray = req.files as Express.Multer.File[];
       
-      console.log('📁 Total files received:', filesArray.length);
-      console.log('📋 File field names:', filesArray.map(f => f.fieldname));
+ 
 
       // Group files by fieldname
       const filesByField: { [key: string]: Express.Multer.File[] } = {};
@@ -146,7 +145,6 @@ export const createInspection = async (req: Request, res: Response) => {
           inspection.id
         );
 
-        console.log('📁 Inspection images to upload:', uploadedFiles.length);
 
         await tx.document.createMany({
           data: structuredFiles.map((file) => ({
@@ -170,7 +168,6 @@ export const createInspection = async (req: Request, res: Response) => {
             createdItems[index].id
           );
 
-          console.log(`📁 Item ${index} images to upload:`, uploadedFiles.length);
 
           await tx.document.createMany({
             data: structuredFiles.map((file) => ({
@@ -186,7 +183,6 @@ export const createInspection = async (req: Request, res: Response) => {
     } else if (req.files && typeof req.files === 'object' && !Array.isArray(req.files)) {
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
-      console.log('📁 File fields received:', Object.keys(files));
 
       // Handle inspection-level images
       if (files["inspectionImages"]) {
@@ -237,7 +233,7 @@ export const createInspection = async (req: Request, res: Response) => {
       await tx.idempotency_tracker.create({
         data: {
           key: idempotencyKey,
-          inspection_id: inspection.id, // ✅ Link to inspection
+          inspection_id: inspection.id, 
         },
       });
     }

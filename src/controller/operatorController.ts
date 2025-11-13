@@ -106,71 +106,9 @@ export const getOperators = async (req: Request, res: Response) => {
   });
 };
 
-// =======================================================
-// GET OPERATOR BY ID
-// =======================================================
-export const getOperatorById = async (req: Request, res: Response) => {
-  let { id } = req.params;
-  id = sanitizeInput(id);
-
-  const user: any = req.user;
-  if (user.role === "OFFICER") throw new unAuthorizedError();
-
-  const operator = await prismaclient.operator.findUnique({
-    where: { id },
-    include: {
-      documents: {
-        where: { fileType: { not: "idempotency" } }, // Exclude idempotency trackers
-        select: {
-          id: true,
-          fileName: true,
-          fileUrl: true,
-          fileType: true,
-          fileSize: true,
-          createdAt: true,
-        },
-      },
-      ownerships: {
-        include: {
-          equipment: {
-            select: {
-              id: true,
-              equipmentName: true,
-              chasisNumber: true,
-              model: true,
-              equipmentType: true,
-              currentCondition: true,
-            },
-          },
-          assignedBy: {
-            select: {
-              firstName: true,
-              lastName: true,
-              email: true,
-            },
-          },
-        },
-        orderBy: { startDate: "desc" },
-      },
-      _count: {
-        select: {
-          ownerships: true,
-          documents: true,
-        },
-      },
-    },
-  });
-
-  if (!operator) throw new BadRequestError("Operator not found");
-
-  res.status(200).json({
-    success: true,
-    operator,
-  });
-};
 
 // =======================================================
-// CREATE OPERATOR (WITH IDEMPOTENCY)
+// CREATE OPERATOR (WITH IDEMPOTENCY) - FIXED
 // =======================================================
 export const createOperator = async (req: Request, res: Response) => {
   const user: any = req.user;
@@ -185,16 +123,17 @@ export const createOperator = async (req: Request, res: Response) => {
       where: {
         OR: [
           { serviceNumber: validated.serviceNumber },
-          { documents: { some: { fileName: idempotencyKey } } },
+          { idempotency_tracker: { some: { key: idempotencyKey } } }, // ✅ Proper relation
         ],
       },
+      include: { documents: true },
     });
 
     if (existingOperator) {
       return res.status(200).json({
         success: true,
         message: "Operator already exists (idempotent)",
-        operatorId: existingOperator.id,
+        data: existingOperator,
         isNew: false,
       });
     }
@@ -224,51 +163,64 @@ export const createOperator = async (req: Request, res: Response) => {
       data: validated,
     });
 
-    // Handle uploaded documents
-    if (req.files && Object.keys(req.files).length > 0) {
-      const uploadedFiles = Object.values(req.files).flat();
-      const structuredFiles = getFileUrls(
-        uploadedFiles as Express.Multer.File[],
-        "operatorId",
-        operator.id
-      );
+    if (req.files) {
+      let filesToUpload: Express.Multer.File[] = [];
 
-      await tx.document.createMany({
-        data: structuredFiles.map((file) => ({
-          ...file,
-          operatorId: operator.id,
-          fileType: file.fileType || "unknown",
-          fileSize: file.fileSize || 0,
-        })),
-      });
+      if (Array.isArray(req.files)) {
+        // upload.any() format
+        filesToUpload = req.files;
+      } else if (typeof req.files === 'object') {
+        // upload.fields() format
+        filesToUpload = Object.values(req.files).flat();
+      }
+
+      if (filesToUpload.length > 0) {
+        const structuredFiles = getFileUrls(
+          filesToUpload,
+          "operatorId",
+          operator.id
+        );
+
+
+        await tx.document.createMany({
+          data: structuredFiles.map((file) => ({
+            fileName: file.fileName,
+            fileUrl: file.fileUrl,
+            operatorId: operator.id, 
+            fileType: file.fileType || "unknown",
+            fileSize: file.fileSize || 0,
+          })),
+        });
+      }
     }
 
-    // Create idempotency tracker
+    // ✅ Create proper idempotency tracker
     if (idempotencyKey) {
-      await tx.document.create({
+      await tx.idempotency_tracker.create({
         data: {
-          fileName: idempotencyKey,
-          fileUrl: "idempotency-tracker",
-          operatorId: operator.id,
-          fileType: "idempotency",
-          fileSize: 0,
+          key: idempotencyKey,
+          operator_id: operator.id, 
         },
       });
     }
 
-    return operator;
+    // Return operator with documents
+    return await tx.operator.findUnique({
+      where: { id: operator.id },
+      include: { documents: true },
+    });
   });
 
   res.status(201).json({
     success: true,
     message: "Operator created successfully",
-    operatorId: result.id,
+    data: result,
     isNew: true,
   });
 };
 
 // =======================================================
-// UPDATE OPERATOR
+// UPDATE OPERATOR 
 // =======================================================
 export const updateOperator = async (req: Request, res: Response) => {
   const user: any = req.user;
@@ -308,49 +260,159 @@ export const updateOperator = async (req: Request, res: Response) => {
     }
   }
 
-  await prismaclient.$transaction(async (tx) => {
+  const result = await prismaclient.$transaction(async (tx) => {
     // Update operator info
-    await tx.operator.update({
+    const updatedOperator = await tx.operator.update({
       where: { id },
       data: validated,
     });
 
-    // Handle file updates
-    if (req.files && Object.keys(req.files).length > 0) {
-      const uploadedFiles = Object.values(req.files).flat();
-      const structuredFiles = getFileUrls(
-        uploadedFiles as Express.Multer.File[],
-        "operatorId",
-        operator.id
-      );
+    if (req.files) {
+      let filesToUpload: Express.Multer.File[] = [];
 
-      for (const file of structuredFiles) {
-        const existing = await tx.document.findFirst({
-          where: { operatorId: operator.id, fileName: file.fileName },
-        });
+      if (Array.isArray(req.files)) {
+        filesToUpload = req.files;
+      } else if (typeof req.files === 'object') {
+        filesToUpload = Object.values(req.files).flat();
+      }
 
-        if (existing) {
-          await tx.document.update({
-            where: { id: existing.id },
-            data: { fileUrl: file.fileUrl, fileType: file.fileType, fileSize: file.fileSize },
-          });
-        } else {
-          await tx.document.create({
-            data: {
-              ...file,
-              operatorId: operator.id,
+      if (filesToUpload.length > 0) {
+        const structuredFiles = getFileUrls(
+          filesToUpload,
+          "operatorId",
+          operator.id
+        );
+
+
+        for (const file of structuredFiles) {
+          const existing = await tx.document.findFirst({
+            where: { 
+              operatorId: operator.id, 
+              fileName: file.fileName 
             },
           });
+
+          if (existing) {
+            // Update existing document
+            await tx.document.update({
+              where: { id: existing.id },
+              data: { 
+                fileUrl: file.fileUrl, 
+                fileType: file.fileType || "unknown", 
+                fileSize: file.fileSize || 0 
+              },
+            });
+          } else {
+            // Create new document
+            await tx.document.create({
+              data: {
+                fileName: file.fileName,
+                fileUrl: file.fileUrl,
+                operatorId: operator.id, 
+                fileType: file.fileType || "unknown",
+                fileSize: file.fileSize || 0,
+              },
+            });
+          }
         }
       }
     }
+
+    return await tx.operator.findUnique({
+      where: { id },
+      include: { documents: true },
+    });
   });
 
   res.status(200).json({
     success: true,
     message: "Operator updated successfully",
+    data: result,
   });
 };
+
+// =======================================================
+// GET OPERATOR BY ID - FIXED
+// =======================================================
+export const getOperatorById = async (req: Request, res: Response) => {
+  let { id } = req.params;
+  id = sanitizeInput(id);
+
+  const user: any = req.user;
+  if (user.role === "OFFICER") throw new unAuthorizedError();
+
+  const operator = await prismaclient.operator.findUnique({
+    where: { id },
+    include: {
+      documents: {
+        where: { 
+          inspectionItemId: null,
+          inspectionId: null,
+          equipmentId: null,
+          ownershipId: null,
+          conditionRecordId: null,
+        },
+        select: {
+          id: true,
+          fileName: true,
+          fileUrl: true, // ✅ Ensure fileUrl is included
+          fileType: true,
+          fileSize: true,
+          createdAt: true,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      },
+      ownerships: {
+        include: {
+          equipment: {
+            select: {
+              id: true,
+              equipmentName: true,
+              chasisNumber: true,
+              model: true,
+              equipmentType: true,
+              currentCondition: true,
+            },
+          },
+          assignedBy: {
+            select: {
+              firstName: true,
+              lastName: true,
+              email: true,
+            },
+          },
+          documents: {
+            select: {
+              id: true,
+              fileName: true,
+              fileUrl: true, // ✅ Ensure fileUrl is included
+              fileType: true,
+              fileSize: true,
+            },
+          },
+        },
+        orderBy: { startDate: "desc" },
+      },
+      _count: {
+        select: {
+          ownerships: true,
+          documents: true,
+        },
+      },
+    },
+  });
+
+  if (!operator) throw new BadRequestError("Operator not found");
+
+  res.status(200).json({
+    success: true,
+    operator,
+  });
+};
+
+
 
 // =======================================================
 // DELETE OPERATOR

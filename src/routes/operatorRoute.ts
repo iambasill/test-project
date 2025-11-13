@@ -19,12 +19,12 @@ operatorRouter.get("/stats", authMiddleware, getOperatorStats);
 
 // Base routes - GET with queries/pagination
 operatorRouter.get("/", authMiddleware, getOperators);
-operatorRouter.post("/", authMiddleware, upload.fields(OPERATOR_FIELDS), createOperator);
+operatorRouter.post("/", authMiddleware, upload.any(), createOperator);
 
 // Equipment history for specific operator (must be before /:id to avoid route conflicts)
 operatorRouter.get("/:id/equipment-history", authMiddleware, getOperatorEquipmentHistory);
 
 // Specific operator routes
 operatorRouter.get("/:id", authMiddleware, getOperatorById);
-operatorRouter.put("/:id", authMiddleware, upload.fields(OPERATOR_FIELDS), updateOperator);
+operatorRouter.put("/:id", authMiddleware, upload.any(), updateOperator);
 operatorRouter.delete("/:id", authMiddleware, deleteOperator);
