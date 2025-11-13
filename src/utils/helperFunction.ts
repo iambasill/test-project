@@ -1,12 +1,11 @@
-import jwt from "jsonwebtoken"
+import jwt from "jsonwebtoken";
 import { BadRequestError, unAuthorizedError } from "../logger/exceptions";
 import sanitiseHtml from "sanitize-html";
 import { config } from "../config";
 import { prismaclient } from "../lib/prisma-connect";
-import { getFileUrls } from "./fileHandler";
 
-export function checkUser(id: string) {
-  const user = prismaclient.user.findUnique({
+export async function checkUser(id: string) {
+  const user = await prismaclient.user.findUnique({
     where: { id },
     select: {
       id: true,
@@ -14,25 +13,36 @@ export function checkUser(id: string) {
       status: true,
       email: true,
       firstName: true,
-      lastName: true
-    }
-  })
-  return user
+      lastName: true,
+    },
+  });
+  return user;
 }
 
-export const generateToken = (userId: string) => {
-  const token = jwt.sign({ id: userId }, config.AUTH_JWT_RESET_TOKEN as string, { expiresIn: '24h' });
+export const generateToken = async (userId: string) => {
+  const token = jwt.sign(
+    { id: userId },
+    config.AUTH_JWT_RESET_TOKEN as string,
+    { expiresIn: "24h" }
+  );
 
-  prismaclient.user.update({
+  await prismaclient.user.update({
     where: { id: userId },
-    data: { resetToken: token, resetTokenExpiry: new Date(Date.now() + 86400000) }
+    data: {
+      resetToken: token,
+      resetTokenExpiry: new Date(Date.now() + 86400000), // 24 hours
+    },
   });
 
   return token;
 };
 
 export const generateLoginToken = (userId: string, expiresIn: any) => {
-  return jwt.sign({ id: userId }, config.AUTH_JWT_TOKEN as string, { expiresIn: expiresIn });
+  return jwt.sign(
+    { id: userId },
+    config.AUTH_JWT_TOKEN as string,
+    { expiresIn: expiresIn }
+  );
 };
 
 export const generateUserSession = async (
@@ -44,16 +54,16 @@ export const generateUserSession = async (
     await tx.user_sessions.updateMany({
       where: {
         user_id: userId,
-        logout_time: null
+        logout_time: null,
       },
-      data: { logout_time: new Date() }
+      data: { logout_time: new Date() },
     });
 
     // Store new user session
     await tx.user_sessions.create({
       data: {
         user_id: userId,
-        refreshToken
+        refreshToken,
       },
     });
 
@@ -74,53 +84,57 @@ export const manageAdminSession = async (userId: string) => {
     where: {
       admin_id: { not: userId },
       logout_time: {
-        gt: new Date() // Still active
+        gt: new Date(), // Still active
       },
       user: {
-        status: "ACTIVE"
-      }
-    }
+        status: "ACTIVE",
+      },
+    },
   });
 
   if (existingSession) {
-    throw new BadRequestError("Another admin is currently active. You cannot log in until their session ends");
+    throw new BadRequestError(
+      "Another admin is currently active. You cannot log in until their session ends"
+    );
   }
 
   await prismaclient.active_admin_sessions.deleteMany({
     where: {
-      admin_id: { not: userId }
-    }
-  })
+      admin_id: { not: userId },
+    },
+  });
 
   // 4 hours from now
   const logoutAt = new Date(Date.now() + 4 * 60 * 60 * 1000);
 
-  const session = await prismaclient.active_admin_sessions.upsert({
+  await prismaclient.active_admin_sessions.upsert({
     where: {
-      admin_id: userId
+      admin_id: userId,
     },
     update: {
       login_time: new Date(),
-      logout_time: logoutAt
+      logout_time: logoutAt,
     },
     create: {
       admin_id: userId,
       login_time: new Date(),
-      logout_time: logoutAt
-    }
+      logout_time: logoutAt,
+    },
   });
 
   return "4hrs";
 };
 
 export function genrateRandomPassword() {
-  const timestamp = Date.now().toString(36).toString()
-  return timestamp + Math.random().toString(36).substring(2, 5)
+  const timestamp = Date.now().toString(36).toString();
+  return timestamp + Math.random().toString(36).substring(2, 5);
 }
 
 export function verifyToken(token: string, type: string) {
-  if (!process.env.AUTH_JWT_TOKEN) throw new unAuthorizedError('JWT SECRET TOKEN UNDEFINED!');
-  if (!process.env.AUTH_RESET_TOKEN) throw new unAuthorizedError('JWT SECRET TOKEN UNDEFINED!');
+  if (!process.env.AUTH_JWT_TOKEN)
+    throw new unAuthorizedError("JWT SECRET TOKEN UNDEFINED!");
+  if (!process.env.AUTH_RESET_TOKEN)
+    throw new unAuthorizedError("JWT SECRET TOKEN UNDEFINED!");
 
   let secret: string;
   if (type === "auth") {
@@ -155,36 +169,32 @@ export function sanitizeInput(input: Record<string, any> | string): any {
   return sanitized;
 }
 
-// /**
-//  * Handle file uploads for any entity type
-//  * @param files - Multer files object or array
-//  * @param keyValue - The ID of the parent entity (inspection ID or item ID)
-//  * @param keyId - The field name in the Document table (inspectionId or inspectionItemId)
-//  */
-// export const handleFileUploads = async (
-//   files: any,
-//   keyValue: string,
-//   keyId: string
-// ): Promise<void> => {
-//   // Convert multer file map to array
-//   const uploadedFiles = Object.values(files).flat();
+// Optional: file upload helper (kept commented)
+/*
+export const handleFileUploads = async (
+  files: any,
+  keyValue: string,
+  keyId: string
+): Promise<void> => {
+  const uploadedFiles = Object.values(files).flat();
 
-//   if (!uploadedFiles || uploadedFiles.length === 0) {
-//     return;
-//   }
+  if (!uploadedFiles || uploadedFiles.length === 0) return;
 
-//   // Get file info (URL + meta)
-//   const structuredFiles = getFileUrls(uploadedFiles as Express.Multer.File[], keyId, keyValue);
+  const structuredFiles = getFileUrls(
+    uploadedFiles as Express.Multer.File[],
+    keyId,
+    keyValue
+  );
 
-//   // Store in DB
-//   await prismaclient.document.createMany({
-//     data: structuredFiles.map((file) => ({
-//       fileName: file.fileName,
-//       fileUrl: file.fileUrl,
-//       keyId: file.keyId,
-//       keyValue: file.keyValue,
-//       fileType: file.fileType || "unknown",
-//       fileSize: file.fileSize || 0,
-//     })),
-//   });
-// };
+  await prismaclient.document.createMany({
+    data: structuredFiles.map((file) => ({
+      fileName: file.fileName,
+      fileUrl: file.fileUrl,
+      keyId: file.keyId,
+      keyValue: file.keyValue,
+      fileType: file.fileType || "unknown",
+      fileSize: file.fileSize || 0,
+    })),
+  });
+};
+*/

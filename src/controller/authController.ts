@@ -241,7 +241,7 @@ export const changePasswordController = async (req: Request, res: Response) => {
 
   const { token, newPassword } = changePasswordSchema.parse(req.body);
   
-  verifyToken(token as string,"reset")
+  await verifyToken(token as string,"reset")
   const user = await prismaclient.user.findFirst({
     where: {
       resetToken: token,
