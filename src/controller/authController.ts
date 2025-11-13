@@ -249,7 +249,7 @@ export const changePasswordController = async (req: Request, res: Response) => {
     }
   });
 
-  if (!user) throw new BadRequestError("Invalid or expired token");
+  if (!user) throw new BadRequestError("Bad Request");
 
   const hashedPassword = await bcrypt.hash(newPassword as string, 12);
   await prismaclient.user.update({
