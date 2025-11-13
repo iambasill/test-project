@@ -207,10 +207,10 @@ export const forceTerminateAdminController = async (req: Request, res: Response)
 };
 
 /**
- * Change password
+ * Reset password
  */
 
-export const changePasswordController = async (req: Request, res: Response) => {
+export const resetPasswordController = async (req: Request, res: Response) => {
 
   const { token, newPassword } = changePasswordSchema.parse(req.body);
   
@@ -232,6 +232,34 @@ export const changePasswordController = async (req: Request, res: Response) => {
 
   res.status(200).send({ success: true, message: "Password changed successful" });
 };
+
+/**
+ * Reset password
+ */
+
+export const changePasswordController = async (req: Request, res: Response) => {
+
+  const { token, newPassword } = changePasswordSchema.parse(req.body);
+  
+  await verifyToken(token as string,"auth")
+  const user = await prismaclient.user.findFirst({
+    where: {
+      resetToken: token,
+      resetTokenExpiry: { gt: new Date() }
+    }
+  });
+
+  if (!user) throw new BadRequestError("Invalid or expired token");
+
+  const hashedPassword = await bcrypt.hash(newPassword as string, 12);
+  await prismaclient.user.update({
+    where: { id: user.id },
+    data: { password: hashedPassword, resetToken: null, resetTokenExpiry: null, status: "ACTIVE" }
+  });
+
+  res.status(200).send({ success: true, message: "Password changed successful" });
+};
+
 
 /**
  * forgot Password controller 
