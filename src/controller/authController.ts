@@ -69,8 +69,8 @@ const expiresIn =
     ? `${Math.floor((tokenExpiry.getTime() - Date.now()) / 1000)}s`
     : "8hrs";
 
-  const token =  generateLoginToken(user.id, "1hr");
-  const refreshToken =   generateLoginToken(user.id, expiresIn)
+  const token =  await generateLoginToken(user.id, "1hr");
+  const refreshToken =   await generateLoginToken(user.id, expiresIn)
 
   await generateUserSession(user.id,refreshToken);
 

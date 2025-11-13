@@ -37,7 +37,7 @@ export const generateToken = async (userId: string) => {
   return token;
 };
 
-export const generateLoginToken = (userId: string, expiresIn: any) => {
+export const generateLoginToken = async(userId: string, expiresIn: any) => {
   return jwt.sign(
     { id: userId },
     config.AUTH_JWT_TOKEN as string,
@@ -130,7 +130,7 @@ export function genrateRandomPassword() {
   return timestamp + Math.random().toString(36).substring(2, 5);
 }
 
-export function verifyToken(token: string, type: string) {
+export async function verifyToken(token: string, type: string) {
   if (!process.env.AUTH_JWT_TOKEN)
     throw new unAuthorizedError("JWT SECRET TOKEN UNDEFINED!");
   if (!process.env.AUTH_RESET_TOKEN)
@@ -151,7 +151,7 @@ export function verifyToken(token: string, type: string) {
   }
 }
 
-export function sanitizeInput(input: Record<string, any> | string): any {
+export  function sanitizeInput(input: Record<string, any> | string): any {
   if (typeof input === "string") {
     return sanitiseHtml(input, {
       allowedTags: [],
