@@ -155,29 +155,36 @@ export function sanitizeInput(input: Record<string, any> | string): any {
   return sanitized;
 }
 
-export const handleFileUploads = async (
-  files: any,
-  keyValue: string,
-  keyId: string
-): Promise<void> => {
-  const uploadedFiles = Object.values(files).flat();
+// /**
+//  * Handle file uploads for any entity type
+//  * @param files - Multer files object or array
+//  * @param keyValue - The ID of the parent entity (inspection ID or item ID)
+//  * @param keyId - The field name in the Document table (inspectionId or inspectionItemId)
+//  */
+// export const handleFileUploads = async (
+//   files: any,
+//   keyValue: string,
+//   keyId: string
+// ): Promise<void> => {
+//   // Convert multer file map to array
+//   const uploadedFiles = Object.values(files).flat();
 
-  if (!uploadedFiles || uploadedFiles.length === 0) {
-    return;
-  }
+//   if (!uploadedFiles || uploadedFiles.length === 0) {
+//     return;
+//   }
 
-  const structuredFiles = getFileUrls(uploadedFiles as Express.Multer.File[], keyId, keyValue);
+//   // Get file info (URL + meta)
+//   const structuredFiles = getFileUrls(uploadedFiles as Express.Multer.File[], keyId, keyValue);
 
-  // Map keyId to actual Prisma field names
-  await prismaclient.document.createMany({
-    data: structuredFiles.map((file) => ({
-      fileName: file.fileName,
-      fileUrl: file.fileUrl,
-      fileType: file.fileType || "unknown",
-      fileSize: file.fileSize || 0,
-      // Set the correct foreign key field based on keyId
-      ...(keyId === "inspectionId" && { inspectionId: keyValue }),
-      ...(keyId === "inspectionItemId" && { inspectionItemId: keyValue }),
-    })),
-  });
-};
+//   // Store in DB
+//   await prismaclient.document.createMany({
+//     data: structuredFiles.map((file) => ({
+//       fileName: file.fileName,
+//       fileUrl: file.fileUrl,
+//       keyId: file.keyId,
+//       keyValue: file.keyValue,
+//       fileType: file.fileType || "unknown",
+//       fileSize: file.fileSize || 0,
+//     })),
+//   });
+// };

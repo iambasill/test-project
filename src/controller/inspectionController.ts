@@ -2,8 +2,9 @@ import { Request, Response } from "express";
 import { BadRequestError, notFoundError } from "../logger/exceptions";
 import { CreateInspectionSchema } from "../validator/authValidator";
 import { prismaclient } from "../lib/prisma-connect";
-import { handleFileUploads, sanitizeInput } from "../utils/helperFunction";
-import { User } from "../generated/prisma";
+import {  sanitizeInput } from "../utils/helperFunction";
+import { User, InspectionItem } from "../generated/prisma";
+import { getFileUrls } from "../utils/fileHandler";
 
 /**
  * Create an inspection (with idempotency)
@@ -64,7 +65,7 @@ export const createInspection = async (req: Request, res: Response) => {
     throw new BadRequestError(`Equipment not found!`);
   }
 
-  // Create inspection and items
+  // Create inspection and items with file uploads in transaction
   const result = await prismaclient.$transaction(async (tx) => {
     const inspection = await tx.inspection.create({
       data: {
@@ -77,7 +78,7 @@ export const createInspection = async (req: Request, res: Response) => {
     });
 
     // Create inspection items if available
-    const createdItems = [];
+    const createdItems: InspectionItem[] = [];
     if (items && items.length > 0) {
       for (const item of items) {
         const createdItem = await tx.inspectionItem.create({
@@ -117,6 +118,54 @@ export const createInspection = async (req: Request, res: Response) => {
       }
     }
 
+    // Handle file uploads (if any)
+    if (req.files && Object.keys(req.files).length > 0) {
+      const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+
+      // Handle inspection-level images
+      if (files["inspectionImages"]) {
+        const uploadedFiles = files["inspectionImages"];
+        const structuredFiles = getFileUrls(
+          uploadedFiles,
+          "inspectionId",
+          inspection.id
+        );
+
+        await tx.document.createMany({
+          data: structuredFiles.map((file) => ({
+            fileName: file.fileName,
+            fileUrl: file.fileUrl,
+            inspectionId: inspection.id,
+            fileType: file.fileType || "unknown",
+            fileSize: file.fileSize || 0,
+          })),
+        });
+      }
+
+      // Handle item-level images (item_0_images, item_1_images, etc.)
+      for (let index = 0; index < createdItems.length; index++) {
+        const itemImageKey = `item_${index}_images`;
+        if (files[itemImageKey]) {
+          const uploadedFiles = files[itemImageKey];
+          const structuredFiles = getFileUrls(
+            uploadedFiles,
+            "inspectionItemId",
+            createdItems[index].id
+          );
+
+          await tx.document.createMany({
+            data: structuredFiles.map((file) => ({
+              fileName: file.fileName,
+              fileUrl: file.fileUrl,
+              inspectionItemId: createdItems[index].id,
+              fileType: file.fileType || "unknown",
+              fileSize: file.fileSize || 0,
+            })),
+          });
+        }
+      }
+    }
+
     // Create idempotency tracker if key provided
     if (idempotencyKey) {
       await tx.idempotency_tracker.create({
@@ -130,44 +179,7 @@ export const createInspection = async (req: Request, res: Response) => {
     return { inspection, createdItems };
   });
 
-  // Handle file uploads (non-blocking)
-  const fileUploadPromises: Promise<void>[] = [];
-
-  if (req.files && Object.keys(req.files).length > 0) {
-    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-
-    // Handle inspection-level images
-    if (files["inspectionImages"]) {
-      fileUploadPromises.push(
-        handleFileUploads(
-          { inspectionImages: files["inspectionImages"] },
-          result.inspection.id,
-          "inspectionId"
-        )
-      );
-    }
-
-    // Handle item-level images (item_0_images, item_1_images, etc.)
-    result.createdItems.forEach((item, index) => {
-      const itemImageKey = `item_${index}_images`;
-      if (files[itemImageKey]) {
-        fileUploadPromises.push(
-          handleFileUploads(
-            { [itemImageKey]: files[itemImageKey] },
-            item.id,
-            "inspectionItemId"
-          )
-        );
-      }
-    });
-
-    // Execute all uploads in background
-    Promise.all(fileUploadPromises).catch((error) => {
-      console.error("File upload failed:", error);
-    });
-  }
-
-  // Respond immediately
+  // Respond after transaction completes
   return res.status(201).json({
     success: true,
     message: "Inspection created successfully",
@@ -179,7 +191,6 @@ export const createInspection = async (req: Request, res: Response) => {
     },
   });
 };
-
 
 export const getAllInspectionByEquipmentId = async (req: Request, res: Response) => {
   const equipmentId  = sanitizeInput(req.params.id)
