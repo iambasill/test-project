@@ -549,6 +549,7 @@ export const getOperatorEquipmentHistory = async (req: Request, res: Response) =
     orderBy: { startDate: "desc" },
   });
 
+  
   res.status(200).json({
     success: true,
     data: history,
