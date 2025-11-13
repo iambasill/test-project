@@ -256,10 +256,28 @@ export const getAllInspectionByEquipmentId = async (req: Request, res: Response)
             role: true,
           },
         },
-        documents: true,
+        documents: {
+          select: {
+            id: true,
+            fileName: true,
+            fileType: true,
+            fileSize: true,
+            fileUrl: true, 
+        },
+        orderBy: {
+          createdAt: 'asc',
+        },
+        },
         items: {
           include: {
             documents: {
+              select: {
+                id: true,
+                fileName: true,
+                fileType: true,
+                fileSize: true,
+                fileUrl: true, 
+            },
               orderBy: {
                 createdAt: 'asc',
               },

@@ -180,7 +180,7 @@ export const createEquipment = async (req: Request, res: Response) => {
     });
 
     if (existingEquipment) {
-    res.status(201).json({
+    return res.status(201).json({
     success: true,
     message: "Equipment created successfully",
   });
@@ -205,7 +205,7 @@ export const createEquipment = async (req: Request, res: Response) => {
     // Handle document uploads (if any)
     if (req.files && Object.keys(req.files).length > 0) {
       const uploadedFiles = Object.values(req.files).flat();
-      const structuredFiles = getFileUrls(uploadedFiles as Express.Multer.File[], "equipment", equipment.id);
+      const structuredFiles = getFileUrls(uploadedFiles as Express.Multer.File[], "equipmentId", equipment.id);
 
       await tx.document.createMany({
         data: structuredFiles.map((file) => ({
@@ -223,6 +223,7 @@ export const createEquipment = async (req: Request, res: Response) => {
       await tx.idempotency_tracker.create({
         data: {
           key: idempotencyKey,
+          equipment_id: equipment.id
         },
       });
     }
@@ -358,7 +359,7 @@ export const createEquipmentOwnership = async (req: Request, res: Response) => {
     // Handle any attached ownership documents
     if (req.files && Object.keys(req.files).length > 0) {
       const uploadedFiles = Object.values(req.files).flat();
-      const structuredFiles = getFileUrls(uploadedFiles as Express.Multer.File[], "equipmentOwnership", ownership.id);
+      const structuredFiles = getFileUrls(uploadedFiles as Express.Multer.File[], "ownershipId", ownership.id);
 
       await tx.document.createMany({
         data: structuredFiles.map((file) => ({
@@ -375,6 +376,7 @@ export const createEquipmentOwnership = async (req: Request, res: Response) => {
       await tx.idempotency_tracker.create({
         data: {
           key: idempotencyKey,
+          equipment_ownership_id: ownership.id,
         },
       });
     }
