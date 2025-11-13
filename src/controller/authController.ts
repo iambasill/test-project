@@ -362,7 +362,7 @@ export const verifyUserController = async (req: Request, res: Response) => {
 
   if (!user) throw new BadRequestError("User does not exist!");
 
-  const token = generateToken(user.id);
+  const token = await generateToken(user.id);
 
   res.status(200).json({
     success: "true",
