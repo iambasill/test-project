@@ -10,7 +10,7 @@ import { prismaclient } from "../lib/prisma-connect";
 // =======================================================
 export const getOperators = async (req: Request, res: Response) => {
   const user: any = req.user;
-  if (user.role === "OFFICER") throw new unAuthorizedError();
+  // if (user.role === "OFFICER") throw new unAuthorizedError();//TODO:
 
   const {
     page = "1",
@@ -123,7 +123,7 @@ export const createOperator = async (req: Request, res: Response) => {
       where: {
         OR: [
           { serviceNumber: validated.serviceNumber },
-          { idempotency_tracker: { some: { key: idempotencyKey } } }, // ✅ Proper relation
+          { idempotency_tracker: { some: { key: idempotencyKey } } }, 
         ],
       },
       include: { documents: true },
@@ -132,7 +132,7 @@ export const createOperator = async (req: Request, res: Response) => {
     if (existingOperator) {
       return res.status(200).json({
         success: true,
-        message: "Operator already exists (idempotent)",
+        message: "Operator already exists",
         data: existingOperator,
         isNew: false,
       });
@@ -194,7 +194,6 @@ export const createOperator = async (req: Request, res: Response) => {
       }
     }
 
-    // ✅ Create proper idempotency tracker
     if (idempotencyKey) {
       await tx.idempotency_tracker.create({
         data: {
@@ -224,7 +223,6 @@ export const createOperator = async (req: Request, res: Response) => {
 // =======================================================
 export const updateOperator = async (req: Request, res: Response) => {
   const user: any = req.user;
-  if (user.role === "OFFICER") throw new unAuthorizedError();
 
   let { id } = req.params;
   id = sanitizeInput(id);
@@ -339,7 +337,6 @@ export const getOperatorById = async (req: Request, res: Response) => {
   id = sanitizeInput(id);
 
   const user: any = req.user;
-  if (user.role === "OFFICER") throw new unAuthorizedError();
 
   const operator = await prismaclient.operator.findUnique({
     where: { id },
@@ -355,7 +352,7 @@ export const getOperatorById = async (req: Request, res: Response) => {
         select: {
           id: true,
           fileName: true,
-          fileUrl: true, // ✅ Ensure fileUrl is included
+          fileUrl: true,
           fileType: true,
           fileSize: true,
           createdAt: true,
@@ -387,7 +384,7 @@ export const getOperatorById = async (req: Request, res: Response) => {
             select: {
               id: true,
               fileName: true,
-              fileUrl: true, // ✅ Ensure fileUrl is included
+              fileUrl: true, 
               fileType: true,
               fileSize: true,
             },
@@ -419,7 +416,6 @@ export const getOperatorById = async (req: Request, res: Response) => {
 // =======================================================
 export const deleteOperator = async (req: Request, res: Response) => {
   const user: any = req.user;
-  if (user.role === "OFFICER") throw new unAuthorizedError();
 
   let { id } = req.params;
   id = sanitizeInput(id);
@@ -455,7 +451,6 @@ export const deleteOperator = async (req: Request, res: Response) => {
 // =======================================================
 export const getOperatorStats = async (req: Request, res: Response) => {
   const user: any = req.user;
-  if (user.role === "OFFICER") throw new unAuthorizedError();
 
   const [
     totalOperators,
@@ -514,7 +509,6 @@ export const getOperatorStats = async (req: Request, res: Response) => {
 // =======================================================
 export const getOperatorEquipmentHistory = async (req: Request, res: Response) => {
   const user: any = req.user;
-  if (user.role === "OFFICER") throw new unAuthorizedError();
 
   let { id } = req.params;
   id = sanitizeInput(id);
