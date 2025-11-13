@@ -239,28 +239,86 @@ export const resetPasswordController = async (req: Request, res: Response) => {
  * Change password
  */
 
-export const changePasswordController = async (req: Request, res: Response) => {
+// export const changePasswordController = async (req: Request, res: Response) => {
 
-  const { email, newPassword } = req.body //TODO://
+//   const { email, newPassword } = req.body //TODO://
   
-  const user = await prismaclient.user.findFirst({
-    where: {
-      email: email,
+//   const user = await prismaclient.user.findFirst({
+//     where: {
+//       email: email,
+//     }
+//   });
+
+//   if (!user) throw new BadRequestError("Bad Request");
+
+//   const hashedPassword = await bcrypt.hash(newPassword, 12);
+//   await prismaclient.user.update({
+//     where: { id: user.id },
+//     data: { password: hashedPassword, resetToken: null, resetTokenExpiry: null, status: "ACTIVE" }
+//   });
+
+//   res.status(200).send({ success: true, message: "Password changed successful" });
+// };
+
+export const changePasswordController = async (req: Request, res: Response) => {
+  try {
+    const { email, newPassword } = req.body;
+
+    // Validate input fields
+    if (!email || !newPassword) {
+      throw new BadRequestError("Email and new password are required");
     }
-  });
 
-  if (!user) throw new BadRequestError("Bad Request");
+    if (typeof newPassword !== 'string' || newPassword.trim() === '') {
+      throw new BadRequestError("Valid new password is required");
+    }
 
-  const hashedPassword = await bcrypt.hash(newPassword, 12);
-  await prismaclient.user.update({
-    where: { id: user.id },
-    data: { password: hashedPassword, resetToken: null, resetTokenExpiry: null, status: "ACTIVE" }
-  });
+    // Check if user exists
+    const user = await prismaclient.user.findFirst({
+      where: {
+        email: email,
+      }
+    });
 
-  res.status(200).send({ success: true, message: "Password changed successful" });
+    if (!user) {
+      throw new BadRequestError("User not found");
+    }
+
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    
+    // Update user
+    await prismaclient.user.update({
+      where: { id: user.id },
+      data: { 
+        password: hashedPassword, 
+        resetToken: null, 
+        resetTokenExpiry: null, 
+        status: "ACTIVE" 
+      }
+    });
+
+    res.status(200).send({ 
+      success: true, 
+      message: "Password changed successfully" 
+    });
+
+  } catch (error) {
+    console.error('Change password error:', error);
+    
+    if (error instanceof BadRequestError) {
+      return res.status(400).send({
+        success: false,
+        message: error.message
+      });
+    }
+
+    res.status(500).send({
+      success: false,
+      message: "Internal server error"
+    });
+  }
 };
-
-
 /**
  * forgot Password controller 
  */
