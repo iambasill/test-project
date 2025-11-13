@@ -223,6 +223,7 @@ export const resetPasswordController = async (req: Request, res: Response) => {
       resetTokenExpiry: { gt: new Date() }
     }
   });
+  
 
   if (!user) throw new BadRequestError("Bad Request");
 
@@ -364,7 +365,7 @@ export const verifyUserController = async (req: Request, res: Response) => {
 
   const token = await generateToken(user.id);
 
-  
+
   res.status(200).json({
     success: "true",
     UserStatus: user.status,
