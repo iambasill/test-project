@@ -364,6 +364,7 @@ export const verifyUserController = async (req: Request, res: Response) => {
 
   const token = await generateToken(user.id);
 
+  
   res.status(200).json({
     success: "true",
     UserStatus: user.status,
