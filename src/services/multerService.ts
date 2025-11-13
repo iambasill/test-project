@@ -11,9 +11,13 @@ let upload:any;
 
 const fileFilter = (req:any, file:any, cb:any) => {
   const allowedTypes = [
-    "image/jpeg",
-    "image/png",
-    "image/gif",
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+  "image/jpg",
+  "image/bmp",
+  "image/tiff",
     "application/pdf",
     "application/msword",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
