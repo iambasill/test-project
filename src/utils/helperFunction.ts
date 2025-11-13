@@ -22,7 +22,7 @@ export async function checkUser(id: string) {
 export const generateToken = async (userId: string) => {
   const token = jwt.sign(
     { id: userId },
-    config.AUTH_JWT_RESET_TOKEN as string,
+    config.AUTH_JWT_RESET_TOKEN ,
     { expiresIn: "24h" }
   );
 

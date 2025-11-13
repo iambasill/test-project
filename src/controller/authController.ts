@@ -224,7 +224,7 @@ export const resetPasswordController = async (req: Request, res: Response) => {
     }
   });
 
-  if (!user) throw new BadRequestError("Invalid or expired token");
+  if (!user) throw new BadRequestError("Bad Request");
 
   const hashedPassword = await bcrypt.hash(newPassword as string, 12);
   await prismaclient.user.update({
@@ -261,28 +261,17 @@ export const resetPasswordController = async (req: Request, res: Response) => {
 // };
 
 export const changePasswordController = async (req: Request, res: Response) => {
-  try {
-    const { email, newPassword } = req.body;
-
-    // Validate input fields
-    if (!email || !newPassword) {
-      throw new BadRequestError("Email and new password are required");
+  const { token, newPassword } = changePasswordSchema.parse(req.body);
+  
+  await verifyToken(token as string,"reset")
+  const user = await prismaclient.user.findFirst({
+    where: {
+      resetToken: token,
+      resetTokenExpiry: { gt: new Date() }
     }
+  });
 
-    if (typeof newPassword !== 'string' || newPassword.trim() === '') {
-      throw new BadRequestError("Valid new password is required");
-    }
-
-    // Check if user exists
-    const user = await prismaclient.user.findFirst({
-      where: {
-        email: email,
-      }
-    });
-
-    if (!user) {
-      throw new BadRequestError("User not found");
-    }
+  if (!user) throw new BadRequestError("Bad Request");
 
     // Hash the new password
     const hashedPassword = await bcrypt.hash(newPassword, 12);
@@ -303,22 +292,7 @@ export const changePasswordController = async (req: Request, res: Response) => {
       message: "Password changed successfully" 
     });
 
-  } catch (error) {
-    console.error('Change password error:', error);
-    
-    if (error instanceof BadRequestError) {
-      return res.status(400).send({
-        success: false,
-        message: error.message
-      });
-    }
-
-    res.status(500).send({
-      success: false,
-      message: "Internal server error"
-    });
-  }
-};
+  } 
 /**
  * forgot Password controller 
  */
