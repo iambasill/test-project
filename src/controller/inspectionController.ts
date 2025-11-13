@@ -258,6 +258,7 @@ export const getAllInspectionByEquipmentId = async (req: Request, res: Response)
         },
         documents: {
           select:{
+          id:true,
           fileName:true,          
           fileType:true,  
           fileSize:true,          
