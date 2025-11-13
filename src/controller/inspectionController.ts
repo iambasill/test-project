@@ -35,21 +35,24 @@ export const createInspection = async (req: Request, res: Response) => {
         equipmentId,
         idempotency_tracker: { some: { key: idempotencyKey } },
       },
-      select: {
-        id: true,
-        equipmentId: true,
-        datePerformed: true,
+      include: {
+        documents: true,
+        items: {
+          include: { documents: true },
+        },
       },
     });
 
     if (existingInspection) {
-      return res.status(200).json({
+      return res.status(200).json({ // ✅ Added return
         success: true,
         message: "Inspection created successfully (idempotent)",
         data: {
           id: existingInspection.id,
           equipmentId: existingInspection.equipmentId,
           datePerformed: existingInspection.datePerformed,
+          documents: existingInspection.documents,
+          items: existingInspection.items,
         },
       });
     }
@@ -66,7 +69,7 @@ export const createInspection = async (req: Request, res: Response) => {
   }
 
   // Create inspection and items with file uploads in transaction
-  const result = await prismaclient.$transaction(async (tx) => {
+     await prismaclient.$transaction(async (tx) => {
     const inspection = await tx.inspection.create({
       data: {
         equipment: { connect: { id: equipmentId } },
@@ -119,8 +122,71 @@ export const createInspection = async (req: Request, res: Response) => {
     }
 
     // Handle file uploads (if any)
-    if (req.files && Object.keys(req.files).length > 0) {
+    if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+      const filesArray = req.files as Express.Multer.File[];
+      
+      console.log('📁 Total files received:', filesArray.length);
+      console.log('📋 File field names:', filesArray.map(f => f.fieldname));
+
+      // Group files by fieldname
+      const filesByField: { [key: string]: Express.Multer.File[] } = {};
+      filesArray.forEach(file => {
+        if (!filesByField[file.fieldname]) {
+          filesByField[file.fieldname] = [];
+        }
+        filesByField[file.fieldname].push(file);
+      });
+
+      // Handle inspection-level images
+      if (filesByField["inspectionImages"]) {
+        const uploadedFiles = filesByField["inspectionImages"];
+        const structuredFiles = getFileUrls(
+          uploadedFiles,
+          "inspectionId",
+          inspection.id
+        );
+
+        console.log('📁 Inspection images to upload:', uploadedFiles.length);
+
+        await tx.document.createMany({
+          data: structuredFiles.map((file) => ({
+            fileName: file.fileName,
+            fileUrl: file.fileUrl,
+            inspectionId: inspection.id,
+            fileType: file.fileType || "unknown",
+            fileSize: file.fileSize || 0,
+          })),
+        });
+      }
+
+      // Handle item-level images (item_0_images, item_1_images, etc.)
+      for (let index = 0; index < createdItems.length; index++) {
+        const itemImageKey = `item_${index}_images`;
+        if (filesByField[itemImageKey]) {
+          const uploadedFiles = filesByField[itemImageKey];
+          const structuredFiles = getFileUrls(
+            uploadedFiles,
+            "inspectionItemId",
+            createdItems[index].id
+          );
+
+          console.log(`📁 Item ${index} images to upload:`, uploadedFiles.length);
+
+          await tx.document.createMany({
+            data: structuredFiles.map((file) => ({
+              fileName: file.fileName,
+              fileUrl: file.fileUrl,
+              inspectionItemId: createdItems[index].id,
+              fileType: file.fileType || "unknown",
+              fileSize: file.fileSize || 0,
+            })),
+          });
+        }
+      }
+    } else if (req.files && typeof req.files === 'object' && !Array.isArray(req.files)) {
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+
+      console.log('📁 File fields received:', Object.keys(files));
 
       // Handle inspection-level images
       if (files["inspectionImages"]) {
@@ -142,7 +208,7 @@ export const createInspection = async (req: Request, res: Response) => {
         });
       }
 
-      // Handle item-level images (item_0_images, item_1_images, etc.)
+      // Handle item-level images
       for (let index = 0; index < createdItems.length; index++) {
         const itemImageKey = `item_${index}_images`;
         if (files[itemImageKey]) {
@@ -171,26 +237,26 @@ export const createInspection = async (req: Request, res: Response) => {
       await tx.idempotency_tracker.create({
         data: {
           key: idempotencyKey,
-          inspection_id: inspection.id,
+          inspection_id: inspection.id, // ✅ Link to inspection
         },
       });
     }
-
-    return { inspection, createdItems };
   });
 
   // Respond after transaction completes
   return res.status(201).json({
     success: true,
     message: "Inspection created successfully",
-    data: {
-      id: result.inspection.id,
-      equipmentId: result.inspection.equipmentId,
-      datePerformed: result.inspection.datePerformed,
-      itemsCreated: result.createdItems.length,
-    },
+
   });
 };
+
+
+
+
+
+
+
 
 export const getAllInspectionByEquipmentId = async (req: Request, res: Response) => {
   const equipmentId  = sanitizeInput(req.params.id)
