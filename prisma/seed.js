@@ -58,21 +58,6 @@ const countries = ["Nigeria", "USA", "Germany", "Japan", "China", "Israel", "Swe
 async function main() {
   console.log("🌱 Seeding database with platform admin and equipment inventory...");
 
-  // --- Clear Tables ---
-  await prisma.document.deleteMany();
-  await prisma.equipmentCondition.deleteMany();
-  await prisma.equipmentOwnership.deleteMany();
-  await prisma.operator.deleteMany();
-  await prisma.exteriorInspection.deleteMany();
-  await prisma.interiorInspection.deleteMany();
-  await prisma.mechanicalInspection.deleteMany();
-  await prisma.functionalInspection.deleteMany();
-  await prisma.documentLegalInspection.deleteMany();
-  await prisma.inspection.deleteMany();
-  await prisma.equipment.deleteMany();
-  await prisma.user_sessions.deleteMany();
-  await prisma.active_admin_sessions.deleteMany();
-  await prisma.user.deleteMany();
 
   // --- Create Platform Admin ---
   const admin = await prisma.user.create({
