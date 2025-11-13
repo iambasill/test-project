@@ -236,18 +236,17 @@ export const resetPasswordController = async (req: Request, res: Response) => {
 };
 
 /**
- * Reset password
+ * Change password
  */
 
 export const changePasswordController = async (req: Request, res: Response) => {
 
-  const { token, newPassword } = changePasswordSchema.parse(req.body);
+  const { email, newPassword } = req.body //TODO://
   
   // await verifyToken(token as string,"reset")
   const user = await prismaclient.user.findFirst({
     where: {
-      resetToken: token,
-      // resetTokenExpiry: { gt: new Date() }
+      email: email,
     }
   });
 
