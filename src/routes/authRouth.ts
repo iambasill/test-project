@@ -23,6 +23,7 @@ export const authRoute = express();
 authRoute.post('/login', loginController);
 authRoute.post('/signup', registerController);
 authRoute.post('/verify-user', verifyUserController);
+authRoute.post('/check-user', verifyUserController);
 authRoute.post('/reset-password', resetPasswordController);
 authRoute.post('/change-password', changePasswordController);
 authRoute.post('/forgot-password', forgotPasswordController);
