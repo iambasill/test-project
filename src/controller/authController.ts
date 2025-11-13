@@ -271,6 +271,7 @@ export const changePasswordController = async (req: Request, res: Response) => {
     }
   });
 
+  
   if (!user) throw new BadRequestError("Bad Request");
 
     // Hash the new password
