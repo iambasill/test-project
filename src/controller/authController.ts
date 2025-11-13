@@ -243,7 +243,6 @@ export const changePasswordController = async (req: Request, res: Response) => {
 
   const { email, newPassword } = req.body //TODO://
   
-  // await verifyToken(token as string,"reset")
   const user = await prismaclient.user.findFirst({
     where: {
       email: email,
@@ -252,7 +251,7 @@ export const changePasswordController = async (req: Request, res: Response) => {
 
   if (!user) throw new BadRequestError("Bad Request");
 
-  const hashedPassword = await bcrypt.hash(newPassword as string, 12);
+  const hashedPassword = await bcrypt.hash(newPassword, 12);
   await prismaclient.user.update({
     where: { id: user.id },
     data: { password: hashedPassword, resetToken: null, resetTokenExpiry: null, status: "ACTIVE" }
