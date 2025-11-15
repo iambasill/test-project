@@ -12,14 +12,14 @@ const app = express();
 // ----------------------
 // ✅ CORS CONFIG
 // ----------------------
-// const corsOptions = {
+const corsOptions = {
 //   origin: config.CLIENT_URL,      // e.g. "http://localhost:5173"
-//   methods: ['GET', 'POST', 'PUT', 'DELETE'],
-//   allowedHeaders: ['Content-Type', 'Authorization'],
-//   credentials: true,
-// };
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+};
 
-// app.use(cors(corsOptions));
+app.use(cors(corsOptions));
 
 
 
