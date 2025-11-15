@@ -131,10 +131,6 @@ export function genrateRandomPassword() {
 }
 
 export async function verifyToken(token: string, type: string) {
-  if (!process.env.AUTH_JWT_TOKEN)
-    throw new unAuthorizedError("JWT SECRET TOKEN UNDEFINED!");
-  if (!process.env.AUTH_RESET_TOKEN)
-    throw new unAuthorizedError("JWT SECRET TOKEN UNDEFINED!");
 
   let secret: string;
   if (type === "auth") {
@@ -147,7 +143,7 @@ export async function verifyToken(token: string, type: string) {
     const decoded = jwt.verify(token, secret) as jwt.JwtPayload;
     return decoded;
   } catch (err) {
-    throw new unAuthorizedError("INVALID OR EXPIRED TOKEN");
+    throw new unAuthorizedError("Unauthorized user");
   }
 }
 
