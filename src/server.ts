@@ -21,8 +21,7 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// CRITICAL: allow OPTIONS preflight
-app.options("/*", cors(corsOptions));
+
 
 
 // ----------------------
