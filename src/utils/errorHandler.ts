@@ -44,9 +44,8 @@ export const errorHandler = (err: Error, req: Request, res: Response, next: Next
   }
 
     if (err.message.includes('CORS')) {
-    return res.sendFile(path.join(__dirname, '../../public/cors-error.html'));
+    return res.sendFile(path.join(__dirname, "/public/cors-error.html"));
   }
-
 
   // Handle unexpected errors
   return res.status(500).json({
