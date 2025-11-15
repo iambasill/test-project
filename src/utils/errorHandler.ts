@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
 import { http_Exception } from '../logger/extendHttp';
 import logger from '../logger/logger';
+import path from 'path';
 
 
 
@@ -42,6 +43,11 @@ export const errorHandler = (err: Error, req: Request, res: Response, next: Next
     });
   }
 
+    if (err.message.includes('CORS')) {
+    return res.sendFile(path.join(__dirname, '../../public/cors-error.html'));
+  }
+
+
   // Handle unexpected errors
   return res.status(500).json({
     success: false,
@@ -50,3 +56,4 @@ export const errorHandler = (err: Error, req: Request, res: Response, next: Next
     ...(!isProduction && { stack: err.stack })
   });
 };
+
