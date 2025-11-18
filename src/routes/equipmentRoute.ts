@@ -17,7 +17,7 @@ import e from "express";
 export const equipmentRouter = express.Router();
 
 // Statistics route (should be before :id route to avoid conflicts)
-equipmentRouter.get("/stats", authMiddleware, getEquipmentStats);
+// equipmentRouter.get("/stats", authMiddleware, getEquipmentStats);
 
 // Base routes - GET with queries/pagination
 equipmentRouter.get("/", authMiddleware, getEquipment);
