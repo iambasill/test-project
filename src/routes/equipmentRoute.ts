@@ -10,7 +10,9 @@ import {
   updateEquipment,
   getEquipmentOwnerships,
   getEquipmentStats,
+  updateEquipmentOwnerships,
 } from "../controller/equipmentController";
+import e from "express";
 
 export const equipmentRouter = express.Router();
 
@@ -24,6 +26,7 @@ equipmentRouter.post("/", authMiddleware, upload.fields(UPLOAD_FIELDS), createEq
 // Ownership routes
 equipmentRouter.get("/ownership/:id", authMiddleware, getEquipmentOwnerships);
 equipmentRouter.post("/create-ownership", authMiddleware, upload.any(), createEquipmentOwnership);
+equipmentRouter.put("/ownership/:ownershipId", authMiddleware, upload.any(), updateEquipmentOwnerships);
 
 // Specific equipment routes (must be after other routes with /stats and /ownership to avoid :id conflicts)
 equipmentRouter.get("/:id", authMiddleware, getEquipmentById);

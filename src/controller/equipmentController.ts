@@ -1,9 +1,10 @@
 import { Request, Response } from "express";
-import { BadRequestError } from "../logger/exceptions";
-import { CreateEquipmentOwnershipSchema, equipmentData } from "../validator/authValidator";
+import { BadRequestError, unAuthorizedError } from "../logger/exceptions";
+import { CreateEquipmentOwnershipSchema, equipmentData, UpdateEquipmentOwnershipSchema } from "../validator/authValidator";
 import { sanitizeInput } from "../utils/helperFunction";
 import { getFileUrls } from "../utils/fileHandler";
 import { prismaclient } from "../lib/prisma-connect";
+import { User } from "../generated/prisma";
 
 // =======================================================
 // GET EQUIPMENT WITH QUERIES AND PAGINATION
@@ -441,6 +442,89 @@ export const getEquipmentOwnerships = async (req: Request, res: Response) => {
     data: ownerships,
   });
 };
+
+// =======================================================
+// UPDATE EQUIPMENT OWNERSHIPS RECORDS
+// =======================================================
+
+export const updateEquipmentOwnerships = async (req: Request, res: Response) => {
+  const user = req.user as User;
+  const { ownershipId } = req.params;
+
+  if (!ownershipId) throw new BadRequestError("Ownership ID is required");
+  if( user.role !== "PLATADMIN") throw new unAuthorizedError("User not authorized");
+  // Allow partial updates
+  const validatedData = UpdateEquipmentOwnershipSchema.parse(req.body);
+
+  const ownership = await prismaclient.equipmentOwnership.findUnique({
+    where: { id: ownershipId },
+  });
+
+  if (!ownership) throw new BadRequestError("Ownership record not found");
+
+  const result = await prismaclient.$transaction(async (tx) => {
+    // Update ownership record fields only
+    const updated = await tx.equipmentOwnership.update({
+      where: { id: ownershipId },
+      data: {
+        ...validatedData,
+        startDate: validatedData.startDate
+          ? new Date(validatedData.startDate)
+          : ownership.startDate,
+        endDate: validatedData.endDate
+          ? new Date(validatedData.endDate)
+          : ownership.endDate,
+      },
+    });
+
+    // === DOCUMENT UPDATES (optional) ===
+    if (req.files && Object.keys(req.files).length > 0) {
+      const uploadedFiles = Object.values(req.files).flat();
+      const structuredFiles = getFileUrls(
+        uploadedFiles as Express.Multer.File[],
+        "ownershipId",
+        ownershipId
+      );
+
+      for (const file of structuredFiles) {
+        // Check if file with same name exists for this ownership
+        const existingDoc = await tx.document.findFirst({
+          where: { ownershipId, fileName: file.fileName },
+        });
+
+        if (existingDoc) {
+          // Update the document
+          await tx.document.update({
+            where: { id: existingDoc.id },
+            data: {
+              fileUrl: file.fileUrl,
+              fileType: file.fileType || "unknown",
+              fileSize: file.fileSize || 0,
+            },
+          });
+        } else {
+          // Create new document
+          await tx.document.create({
+            data: {
+              ...file,
+              ownershipId,
+              fileType: file.fileType || "unknown",
+              fileSize: file.fileSize || 0,
+            },
+          });
+        }
+      }
+    }
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "Ownership record updated successfully",
+  });
+};
+
+
+
 
 // =======================================================
 // GET EQUIPMENT STATISTICS
