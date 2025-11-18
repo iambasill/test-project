@@ -7,7 +7,7 @@ import { unAuthorizedError } from '../logger/exceptions';
 export const requirePlatformAdmin = async (req: Request, res: Response, next: NextFunction) => {
     const user:any = req.user
     if (!user || user.role !== 'PLATADMIN') {
-      throw new unAuthorizedError("Platform Admin privileges required");
+      throw new unAuthorizedError("Unauthorized user");
     }
     next();
 };

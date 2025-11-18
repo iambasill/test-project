@@ -1,5 +1,5 @@
 import express, { Request, Response, NextFunction } from "express";
-import { BadRequestError } from "../logger/exceptions";
+import { BadRequestError, unAuthorizedError } from "../logger/exceptions";
 import { signUpSchema, loginSchema, emailSchema, changePasswordSchema, userIdSchema, tokenSchema } from "../validator/authValidator";
 import bcrypt from 'bcrypt';
 import { checkUser, generateLoginToken, generateToken, generateUserSession, genrateRandomPassword, manageAdminSession, verifyToken } from "../utils/helperFunction";
@@ -236,7 +236,8 @@ export const resetPasswordController = async (req: Request, res: Response) => {
   res.status(200).send({ success: true, message: "Password changed successful" });
 };
 
-/**
+
+/***
  * Change password
  */
 
@@ -272,6 +273,7 @@ export const changePasswordController = async (req: Request, res: Response) => {
     }
   });
 
+  
   if (!user) throw new BadRequestError("Bad Request");
 
     // Hash the new password
@@ -344,7 +346,7 @@ export const getApkController = async (req: Request, res: Response) => {
     await verifyToken(token,"reset")
     res.redirect("https://github.com/404-services01/Defence-IVM-Mobile/releases/download/v1.0.0/DefenceApp.apk")
   } else {
-    res.status(401).send("Invalid token");
+    res.status(401).send("Unauthorized user");
   }
 };
 
@@ -419,7 +421,7 @@ export const refreshToken = async (req:Request, res:Response) => {
       logout_time:null
     }
   })
-  if (!valid || user.status !== "ACTIVE") throw new BadRequestError("Invalid refresh token")
+  if (!valid || user.status !== "ACTIVE") throw new unAuthorizedError("Unauthorized user, please login to continue")
   
   const decoded = await verifyToken(refreshToken,"auth")
 

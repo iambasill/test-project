@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { BadRequestError, unAuthorizedError } from '../logger/exceptions';
+import { BadRequestError } from '../logger/exceptions';
 import { sanitizeInput } from '../utils/helperFunction';
 import { signUpSchema } from '../validator/authValidator';
 import { prismaclient } from '../lib/prisma-connect';

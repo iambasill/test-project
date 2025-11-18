@@ -17,10 +17,10 @@ declare global {
 
 export const authMiddleware = async(req: Request, _res: Response, next: NextFunction) => {
     const token = req.header('Authorization')?.split(' ')[1];
-    if (!token || token == null) throw new unAuthorizedError("INVALID TOKEN OR EXPIRED TOKEN");
+    if (!token || token == null) throw new unAuthorizedError("Unauthorized user, please login to continue");
 
     const decoded:jwt.JwtPayload = await verifyToken(token,"auth")
-    if (!decoded || typeof decoded !== 'object' || !('id' in decoded)) throw new unAuthorizedError("INVALID OR EXPIRED TOKEN");
+    if (!decoded || typeof decoded !== 'object' || !('id' in decoded)) throw new unAuthorizedError("Unauthorized user, please login to continue");
     const user:any = await checkUser((decoded as any).id as string)
     if (!user || user.status?.toUpperCase() !== "ACTIVE") throw new unAuthorizedError("Access Denied")
     req.user = user

@@ -3,4 +3,5 @@ build
 readme
 logs
 .env
-/src/generated/prisma
+src/generated/prisma
+src/server.ts

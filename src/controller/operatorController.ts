@@ -10,7 +10,7 @@ import { prismaclient } from "../lib/prisma-connect";
 // =======================================================
 export const getOperators = async (req: Request, res: Response) => {
   const user: any = req.user;
-  // if (user.role === "OFFICER") throw new unAuthorizedError();//TODO:
+  // if (user.role === "OFFICER") throw new unAuthorizedError(Unauthorized user, please login to continue);//TODO:
 
   const {
     page = "1",
@@ -112,7 +112,7 @@ export const getOperators = async (req: Request, res: Response) => {
 // =======================================================
 export const createOperator = async (req: Request, res: Response) => {
   const user: any = req.user;
-  if (user.role === "OFFICER") throw new unAuthorizedError();
+  if (user.role === "OFFICER") throw new unAuthorizedError("Unauthorized user");
 
   const validated = operatorSchema.parse(req.body);
   const idempotencyKey = req.headers["idempotency-key"] as string;
