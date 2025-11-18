@@ -13,7 +13,7 @@ const app = express();
 // ✅ CORS CONFIG
 // ----------------------
 const corsOptions = {
-//   origin: config.CLIENT_URL,      // e.g. "http://localhost:5173"
+  origin: config.CLIENT_URL,      // e.g. "http://localhost:5173"
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
