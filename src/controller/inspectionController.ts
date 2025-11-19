@@ -11,7 +11,10 @@ import { getFileUrls } from "../utils/fileHandler";
  */
 export const createInspection = async (req: Request, res: Response) => {
   const user = req.user as User;
-  const idempotencyKey = req.headers["idempotency-key"] as string;
+  const idempotencyKey = req.headers["Idempotency-Key"] as string;
+  if (!idempotencyKey) {
+    throw new BadRequestError("Idempotency-Key header is required");
+  }
 
   // Parse JSON string if exists
   let rawData;
