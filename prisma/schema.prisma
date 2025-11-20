@@ -36,13 +36,6 @@ enum UserRole {
     OFFICER
 }
 
-enum AcquisitionMethod {
-    PURCHASE
-    LEASE
-    DONATION
-    TRANSFER
-    OTHER
-}
 
 
 model equipmentCategory {
@@ -97,7 +90,7 @@ model Equipment {
 
     // Section B: Acquisition Details
     dateOfAcquisition   String?
-    acquisitionMethod   AcquisitionMethod?
+    acquisitionMethod   String?
     supplierInfo        String?
     purchaseOrderNumber String?
     contractReference   String?
