@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { AcquisitionMethod, InspectionStatus, UserRole } from "../generated/prisma";
+import {  InspectionStatus, UserRole } from "../generated/prisma";
 import { sanitizeObject } from "../utils/zodHandler";
 
 const status = Object.values(InspectionStatus)
@@ -42,7 +42,7 @@ export const equipmentData = sanitizeObject(z.object({
     yearOfManufacture: z.string().optional(),
     countryOfOrigin:   z.string(),
     dateOfAcquisition :  z.string(),
-    acquisitionMethod :  z.enum(AcquisitionMethod),
+    acquisitionMethod :  z.string(),
     supplierInfo  :      z.string(),
     purchaseOrderNumber :z.string().optional(),
     contractReference :  z.string().optional(),
