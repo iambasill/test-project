@@ -362,7 +362,11 @@ export const getOperatorById = async (req: Request, res: Response) => {
         },
       },
       ownerships: {
-        include: {
+          select: {
+            id: true,
+            startDate: true,
+            endDate: true,
+            isCurrent: true,
           equipment: {
             select: {
               id: true,
@@ -378,6 +382,7 @@ export const getOperatorById = async (req: Request, res: Response) => {
               firstName: true,
               lastName: true,
               email: true,
+
             },
           },
           documents: {
@@ -388,7 +393,9 @@ export const getOperatorById = async (req: Request, res: Response) => {
               fileType: true,
               fileSize: true,
             },
+            
           },
+        
         },
         orderBy: { startDate: "desc" },
       },
