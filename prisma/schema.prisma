@@ -19,7 +19,7 @@ enum UserStatus {
 
 enum InspectionStatus {
     Serviceable
-    Operatioanl
+    Operational
     Needs_Maintenance
     Non_Operational
 }
@@ -82,23 +82,23 @@ model Equipment {
     chasisNumber String @unique // Now using chasisNumber as primary key
 
     // Section A: Equipment Identification
-    equipmentName     String
-    model             String
-    equipmentType     String
+    equipmentName     String?
+    model             String?
+    equipmentType     String?
     equipmentCategory String?
-    manufacturer      String
+    manufacturer      String?
     modelNumber       String?
     yearOfManufacture String?
-    countryOfOrigin   String
+    countryOfOrigin   String?
 
     // Section B: Acquisition Details
     dateOfAcquisition   String?
-    acquisitionMethod   AcquisitionMethod
+    acquisitionMethod   AcquisitionMethod?
     supplierInfo        String?
     purchaseOrderNumber String?
     contractReference   String?
     costValue           String?
-    currency            String            @default("NGN")
+    currency            String?            @default("NGN")
     fundingSource       String?
     warrantyStartDate String?
     warrantyEndDate String?
