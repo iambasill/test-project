@@ -13,7 +13,7 @@ const app = express();
 // ✅ CORS CONFIG
 // ----------------------
 const corsOptions = {
-  // origin: config.CLIENT_URL,      
+  origin: config.CLIENT_URL,      
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Idempotency-Key'],
   credentials: true,
