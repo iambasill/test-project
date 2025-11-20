@@ -19,10 +19,13 @@ enum UserStatus {
 
 enum InspectionStatus {
     Serviceable
-    Operatioanl
+    Operational
     Needs_Maintenance
     Non_Operational
 }
+
+// npx prisma migrate resolve --applied 20251119145421_edited_conditions
+
 
 enum UserRole {
     PLATADMIN
