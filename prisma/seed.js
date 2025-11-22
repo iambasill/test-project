@@ -1,4 +1,4 @@
-const { PrismaClientClient } = require('../src//lib/PrismaClient-connect');
+const { PrismaClientClient } = require('../src/lib/PrismaClient-connect');
 
 // --- Fake Data Arrays ---
 const conditionStatuses = ["S", "O", "A", "B", "C"];
