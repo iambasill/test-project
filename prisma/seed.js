@@ -1,5 +1,4 @@
-import { prismaclient } from "../lib/prisma-connect";
-const PrismaClient = prismaclient;
+const { PrismaClientClient } = require('../build/lib/prisma-connect');
 // --- Fake Data Arrays ---
 const conditionStatuses = ["S", "O", "A", "B", "C"];
 const acquisitionMethods = ["PURCHASE", "LEASE", "DONATION", "TRANSFER", "OTHER"];
