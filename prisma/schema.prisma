@@ -180,7 +180,7 @@ model EquipmentOwnership {
     coEmail       String?
     coPhoneNumber String?
 
-    // Equipment condition at assignment
+    //TODO: remove?? Equipment condition at assignment
     conditionAtAssignment String? @default("")
     notes                 String?
     documents             Document[]
