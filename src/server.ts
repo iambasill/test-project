@@ -9,6 +9,7 @@ import { config } from './config';
 
 const app = express();
 
+
 // ----------------------
 //  CORS CONFIG
 // ----------------------
