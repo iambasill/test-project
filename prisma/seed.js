@@ -1,4 +1,4 @@
-const { PrismaClient } = require('../build/lib/prisma-connect');
+const { prismaclient } = require('../build/lib/prisma-connect');
 // --- Fake Data Arrays ---
 const conditionStatuses = ["S", "O", "A", "B", "C"];
 const acquisitionMethods = ["PURCHASE", "LEASE", "DONATION", "TRANSFER", "OTHER"];
@@ -83,7 +83,7 @@ async function main() {
     const acquisitionDate = new Date();
     acquisitionDate.setFullYear(acquisitionDate.getFullYear() - (i % 4));
 
-    const equipment = await PrismaClient.equipment.create({
+    const equipment = await prismaclient.equipment.create({
       data: {
         chasisNumber: `CHS-${2023000 + i}`,
         equipmentName: `${category} ${model}`,
@@ -126,5 +126,5 @@ main()
     process.exit(1);
   })
   .finally(async () => {
-    await PrismaClient.$disconnect();
+    await prismaclient.$disconnect();
   });
