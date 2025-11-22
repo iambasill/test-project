@@ -165,12 +165,7 @@ export const createOperator = async (req: Request, res: Response) => {
 
     if (req.files) {
       let filesToUpload: Express.Multer.File[] = [];
-
-      if (Array.isArray(req.files)) {
-        // upload.any() format
-        filesToUpload = req.files;
-      } else if (typeof req.files === 'object') {
-        // upload.fields() format
+     if (typeof req.files === 'object') {
         filesToUpload = Object.values(req.files).flat();
       }
 
@@ -267,10 +262,8 @@ export const updateOperator = async (req: Request, res: Response) => {
 
     if (req.files) {
       let filesToUpload: Express.Multer.File[] = [];
-
-      if (Array.isArray(req.files)) {
-        filesToUpload = req.files;
-      } else if (typeof req.files === 'object') {
+      
+     if (typeof req.files === 'object') {
         filesToUpload = Object.values(req.files).flat();
       }
 

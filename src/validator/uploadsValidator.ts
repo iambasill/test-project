@@ -1,14 +1,19 @@
 export const UPLOAD_FIELDS = [
-  { name: 'frontView', maxCount: 1 },
-  { name: 'backView', maxCount: 1 },
-  { name: 'leftView', maxCount: 1 },
-  { name: 'rightView', maxCount: 1 }
+    { name: 'item_0_images', maxCount: 4 },
+    { name: 'item_1_images', maxCount: 4 },
+    { name: 'item_2_images', maxCount: 4 },
+    { name: 'item_3_images', maxCount: 4 },
+    { name: 'item_4_images', maxCount: 4 },
 ];
 
 
 export const OPERATOR_FIELDS = [
-  {name: "operatorPassport", maxCount: 1},
-  {name: "operatorID", maxCount: 1}
+    { name: 'item_1_images', maxCount: 5 },
+    { name: 'item_2_images', maxCount: 5 },
+    { name: 'item_3_images', maxCount: 5 },
+    { name: 'item_4_images', maxCount: 5 },
+    { name: 'item_5_images', maxCount: 5 },
+    { name: 'item_6_images', maxCount: 5 },
 ]
 
 

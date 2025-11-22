@@ -25,7 +25,6 @@ enum InspectionStatus {
     C
 }
 
-// npx prisma migrate resolve --applied 20251119145421_edited_conditions
 
 
 enum UserRole {

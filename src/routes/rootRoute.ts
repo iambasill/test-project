@@ -6,7 +6,7 @@ import { operatorRouter } from "./operatorRoute";
 import { inspectionRouter } from "./inspectionRoute";
 import { attachmentController } from "../controller/attachmentController";
 import { getApkController } from "../controller/authController";
-import { categoryRouter } from "./controllerRoute";
+import { categoryRouter } from "./categoryRoute";
 
 
 export const rootRoute = express()
