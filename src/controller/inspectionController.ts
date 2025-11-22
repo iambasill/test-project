@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { BadRequestError, notFoundError } from "../logger/exceptions";
 import { CreateInspectionSchema } from "../validator/authValidator";
 import { prismaclient } from "../lib/prisma-connect";
-import {  sanitizeInput } from "../utils/helperFunction";
+import { sanitizeInput } from "../utils/helperFunction";
 import { User, InspectionItem } from "../generated/prisma";
 import { getFileUrls } from "../utils/fileHandler";
 
@@ -11,10 +11,7 @@ import { getFileUrls } from "../utils/fileHandler";
  */
 export const createInspection = async (req: Request, res: Response) => {
   const user = req.user as User;
-  const idempotencyKey = req.headers["IdempotencyKey"] as string;
-  if (!idempotencyKey) {
-    throw new BadRequestError("Idempotency-Key header is required");
-  }
+  const IdempotencyKey = req.header('IdempotencyKey');
 
   // Parse JSON string if exists
   let rawData;
@@ -28,37 +25,37 @@ export const createInspection = async (req: Request, res: Response) => {
     rawData = req.body.data || req.body;
   }
 
+  if (!IdempotencyKey) throw new BadRequestError("IdempotencyKey header is required");
+
   const { equipmentId, nextDueDate, overallNotes, overallCondition, items } =
     CreateInspectionSchema.parse(rawData);
 
   // Check idempotency
-  if (idempotencyKey) {
-    const existingInspection = await prismaclient.inspection.findFirst({
-      where: {
-        equipmentId,
-        idempotency_tracker: { some: { key: idempotencyKey } },
+  const existingInspection = await prismaclient.inspection.findFirst({
+    where: {
+      equipmentId,
+      idempotency_tracker: { some: { key: IdempotencyKey } },
+    },
+    include: {
+      documents: true,
+      items: {
+        include: { documents: true },
       },
-      include: {
-        documents: true,
-        items: {
-          include: { documents: true },
-        },
+    },
+  });
+
+  if (existingInspection) {
+    return res.status(200).json({ 
+      success: true,
+      message: "Inspection created successfully (idempotent)",
+      data: {
+        id: existingInspection.id,
+        equipmentId: existingInspection.equipmentId,
+        datePerformed: existingInspection.datePerformed,
+        documents: existingInspection.documents,
+        items: existingInspection.items,
       },
     });
-
-    if (existingInspection) {
-      return res.status(200).json({ 
-        success: true,
-        message: "Inspection created successfully (idempotent)",
-        data: {
-          id: existingInspection.id,
-          equipmentId: existingInspection.equipmentId,
-          datePerformed: existingInspection.datePerformed,
-          documents: existingInspection.documents,
-          items: existingInspection.items,
-        },
-      });
-    }
   }
 
   // Verify equipment exists
@@ -72,7 +69,7 @@ export const createInspection = async (req: Request, res: Response) => {
   }
 
   // Create inspection and items with file uploads in transaction
-     await prismaclient.$transaction(async (tx) => {
+  const result = await prismaclient.$transaction(async (tx) => {
     const inspection = await tx.inspection.create({
       data: {
         equipment: { connect: { id: equipmentId } },
@@ -127,8 +124,6 @@ export const createInspection = async (req: Request, res: Response) => {
     // Handle file uploads (if any)
     if (req.files && Array.isArray(req.files) && req.files.length > 0) {
       const filesArray = req.files as Express.Multer.File[];
-      
- 
 
       // Group files by fieldname
       const filesByField: { [key: string]: Express.Multer.File[] } = {};
@@ -147,7 +142,6 @@ export const createInspection = async (req: Request, res: Response) => {
           "inspectionId",
           inspection.id
         );
-
 
         await tx.document.createMany({
           data: structuredFiles.map((file) => ({
@@ -171,7 +165,6 @@ export const createInspection = async (req: Request, res: Response) => {
             createdItems[index].id
           );
 
-
           await tx.document.createMany({
             data: structuredFiles.map((file) => ({
               fileName: file.fileName,
@@ -185,7 +178,6 @@ export const createInspection = async (req: Request, res: Response) => {
       }
     } else if (req.files && typeof req.files === 'object' && !Array.isArray(req.files)) {
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-
 
       // Handle inspection-level images
       if (files["inspectionImages"]) {
@@ -231,170 +223,165 @@ export const createInspection = async (req: Request, res: Response) => {
       }
     }
 
-    // Create idempotency tracker if key provided
-    if (idempotencyKey) {
-      await tx.idempotency_tracker.create({
-        data: {
-          key: idempotencyKey,
-          inspection_id: inspection.id, 
-        },
-      });
-    }
+    // Create idempotency tracker
+    await tx.idempotency_tracker.create({
+      data: {
+        key: IdempotencyKey,
+        inspection_id: inspection.id, 
+      },
+    });
+
+    return inspection;
   });
 
   // Respond after transaction completes
   return res.status(201).json({
     success: true,
     message: "Inspection created successfully",
-
+    data: {
+      id: result.id,
+      equipmentId: result.equipmentId,
+      datePerformed: result.datePerformed,
+    },
   });
 };
 
-
-
-
-
-
-
-
 export const getAllInspectionByEquipmentId = async (req: Request, res: Response) => {
-  const equipmentId  = sanitizeInput(req.params.id)
+  const equipmentId = sanitizeInput(req.params.id);
 
- // Extract pagination and filter parameters from query
+  // Extract pagination and filter parameters from query
   const page = parseInt(req.query.page as string) || 1;
   const limit = parseInt(req.query.limit as string) || 10;
   const sortBy = (req.query.sortBy as string) || 'createdAt';
   const sortOrder = (req.query.sortOrder as string) || 'desc';
-  const condition = req.query.condition as string; // Filter by overallCondition: 'S' or 'B'
-  const startDate = req.query.startDate as string; // Filter by date range
+  const condition = req.query.condition as string;
+  const startDate = req.query.startDate as string;
   const endDate = req.query.endDate as string;
   
-    // Build where clause with filters
-    const whereClause: any = { equipmentId };
-    
-    // Add condition filter if provided
-    if (condition && (condition === 'S' || condition === 'B')) {
-      whereClause.overallCondition = condition;
+  // Build where clause with filters
+  const whereClause: any = { equipmentId };
+  
+  // Add condition filter if provided
+  if (condition && (condition === 'S' || condition === 'B')) {
+    whereClause.overallCondition = condition;
+  }
+  
+  // Add date range filter if provided
+  if (startDate || endDate) {
+    whereClause.datePerformed = {};
+    if (startDate) {
+      whereClause.datePerformed.gte = new Date(startDate);
     }
-    
-    // Add date range filter if provided
-    if (startDate || endDate) {
-      whereClause.datePerformed = {};
-      if (startDate) {
-        whereClause.datePerformed.gte = new Date(startDate);
-      }
-      if (endDate) {
-        whereClause.datePerformed.lte = new Date(endDate);
-      }
+    if (endDate) {
+      whereClause.datePerformed.lte = new Date(endDate);
     }
-    
-    // Calculate skip for pagination
-    const skip = (page - 1) * limit;
-    
-    // Get total count for pagination metadata
-    const totalCount = await prismaclient.inspection.count({
-      where: whereClause,
-    });
-    
-    // Get paginated inspections
-    const inspections = await prismaclient.inspection.findMany({
-      where: whereClause,
-      include: {
-        equipment: {
-          select: {
-            id: true,
-            equipmentName: true,
-            equipmentType: true,
-            chasisNumber: true,
-            manufacturer: true,
-            model: true,
-            yearOfManufacture: true,
-            currentCondition: true,
-          },
+  }
+  
+  // Calculate skip for pagination
+  const skip = (page - 1) * limit;
+  
+  // Get total count for pagination metadata
+  const totalCount = await prismaclient.inspection.count({
+    where: whereClause,
+  });
+  
+  // Get paginated inspections
+  const inspections = await prismaclient.inspection.findMany({
+    where: whereClause,
+    include: {
+      equipment: {
+        select: {
+          id: true,
+          equipmentName: true,
+          equipmentType: true,
+          chasisNumber: true,
+          manufacturer: true,
+          model: true,
+          yearOfManufacture: true,
+          currentCondition: true,
         },
-        inspector: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-            role: true,
-          },
+      },
+      inspector: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          role: true,
         },
-        documents: {
-          select: {
-            id: true,
-            fileName: true,
-            fileType: true,
-            fileSize: true,
-            fileUrl: true, 
+      },
+      documents: {
+        select: {
+          id: true,
+          fileName: true,
+          fileType: true,
+          fileSize: true,
+          fileUrl: true, 
         },
         orderBy: {
           createdAt: 'asc',
         },
-        },
-        items: {
-          include: {
-            documents: {
-              select: {
-                id: true,
-                fileName: true,
-                fileType: true,
-                fileSize: true,
-                fileUrl: true, 
+      },
+      items: {
+        include: {
+          documents: {
+            select: {
+              id: true,
+              fileName: true,
+              fileType: true,
+              fileSize: true,
+              fileUrl: true, 
             },
-              orderBy: {
-                createdAt: 'asc',
-              },
+            orderBy: {
+              createdAt: 'asc',
             },
-          },
-          orderBy: {
-            createdAt: 'asc',
           },
         },
+        orderBy: {
+          createdAt: 'asc',
+        },
       },
-      orderBy: {
-        [sortBy]: sortOrder,
-      },
-      skip,
-      take: limit,
-    });
-    
-    // Handle not found
-    if (!inspections || inspections.length === 0) {
-      throw new notFoundError("No inspections found for this equipment");
-    }
-    
-    // Clean null fields in each inspection and its items
-    const cleanedInspections = inspections.map((inspection) => {
-      const cleanedItems = inspection.items.map((item) => {
-        const cleanedItem: any = {};
-        for (const [key, value] of Object.entries(item)) {
-          if (value !== null) cleanedItem[key] = value;
-        }
-        return cleanedItem;
-      });
-      return {
-        ...inspection,
-        items: cleanedItems,
-      };
-    });
-    
-    // Calculate pagination metadata
-    const totalPages = Math.ceil(totalCount / limit);
-
-    
-        // Send response with pagination metadata
-        return res.status(200).json({
-          success: true,
-          message: "Inspections retrieved successfully",
-          data: cleanedInspections,
-          pagination: {
-            currentPage: page,
-            totalPages,
-            totalCount,
-            limit,
-          },
-        });
+    },
+    orderBy: {
+      [sortBy]: sortOrder,
+    },
+    skip,
+    take: limit,
+  });
   
+  // Handle not found
+  if (!inspections || inspections.length === 0) {
+    throw new notFoundError("No inspections found for this equipment");
+  }
+  
+  // Clean null fields in each inspection and its items
+  const cleanedInspections = inspections.map((inspection) => {
+    const cleanedItems = inspection.items.map((item) => {
+      const cleanedItem: any = {};
+      for (const [key, value] of Object.entries(item)) {
+        if (value !== null) cleanedItem[key] = value;
+      }
+      return cleanedItem;
+    });
+    return {
+      ...inspection,
+      items: cleanedItems,
     };
+  });
+  
+  // Calculate pagination metadata
+  const totalPages = Math.ceil(totalCount / limit);
+  
+  // Send response with pagination metadata
+  return res.status(200).json({
+    success: true,
+    message: "Inspections retrieved successfully",
+    data: cleanedInspections,
+    pagination: {
+      currentPage: page,
+      totalPages,
+      totalCount,
+      limit,
+    },
+  });
+};

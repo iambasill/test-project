@@ -16,6 +16,7 @@ declare global {
 
 
 export const authMiddleware = async(req: Request, _res: Response, next: NextFunction) => {
+    
     const token = req.header('Authorization')?.split(' ')[1];
     if (!token || token == null) throw new unAuthorizedError("Unauthorized user, please login to continue");
 
