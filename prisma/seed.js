@@ -85,7 +85,7 @@ async function main() {
 
     const equipment = await prismaclient.equipment.create({
       data: {
-        chasisNumber: `CHS-${2023000 + i}`,
+        chasisNumber: `CHSS-${2023000 + i}`,
         equipmentName: `${category} ${model}`,
         model: model,
         equipmentType: type,
