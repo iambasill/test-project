@@ -392,12 +392,12 @@ export const resendVerficationController = async (req: Request, res: Response, n
   const verificationLink = `${config.API_BASE_URL}/download/apk?token=${verificationToken}`;
 
   // Send verification email
-    await sendVerificationEmail(
-    email,
-    verificationLink,
-    existingUser.firstName,
-    "register"
-  );
+  //   await sendVerificationEmail(
+  //   email,
+  //   verificationLink,
+  //   existingUser.firstName,
+  //   "register"
+  // );
 
   res.status(200).send({
     success: true,
