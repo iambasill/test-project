@@ -25,8 +25,8 @@ equipmentRouter.post("/", authMiddleware, upload.fields(UPLOAD_FIELDS), createEq
 
 // Ownership routes
 equipmentRouter.get("/ownership/:id", authMiddleware, getEquipmentOwnerships);
-equipmentRouter.post("/create-ownership", authMiddleware, upload.any(), createEquipmentOwnership);
-equipmentRouter.put("/ownership/:ownershipId", authMiddleware, upload.any(), updateEquipmentOwnerships);
+equipmentRouter.post("/create-ownership", authMiddleware, upload.any(UPLOAD_FIELDS), createEquipmentOwnership);
+equipmentRouter.put("/ownership/:ownershipId", authMiddleware, upload.any(UPLOAD_FIELDS), updateEquipmentOwnerships);
 
 // Specific equipment routes (must be after other routes with /stats and /ownership to avoid :id conflicts)
 equipmentRouter.get("/:id", authMiddleware, getEquipmentById);
