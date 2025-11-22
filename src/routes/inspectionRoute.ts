@@ -7,7 +7,7 @@ import { INSPECTION_FIELDS } from "../validator/uploadsValidator";
 export const inspectionRouter = express.Router();
 
 inspectionRouter.get('/equipment/:id', authMiddleware, getAllInspectionByEquipmentId);
-inspectionRouter.post('/', authMiddleware, upload.any(), createInspection);
+inspectionRouter.post('/', authMiddleware, upload.fields(INSPECTION_FIELDS), createInspection);
 
 // inspectionRouter.delete('/:id',authMiddleware,requirePlatformAdmin,deleteInspection)
 

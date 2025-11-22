@@ -21,7 +21,7 @@ export interface BaseConfig {
 
 export const baseConfig: BaseConfig = {
     APP_NAME: process.env.APP_NAME,
-    NODE_ENV: process.env.NODE_ENV,
+    NODE_ENV: process.env.NODE_ENV || "local",
     AUTH_JWT_TOKEN: process.env.AUTH_JWT_TOKEN!,
     AUTH_JWT_RESET_TOKEN: process.env.AUTH_JWT_RESET_TOKEN!,
     API_BASE_URL: process.env.API_BASE_URL!,

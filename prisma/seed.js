@@ -1,11 +1,11 @@
-const { PrismaClient } = require('../src/generated/prisma');
+const { PrismaClient } = require('../src//lib/prisma-connect');
 const prisma = new PrismaClient();
 
-// --- Data Arrays ---
-const conditionStatuses = ["S", "O", "A", "B", "C"]; // New enum
+// --- Fake Data Arrays ---
+const conditionStatuses = ["S", "O", "A", "B", "C"];
 const acquisitionMethods = ["PURCHASE", "LEASE", "DONATION", "TRANSFER", "OTHER"];
 
-// --- Expanded Equipment Types ---
+// --- Equipment Types ---
 const equipmentTypes = [
   "Vehicle",
   "Communication",
@@ -19,37 +19,50 @@ const equipmentTypes = [
   "Appliance"
 ];
 
-// --- Equipment Categories ---
+// --- Categories ---
 const equipmentCategories = {
-  Vehicle: ["Patrol Car", "SUV", "Truck", "Motorcycle", "Armored Vehicle"],
-  Communication: ["Radio", "Satellite Phone", "Intercom System", "Dispatch System"],
-  Radar: ["Speed Detection", "Surveillance", "Weather"],
-  Transport: ["Personnel Carrier", "Prisoner Transport", "Utility Vehicle"],
-  Surveillance: ["Camera", "Drone", "Audio Surveillance"],
-  "Protective Gear": ["Body Armor", "Helmet", "Gas Mask", "Shield"],
-  "Office Equipment": ["Printer", "Scanner", "Photocopier", "Projector", "Fax Machine"],
-  "IT Equipment": ["Desktop Computer", "Laptop", "Server", "Router", "Switch"],
-  Furniture: ["Office Chair", "Desk", "Filing Cabinet", "Conference Table", "Bookshelf"],
-  Appliance: ["Refrigerator", "Microwave", "Air Conditioner", "Water Dispenser", "Fan"]
+  Vehicle: ["Patrol Unit", "Terrain Vehicle", "Utility Rover", "Command Vehicle"],
+  Communication: ["Field Radio", "Signal Relay", "Comm Hub", "Secure Transmitter"],
+  Radar: ["Target Scanner", "Wide Sweep Radar", "MicroPulse Radar"],
+  Transport: ["Personnel Carrier", "Cargo Module", "Multi-Load Transport"],
+  Surveillance: ["Recon Drone", "Thermal Camera", "Silent Observer"],
+  "Protective Gear": ["Armor Vest", "Shock Helmet", "Air Filtration Mask"],
+  "Office Equipment": ["Laser Printer", "Doc Scanner", "Copy Machine", "Digital Projector"],
+  "IT Equipment": ["Workstation", "Mobile Terminal", "Rack Server", "Network Hub"],
+  Furniture: ["Ergo Chair", "Work Desk", "Filing Cabinet", "Command Table"],
+  Appliance: ["Cooling Unit", "Heat Processor", "Air Purifier", "Hydro Dispenser"]
 };
 
-// --- Manufacturers & Models ---
+// --- FAKE Manufacturers ---
 const manufacturers = [
-  "Toyota", "Siemens", "Colt", "Raytheon", "Mercedes", "Motorola", "3M",
-  "HP", "Dell", "Canon", "LG", "Samsung", "Haier", "IKEA"
+  "Novatek Industries",
+  "Auron Systems",
+  "Skyforge Dynamics",
+  "Vortex Solutions",
+  "HexaTech Labs",
+  "Omnistar Machines",
+  "Coretrix Engineering",
+  "Velonix Equipment",
+  "Solara Devices",
+  "Quantara Robotics",
+  "Stratix Tools",
+  "Aerion Techworks",
+  "Lumera Products",
+  "Metronix Fabricators"
 ];
 
+// --- FAKE Models ---
 const models = {
-  Vehicle: ["Land Cruiser", "Hilux", "Patrol", "Prado"],
-  Communication: ["XTN446", "GP328", "PR860", "TK-3230"],
-  Radar: ["AN/MPQ-64", "Ground Master 400", "AR-327"],
-  Transport: ["Unimog", "Zetros", "Actros"],
-  Surveillance: ["Drone DJI M300", "Thermal Camera X20"],
-  "Protective Gear": ["Vest Level IV", "Helmet Advanced", "Gas Mask M50"],
-  "Office Equipment": ["LaserJet Pro 400", "ScanJet 200", "PIXMA G6020", "Epson L3250"],
-  "IT Equipment": ["OptiPlex 7090", "EliteBook 850", "PowerEdge R540", "TP-Link Archer AX6000"],
-  Furniture: ["Markus Chair", "Bekant Desk", "Galant Cabinet", "Micke Table"],
-  Appliance: ["GR-B202SQBB", "MC32K7055CK", "HWM75-707NZP", "Hisense REF100DR"]
+  Vehicle: ["VX-7 Ranger", "HX-4 Strider", "PX-9 Cruiser", "AX-3 Sentinel"],
+  Communication: ["ComLink-X1", "EchoWave-200", "SignalPro M5", "UltraComm S9"],
+  Radar: ["RDR-450 Sentinel", "RDR-920 SkyScan", "RDR-300 TerraTrack"],
+  Transport: ["TRX-100 Carrier", "Moveron T7", "Loadmax P3"],
+  Surveillance: ["AeroCam V8", "Spectra View 300", "SilentEye X2"],
+  "Protective Gear": ["GuardPro V4", "HelioShield M3", "SafeMask-55"],
+  "Office Equipment": ["Printon L500", "Scanex M100", "CopyLite 220", "ProJet X4"],
+  "IT Equipment": ["DataCore S7", "NetBox Z9", "ComputeMax 500", "LogicOne R2"],
+  Furniture: ["FlexiChair 720", "WorkDesk Pro", "Cabinetron 40", "TableX 100"],
+  Appliance: ["CoolBreeze 900", "HeatWave M300", "PureFlow 75", "ChillBox 120"]
 };
 
 const countries = ["Nigeria", "USA", "Germany", "Japan", "China", "Israel", "Sweden", "South Korea"];
@@ -59,30 +72,14 @@ async function main() {
   console.log("🌱 Seeding database with platform admin and equipment inventory...");
 
 
-  // --- Create Platform Admin ---
-  const admin = await prisma.user.create({
-    data: {
-      email: "platform-admin@gmail.com",
-      firstName: "Platform",
-      lastName: "Administrator",
-      role: "PLATADMIN",
-      status: "PENDING",
-      password: "Password1",
-      isActive: true,
-      serviceNumber: "SN-ADM-001",
-      rank: "Chief Superintendent",
-      unit: "Headquarters"
-    },
-  });
-  console.log("✅ Platform Admin created");
+  const totalCount = 80; // 50 original + 30 extra
 
-  // --- Create 50 Mixed Equipment Items ---
   const allEquipments = [];
-  for (let i = 1; i <= 50; i++) {
+  for (let i = 1; i <= totalCount; i++) {
     const type = equipmentTypes[i % equipmentTypes.length];
     const categoryOptions = equipmentCategories[type] || ["Standard"];
     const category = categoryOptions[i % categoryOptions.length];
-    const modelOptions = models[type] || ["Standard Model"];
+    const modelOptions = models[type] || ["Model-X"];
     const model = modelOptions[i % modelOptions.length];
 
     const acquisitionDate = new Date();
@@ -99,9 +96,9 @@ async function main() {
         modelNumber: `MOD-${type.substring(0, 3).toUpperCase()}-${100 + i}`,
         yearOfManufacture: `${2019 + (i % 5)}`,
         countryOfOrigin: countries[i % countries.length],
-        dateOfAcquisition: acquisitionDate.toISOString().split('T')[0],
+        dateOfAcquisition: acquisitionDate.toISOString().split("T")[0],
         acquisitionMethod: acquisitionMethods[i % acquisitionMethods.length],
-        supplierInfo: `${manufacturers[i % manufacturers.length]} ${i % 2 ? "Ltd" : "Inc"}`,
+        supplierInfo: `${manufacturers[i % manufacturers.length]} ${i % 2 ? "Ltd" : "Corp"}`,
         purchaseOrderNumber: `PO-${2023000 + i}`,
         costValue: `${80000 + (i * 55000)}`,
         currency: "NGN",
@@ -114,14 +111,15 @@ async function main() {
         fuelType: type === "Vehicle" ? (i % 2 === 0 ? "Petrol" : "Diesel") : null,
         operationalSpecs: "Standard operational specifications apply",
         currentCondition: conditionStatuses[i % conditionStatuses.length],
-        lastConditionCheck: new Date().toISOString(),
-      },
+        lastConditionCheck: new Date().toISOString()
+      }
     });
 
     allEquipments.push(equipment);
   }
 
-  console.log(`✅ Created ${allEquipments.length} equipment items`);
+  console.log(`✅ Created ${allEquipments.length} equipment items (all synthetic)`);
+
 }
 
 main()

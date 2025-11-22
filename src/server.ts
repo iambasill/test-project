@@ -9,12 +9,14 @@ import { config } from './config';
 
 const app = express();
 
-
 // ----------------------
 //  CORS CONFIG
 // ----------------------
 const corsOptions = {
-  // origin: config.CLIENT_URL,      
+  origin: 
+      config.NODE_ENV === "production"
+      ? config.CLIENT_URL
+      : ["https://https://divm-test.myport.com.ng", "http://localhost:3000"],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization', 'IdempotencyKey'],
   credentials: true,
@@ -28,7 +30,7 @@ app.use(cors(corsOptions));
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 200, // 200 requests per windowMs per user
-  message: "Too many requests from this IP/user, try again later.",
+  message: "Too many requests, try again later.",
   
   //  KEY: Rate limit per user ID or IP
   keyGenerator: (req) => {
@@ -92,3 +94,4 @@ app.use(errorHandler);
 app.listen(config.PORT, () => {
   console.log(`Connected to port ${config.PORT}`);
 });
+
