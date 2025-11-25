@@ -37,7 +37,7 @@ model InspectionCategory {
     id                    String                 @id @default(uuid())
     title                 String
     createdAt             DateTime               @default(now())
-    subCategories         String[]
+    subCategories         Json?
 }
 
 

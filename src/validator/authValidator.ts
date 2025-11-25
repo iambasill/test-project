@@ -146,3 +146,8 @@ export const CreateInspectionSchema = sanitizeObject(z.object({
 }));
 
 
+export const inspectionCategorySchema = sanitizeObject(z.object({
+  title: z.string(),
+  subcategories: z.json()
+
+}));
