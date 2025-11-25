@@ -68,7 +68,6 @@ export const getAllUsers = async (req: Request, res: Response) => {
           select: {
             inspections: true,
             EquipmentOwnership: true,
-            conditionRecords: true,
           },
         },
       },
@@ -119,7 +118,6 @@ export const getUserById = async (req: Request, res: Response) => {
         select: {
           inspections: true,
           EquipmentOwnership: true,
-          conditionRecords: true,
           User_sessions: true,
         },
       },
@@ -160,7 +158,6 @@ export const getUserByEmail = async (req: Request, res: Response) => {
         select: {
           inspections: true,
           EquipmentOwnership: true,
-          conditionRecords: true,
         },
       },
     },
@@ -263,199 +260,4 @@ export const updateUserStatus = async (req: Request, res: Response) => {
   });
 };
 
-// =======================================================
-// DELETE USER
-// =======================================================
-export const deleteUser = async (req: Request, res: Response) => {
-  const currentUser: any = req.user;
-  let { id } = req.params;
-  id = sanitizeInput(id);
 
-  // Prevent users from deleting themselves
-  if (currentUser.id === id) {
-    throw new BadRequestError('You cannot delete your own account');
-  }
-
-  const user = await prismaclient.user.findUnique({
-    where: { id },
-    include: {
-      _count: {
-        select: {
-          inspections: true,
-          EquipmentOwnership: true,
-          conditionRecords: true,
-        },
-      },
-    },
-  });
-
-  if (!user) throw new BadRequestError('User not found');
-
-  // Check if user has critical records
-  if (user._count.inspections > 0 || user._count.EquipmentOwnership > 0 || user._count.conditionRecords > 0) {
-    throw new BadRequestError(
-      'Cannot delete user with existing records (inspections, equipment assignments, or condition records). Consider suspending the account instead.'
-    );
-  }
-
-  await prismaclient.user.delete({ where: { id } });
-
-  res.status(200).json({
-    success: true,
-    message: 'User deleted successfully',
-  });
-};
-
-// =======================================================
-// GET USER STATISTICS
-// =======================================================
-export const getUserStats = async (req: Request, res: Response) => {
-  const [
-    totalUsers,
-    byRole,
-    byStatus,
-    activeUsers,
-    inactiveUsers,
-    recentLogins,
-  ] = await Promise.all([
-    prismaclient.user.count(),
-    prismaclient.user.groupBy({
-      by: ['role'],
-      _count: true,
-      where: { role: { not: null } },
-    }),
-    prismaclient.user.groupBy({
-      by: ['status'],
-      _count: true,
-      where: { status: { not: null } },
-    }),
-    prismaclient.user.count({
-      where: { isActive: true },
-    }),
-    prismaclient.user.count({
-      where: { isActive: false },
-    }),
-    prismaclient.user.findMany({
-      where: {
-        lastLogin: { not: null },
-      },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        role: true,
-        lastLogin: true,
-      },
-      orderBy: { lastLogin: 'desc' },
-      take: 10,
-    }),
-  ]);
-
-  res.status(200).json({
-    success: true,
-    stats: {
-      total: totalUsers,
-      active: activeUsers,
-      inactive: inactiveUsers,
-      byRole,
-      byStatus,
-      recentLogins,
-    },
-  });
-};
-
-// =======================================================
-// GET USER ACTIVITY
-// =======================================================
-export const getUserActivity = async (req: Request, res: Response) => {
-  let { id } = req.params;
-  id = sanitizeInput(id);
-
-  const user = await prismaclient.user.findUnique({ where: { id } });
-  if (!user) throw new BadRequestError('User not found');
-
-  const [inspections, equipmentAssignments, conditionRecords, sessions] = await Promise.all([
-    prismaclient.inspection.findMany({
-      where: { inspectorId: id },
-      select: {
-        id: true,
-        datePerformed: true,
-        overallCondition: true,
-        equipment: {
-          select: {
-            id: true,
-            equipmentName: true,
-            chasisNumber: true,
-          },
-        },
-      },
-      orderBy: { datePerformed: 'desc' },
-      take: 10,
-    }),
-    prismaclient.equipmentOwnership.findMany({
-      where: { userId: id },
-      select: {
-        id: true,
-        startDate: true,
-        endDate: true,
-        isCurrent: true,
-        equipment: {
-          select: {
-            id: true,
-            equipmentName: true,
-            chasisNumber: true,
-          },
-        },
-        operator: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            serviceNumber: true,
-          },
-        },
-      },
-      orderBy: { startDate: 'desc' },
-      take: 10,
-    }),
-    prismaclient.equipmentCondition.findMany({
-      where: { recordedById: id },
-      select: {
-        id: true,
-        condition: true,
-        date: true,
-        notes: true,
-        equipment: {
-          select: {
-            id: true,
-            equipmentName: true,
-            chasisNumber: true,
-          },
-        },
-      },
-      orderBy: { date: 'desc' },
-      take: 10,
-    }),
-    prismaclient.user_sessions.findMany({
-      where: { user_id: id },
-      select: {
-        id: true,
-        login_time: true,
-        logout_time: true,
-      },
-      orderBy: { login_time: 'desc' },
-      take: 10,
-    }),
-  ]);
-
-  res.status(200).json({
-    success: true,
-    activity: {
-      inspections,
-      equipmentAssignments,
-      conditionRecords,
-      sessions,
-    },
-  });
-};

@@ -7,5 +7,5 @@ export const dashboardRouter = express.Router();
 
 
 // Base routes
-dashboardRouter.get('/dashboard/stats',authMiddleware, requireAuditors, getDashboardStats);
+dashboardRouter.get('/stats',authMiddleware, requireAuditors, getDashboardStats);
 

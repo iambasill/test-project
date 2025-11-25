@@ -7,6 +7,7 @@ import { inspectionRouter } from "./inspectionRoute";
 import { attachmentController } from "../controller/attachmentController";
 import { getApkController } from "../controller/authController";
 import { categoryRouter } from "./categoryRoute";
+import { dashboardRouter } from "./dashboardRoute";
 
 
 export const rootRoute = express()
@@ -17,6 +18,9 @@ rootRoute.use('/api/equipment',equipmentRouter)
 rootRoute.use('/api/operator',operatorRouter)
 rootRoute.use('/api/inspection',inspectionRouter)
 rootRoute.use('/api/category',categoryRouter)
+rootRoute.use('/api/dashboard',dashboardRouter)
+
+
 rootRoute.get('/attachment/:filename',attachmentController)
 rootRoute.get('/download/apk', getApkController)
 

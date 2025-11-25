@@ -19,7 +19,6 @@ export const OPERATOR_FIELDS = [
 
 
 export const INSPECTION_FIELDS = [
-   { name: 'inspectionImages', maxCount: 10 },
     { name: 'item_0_images', maxCount: 5 },
     { name: 'item_1_images', maxCount: 5 },
     { name: 'item_2_images', maxCount: 5 },

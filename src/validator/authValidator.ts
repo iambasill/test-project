@@ -30,38 +30,24 @@ export const changePasswordSchema= sanitizeObject(z.object({
     newPassword: z.string()
 }))
 
+   
+
 
 export const equipmentData = sanitizeObject(z.object({
-    chasisNumber: z.string(),
-    equipmentName:     z.string(),
-    model   :          z.string(),
-    equipmentType :    z.string(),
-    equipmentCategory: z.string(),
-    manufacturer  :    z.string(),
-    modelNumber :      z.string().optional(),
+    chasisNumber: z.string().optional(),
+    model: z.string(),
+    vehicleMake: z.string().optional(),
+    vehicleType: z.string().optional(),
     yearOfManufacture: z.string().optional(),
-    countryOfOrigin:   z.string(),
-    dateOfAcquisition :  z.string(),
-    acquisitionMethod :  z.string(),
-    supplierInfo  :      z.string(),
-    purchaseOrderNumber :z.string().optional(),
-    contractReference :  z.string().optional(),
-    costValue  :      z.string().optional(),        
-    currency  :          z.string().optional(),          
-    fundingSource :      z.string().optional(),
-    weight :          z.string().optional(),
-    dimensions:              z.string().optional(),
-    powerRequirements :      z.string().optional(),
-    fuelType  :              z.string().optional(),
-    maximumRange   :         z.string().optional(),
-    operationalSpecs   :     z.string().optional(),  
-    requiredCertifications : z.string().optional(), 
-    environmentalConditions: z.string().optional(), 
+    color: z.string().optional(),
+    registrationNumber: z.string().optional(),
+
+
+
+
+
+
     currentCondition:    z.enum(status).optional().default("S"),
-    lastConditionCheck: z.string().optional(),
-    warrantyStartDate: z.string().optional(),
-    warrantyEndDate: z.string().optional(),
-    warrantyCoverageDetails :z.string().optional()
 }))
 
 

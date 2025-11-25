@@ -9,7 +9,7 @@ import { User } from "../generated/prisma";
 // =======================================================
 // GET EQUIPMENT WITH QUERIES AND PAGINATION
 // =======================================================
-export const getEquipment = async (req: Request, res: Response) => {
+export const getEquipmentController = async (req: Request, res: Response) => {
   const {
     page = "1",
     limit = "10",
@@ -166,6 +166,7 @@ export const getEquipmentById = async (req: Request, res: Response) => {
 // CREATE NEW EQUIPMENT (WITH IDEMPOTENCY)
 // =======================================================
 export const createEquipment = async (req: Request, res: Response) => {
+  const user = req.user as User;
   const data = equipmentData.parse(req.body);
   const idempotencyKey = req.headers["idempotency-key"] as string;
 
@@ -201,7 +202,11 @@ export const createEquipment = async (req: Request, res: Response) => {
 
   const result = await prismaclient.$transaction(async (tx) => {
     const equipment = await tx.equipment.create({
-      data: { ...data },
+      data: { ...data,
+        addedById: user.id,
+        createdAt: new Date(),
+        
+       },
     });
 
     // Handle document uploads (if any)
@@ -526,59 +531,3 @@ export const updateEquipmentOwnerships = async (req: Request, res: Response) => 
 
 
 
-
-// =======================================================
-// GET EQUIPMENT STATISTICS
-// =======================================================
-export const getEquipmentStats = async (req: Request, res: Response) => {
-  const [
-    totalEquipment,
-    byType,
-    byCategory,
-    byCondition,
-    byAcquisitionMethod,
-    assignedEquipment,
-    unassignedEquipment,
-  ] = await Promise.all([
-    prismaclient.equipment.count(),
-    prismaclient.equipment.groupBy({
-      by: ["equipmentType"],
-      _count: true,
-    }),
-    prismaclient.equipment.groupBy({
-      by: ["equipmentCategory"],
-      _count: true,
-    }),
-    prismaclient.equipment.groupBy({
-      by: ["currentCondition"],
-      _count: true,
-    }),
-    prismaclient.equipment.groupBy({
-      by: ["acquisitionMethod"],
-      _count: true,
-    }),
-    prismaclient.equipmentOwnership.count({
-      where: { isCurrent: true },
-    }),
-    prismaclient.equipment.count({
-      where: {
-        ownerships: {
-          none: { isCurrent: true },
-        },
-      },
-    }),
-  ]);
-
-  res.status(200).json({
-    success: true,
-    stats: {
-      total: totalEquipment,
-      assigned: assignedEquipment,
-      unassigned: unassignedEquipment,
-      byType,
-      byCategory,
-      byCondition,
-      byAcquisitionMethod,
-    },
-  });
-};

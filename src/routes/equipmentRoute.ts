@@ -5,11 +5,10 @@ import { UPLOAD_FIELDS } from "../validator/uploadsValidator";
 import {
   createEquipment,
   createEquipmentOwnership,
-  getEquipment,
+  getEquipmentController,
   getEquipmentById,
   updateEquipment,
   getEquipmentOwnerships,
-  getEquipmentStats,
   updateEquipmentOwnerships,
 } from "../controller/equipmentController";
 import e from "express";
@@ -20,7 +19,7 @@ export const equipmentRouter = express.Router();
 // equipmentRouter.get("/stats", authMiddleware, getEquipmentStats);
 
 // Base routes - GET with queries/pagination
-equipmentRouter.get("/", authMiddleware, getEquipment);
+equipmentRouter.get("/", authMiddleware, getEquipmentController);
 equipmentRouter.post("/", authMiddleware, upload.fields(UPLOAD_FIELDS), createEquipment);
 
 // Ownership routes

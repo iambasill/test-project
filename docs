@@ -1,0 +1,373 @@
+
+Authentication
+All endpoints require authentication via JWT token in the Authorization header:
+Authorization: Bearer <token>
+
+Dashboard Endpoints
+Get Dashboard Statistics
+Retrieves comprehensive dashboard statistics including equipment, operators, inspections, and user analytics.
+Endpoint: GET /api/dashboard/stats
+Authorization: Required (ADMIN, PLATADMIN, or AUDITOR roles)
+Request Headers:
+httpAuthorization: Bearer <jwt_token>
+Response: 200 OK
+json{
+  "success": true,
+  "data": {
+    "summary": {
+      "totalOperators": 45,
+      "totalEquipment": 120,
+      "assignedEquipment": 98,
+      "unassignedEquipment": 22,
+      "totalInspections": 567,
+      "serviceableEquipment": 95,
+      "pendingInspections": 15
+    },
+    "breakdown": {
+      "usersByRole": {
+        "ADMIN": 5,
+        "MANAGER": 10,
+        "OFFICER": 25,
+        "AUDITOR": 3,
+        "PLATADMIN": 2
+      },
+      "equipmentByType": [
+        {
+          "type": "VEHICLE",
+          "count": 80
+        },
+        {
+          "type": "SOABC",
+          "count": 40
+        }
+      ],
+      "equipmentByCategory": [
+        {
+          "category": "TRANSPORT",
+          "count": 50
+        },
+        {
+          "category": "COMBAT",
+          "count": 30
+        }
+      ],
+      "equipmentByCondition": {
+        "S": 95,
+        "O": 15,
+        "A": 5,
+        "B": 3,
+        "C": 2
+      }
+    },
+    "userStats": {
+      "OFFICER": {
+        "count": 25,
+        "active": 23,
+        "inspections": 340,
+        "assignments": 45,
+        "conditionsRecorded": 120
+      },
+      "ADMIN": {
+        "count": 5,
+        "active": 5,
+        "inspections": 120,
+        "assignments": 10,
+        "conditionsRecorded": 80
+      },
+      "AUDITOR": {
+        "count": 3,
+        "active": 3,
+        "inspections": 0,
+        "assignments": 0,
+        "conditionsRecorded": 0
+      },
+      "MANAGER": {
+        "count": 10,
+        "active": 9,
+        "inspections": 107,
+        "assignments": 25,
+        "conditionsRecorded": 65
+      },
+      "PLATADMIN": {
+        "count": 2,
+        "active": 2,
+        "inspections": 0,
+        "assignments": 18,
+        "conditionsRecorded": 15
+      }
+    },
+    "recentInspections": [
+      {
+        "id": "uuid",
+        "datePerformed": "2025-11-20T10:30:00Z",
+        "overallCondition": "S",
+        "equipment": {
+          "equipmentName": "Toyota Hilux",
+          "chasisNumber": "CH12345"
+        },
+        "inspector": {
+          "firstName": "John",
+          "lastName": "Doe"
+        }
+      }
+    ]
+  },
+  "timestamp": "2025-11-25T12:00:00Z"
+}
+Error Responses:
+401 Unauthorized
+json{
+  "success": false,
+  "message": "Authentication required"
+}
+403 Forbidden
+json{
+  "success": false,
+  "message": "Access denied. Insufficient permissions."
+}
+
+Inspection Endpoints
+Create Inspection
+Creates a new equipment inspection with items and optional images.
+Endpoint: POST /inspections
+Authorization: Required
+Request Headers:
+httpAuthorization: Bearer <jwt_token>
+IdempotencyKey: <unique_request_id>
+Content-Type: multipart/form-data
+```
+
+**Request Body (multipart/form-data):**
+```
+data: {
+  "equipmentId": "uuid",
+  "generalNotes": "General inspection notes",
+  "overallCondition": "S",
+  "items": [
+    {
+      "category": "Engine",
+      "subCategory": "Oil Level",
+      "condition": "S",
+      "notes": "Oil level is optimal",
+      "recommendation": "Continue regular checks"
+    },
+    {
+      "category": "Tires",
+      "subCategory": "Front Left",
+      "condition": "B",
+      "notes": "Tire showing wear",
+      "recommendation": "Replace within 30 days"
+    }
+  ]
+}
+
+// Optional image files
+item_0_images: [File, File] // Up to 5 images for item at index 0
+item_1_images: [File, File] // Up to 5 images for item at index 1
+inspectionImages: [File, File] // Up to 5 general inspection images
+Field Definitions:
+
+equipmentId (string, required): UUID of equipment being inspected
+generalNotes (string, optional): Overall inspection notes
+overallCondition (enum, required): Overall condition rating
+
+Values: "S" (Serviceable), "O" (Operational), "A" (Awaiting Parts), "B" (Beyond Repair), "C" (Condemned)
+
+
+items (array, required): Array of inspection items (minimum 1)
+
+category (string, required): Item category
+subCategory (string, required): Item subcategory
+condition (enum, required): Item condition (S/O/A/B/C)
+notes (string, optional): Item-specific notes
+recommendation (string, optional): Recommended action
+
+
+
+Image Upload:
+
+Field naming: item_{index}_images where index matches the item array position
+Maximum 5 images per item
+Supported formats: JPEG, PNG, PDF
+Maximum file size: 10MB per file
+
+Response: 201 Created
+json{
+  "success": true,
+  "message": "Inspection created successfully",
+  "data": {
+    "id": "uuid",
+    "equipmentId": "uuid",
+    "datePerformed": "2025-11-25T12:00:00Z"
+  }
+}
+Idempotency:
+If the same IdempotencyKey is sent again for the same equipment, the API returns:
+200 OK
+json{
+  "success": true,
+  "message": "Inspection created successfully "
+}
+Error Responses:
+400 Bad Request
+json{
+  "success": false,
+  "message": "IdempotencyKey header is required"
+}
+json{
+  "success": false,
+  "message": "Equipment not found!"
+}
+json{
+  "success": false,
+  "message": "Invalid JSON data in request body"
+}
+401 Unauthorized
+json{
+  "success": false,
+  "message": "Authentication required"
+}
+
+Get Inspections by Equipment ID
+Retrieves all inspections for a specific equipment with pagination and filtering.
+Endpoint: GET /inspections/equipment/:id
+Authorization: Required
+Request Headers:
+httpAuthorization: Bearer <jwt_token>
+Path Parameters:
+
+id (string, required): Equipment UUID
+
+Query Parameters:
+
+page (integer, optional, default: 1): Page number
+limit (integer, optional, default: 10): Items per page (max: 100)
+sortBy (string, optional, default: "createdAt"): Sort field
+sortOrder (string, optional, default: "desc"): Sort order ("asc" or "desc")
+condition (string, optional): Filter by condition ("S" or "B")
+startDate (ISO date, optional): Filter inspections from this date
+endDate (ISO date, optional): Filter inspections to this date
+
+Example Request:
+httpGET /inspections/equipment/abc-123-def?page=1&limit=10&condition=S&startDate=2025-01-01&endDate=2025-12-31
+Response: 200 OK
+json{
+  "success": true,
+  "message": "Inspections retrieved successfully",
+  "data": [
+    {
+      "id": "uuid",
+      "equipmentId": "uuid",
+      "inspectorId": "uuid",
+      "datePerformed": "2025-11-20T10:30:00Z",
+      "overallCondition": "S",
+      "generalNotes": "Equipment in good condition",
+      "createdAt": "2025-11-20T10:30:00Z",
+      "updatedAt": "2025-11-20T10:30:00Z",
+      "equipment": {
+        "id": "uuid",
+        "equipmentName": "Toyota Hilux",
+        "equipmentType": "VEHICLE",
+        "chasisNumber": "CH12345",
+        "manufacturer": "Toyota",
+        "model": "Hilux 2020",
+        "yearOfManufacture": "2020",
+        "currentCondition": "S"
+      },
+      "inspector": {
+        "id": "uuid",
+        "firstName": "John",
+        "lastName": "Doe",
+        "email": "john.doe@example.com",
+        "role": "OFFICER"
+      },
+      "documents": [
+        {
+          "id": "uuid",
+          "fileName": "inspection_photo_1.jpg",
+          "fileType": "image/jpeg",
+          "fileSize": 245678,
+          "fileUrl": "https://storage.example.com/inspections/photo1.jpg"
+        }
+      ],
+      "items": [
+        {
+          "id": "uuid",
+          "inspectionId": "uuid",
+          "category": "Engine",
+          "subCategory": "Oil Level",
+          "condition": "S",
+          "notes": "Oil level optimal",
+          "recommendation": "Continue regular checks",
+          "createdAt": "2025-11-20T10:30:00Z",
+          "documents": [
+            {
+              "id": "uuid",
+              "fileName": "engine_oil.jpg",
+              "fileType": "image/jpeg",
+              "fileSize": 156789,
+              "fileUrl": "https://storage.example.com/items/engine_oil.jpg"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "pagination": {
+    "currentPage": 1,
+    "totalPages": 5,
+    "totalCount": 45,
+    "limit": 10
+  }
+}
+Error Responses:
+404 Not Found
+json{
+  "success": false,
+  "message": "No inspections found for this equipment"
+}
+401 Unauthorized
+json{
+  "success": false,
+  "message": "Authentication required"
+}
+
+Get All Inspections
+Retrieves all inspections across all equipment with pagination and filtering.
+Endpoint: GET /inspections
+Authorization: Required
+Request Headers:
+httpAuthorization: Bearer <jwt_token>
+Query Parameters:
+Same as "Get Inspections by Equipment ID" (except no equipment filter)
+Response: Same structure as "Get Inspections by Equipment ID"
+
+Data Models
+Condition Enum
+typescriptenum Status {
+  S = "Serviceable"        // Fully operational
+  O = "Operational"        // Functional with minor issues
+  A = "Awaiting Parts"     // Non-functional, awaiting repair
+  B = "Beyond Repair"      // Cannot be economically repaired
+  C = "Condemned"          // Permanently removed from service
+}
+User Roles
+typescriptenum UserRole {
+  PLATADMIN = "Platform Administrator"
+  ADMIN = "Administrator"
+  MANAGER = "Manager"
+  AUDITOR = "Auditor"
+  OFFICER = "Officer"
+}
+
+Notes
+
+Idempotency: The IdempotencyKey header is required for inspection creation to prevent duplicate submissions. Use a unique identifier (UUID recommended) for each request.
+File Uploads: When uploading inspection images, ensure field names match the pattern item_{index}_images where the index corresponds to the item's position in the items array.
+Pagination: All list endpoints support pagination. The default limit is 10 items per page with a maximum of 100.
+Date Filtering: Use ISO 8601 format for date parameters (e.g., 2025-11-25T12:00:00Z).
+Null Fields: The API automatically removes null fields from inspection items in responses for cleaner data.
+Access Control:
+
+Dashboard stats: ADMIN, MANAGER, AUDITOR
+Inspections: All authenticated users

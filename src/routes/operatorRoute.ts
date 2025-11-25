@@ -8,14 +8,12 @@ import {
   getOperators,
   getOperatorById,
   updateOperator,
-  getOperatorStats,
   getOperatorEquipmentHistory,
 } from "../controller/operatorController";
 
 export const operatorRouter = express.Router();
 
-// Statistics route (should be before :id route to avoid conflicts)
-operatorRouter.get("/stats", authMiddleware, getOperatorStats);
+
 
 // Base routes - GET with queries/pagination
 operatorRouter.get("/", authMiddleware, getOperators);
