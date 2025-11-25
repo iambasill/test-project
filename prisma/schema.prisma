@@ -25,8 +25,6 @@ enum Status {
     C
 }
 
-
-
 enum UserRole {
     PLATADMIN
     ADMIN
@@ -35,15 +33,21 @@ enum UserRole {
     OFFICER
 }
 
-
-
-model equipmentCategory {
+model InspectionCategory {
     id                    String                 @id @default(uuid())
-    name                  String
+    title                 String
+    createdAt             DateTime               @default(now())
+    subCategories         InspectionSubCategory[]
+}
+
+model InspectionSubCategory {
+    id                    String                 @id @default(uuid())
+    category              InspectionCategory     @relation(fields: [categoryId], references: [id])
+    categoryId            String
+    title                 String
     description           String?
     createdAt             DateTime               @default(now())
 }
-
 
 model User {
     id                    String                 @id @default(uuid())
@@ -54,21 +58,26 @@ model User {
     rank                  String?
     unit                  String?
     role                  UserRole?
-    status                UserStatus?           @default(PENDING)            
+    status                UserStatus?            @default(PENDING)            
     password              String
     isActive              Boolean                @default(false)
     refreshToken          String?
     resetToken            String?
     resetTokenExpiry      DateTime?
-    loginAttempt          Int? @default(0)
+    loginAttempt          Int?                   @default(0)
     lastLogin             DateTime?
     createdAt             DateTime               @default(now())
     updatedAt             DateTime               @updatedAt
+    
+    // Relations
     inspections           Inspection[]
-    conditionRecords      EquipmentCondition[]
     User_sessions         User_sessions[]
     Active_admin_sessions Active_admin_sessions?
     EquipmentOwnership    EquipmentOwnership[]
+    
+    // Equipment relations - make sure names match
+    addedEquipments       Equipment[]            @relation("EquipmentAddedBy")
+    recordedConditions    EquipmentCondition[]   @relation("RecordedByConditions")
 
     @@map("users")
 }
@@ -89,13 +98,10 @@ model Equipment {
 
     // Section B: Acquisition Details
     dateOfAcquisition   String?
-    acquisitionMethod   String?
-
 
     // Condition Tracking
     currentCondition   String?  
     idempotency_tracker  Idempotency_tracker[]
-
 
     // Relations
     ownerships       EquipmentOwnership[]
@@ -103,6 +109,10 @@ model Equipment {
     inspections      Inspection[]
     operators        Operator[]
     conditionHistory EquipmentCondition[]
+    
+    // User who added this equipment
+    addedBy          User?   @relation("EquipmentAddedBy", fields: [addedById], references: [id])
+    addedById        String?
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -131,12 +141,11 @@ model Operator {
     documents             Document[]
     ownerships            EquipmentOwnership[]
     equipment             Equipment?           @relation(fields: [equipmentChasisNumber], references: [chasisNumber])
-    equipmentChasisNumber String? // Changed from equipmentId to equipmentChasisNumber
-    idempotency_tracker  Idempotency_tracker[]
+    equipmentChasisNumber String?
+    idempotency_tracker   Idempotency_tracker[]
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
     
-
     @@map("operators")
 }
 
@@ -152,7 +161,7 @@ model EquipmentOwnership {
     primaryDuties   String?
     driverLicenseId String?
 
-    // Comander information
+    // Commander information
     coFirstName   String?
     coLastName    String?
     coEmail       String?
@@ -161,7 +170,7 @@ model EquipmentOwnership {
     conditionAtAssignment String?
     notes                 String?
     documents             Document[]
-    idempotency_tracker Idempotency_tracker[]
+    idempotency_tracker   Idempotency_tracker[]
 
     createdAt  DateTime @default(now())
     updatedAt  DateTime @updatedAt
@@ -182,7 +191,7 @@ model EquipmentCondition {
     condition             String
     date                  DateTime        @default(now())
     notes                 String?
-    recordedBy            User?           @relation(fields: [recordedById], references: [id])
+    recordedBy            User?           @relation("RecordedByConditions", fields: [recordedById], references: [id])
     recordedById          String?
     inspectionId          String?
     documents             Document[]
@@ -199,6 +208,8 @@ model Inspection {
   equipmentId      String
   inspectorId      String?
   datePerformed    DateTime @default(now())
+  overallCondition String   // S O A B C
+  generalNotes     String?  @db.Text
   
   // Relations
   equipment Equipment? @relation(fields: [equipmentId], references: [id])
@@ -212,11 +223,10 @@ model Inspection {
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  idempotency_tracker  Idempotency_tracker[]
+  idempotency_tracker Idempotency_tracker[]
 
   @@map("inspections")
 }
-
 
 // Unified Inspection Items - actual inspection data
 model InspectionItem {
@@ -231,8 +241,7 @@ model InspectionItem {
   condition    String?  // S O A B C
 
   notes        String?  @db.Text
-  recommendation  String?  @db.Text
-  
+  recommendation String? @db.Text
   
   inspection Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
 
@@ -245,25 +254,24 @@ model InspectionItem {
   @@map("inspection_items")
 }
 
-
 model Document {
     id                 String    @id @default(uuid())
     fileName           String
     fileType           String?
     fileSize           Int?
     fileUrl            String
-    equipmentId       String?
-    equipment         Equipment? @relation(fields: [equipmentId], references: [id])
-    operatorId        String?
-    operator          Operator?  @relation(fields: [operatorId], references: [id])
-    ownershipId      String?
-    ownership        EquipmentOwnership? @relation(fields: [ownershipId], references: [id])
-    conditionRecordId String?
-    conditionRecord   EquipmentCondition? @relation(fields: [conditionRecordId], references: [id])
-    inspectionId     String?
-    inspection       Inspection? @relation(fields: [inspectionId], references: [id])
-    inspectionItemId String?
-    inspectionItem   InspectionItem? @relation(fields: [inspectionItemId], references: [id])
+    equipmentId        String?
+    equipment          Equipment? @relation(fields: [equipmentId], references: [id])
+    operatorId         String?
+    operator           Operator?  @relation(fields: [operatorId], references: [id])
+    ownershipId        String?
+    ownership          EquipmentOwnership? @relation(fields: [ownershipId], references: [id])
+    conditionRecordId  String?
+    conditionRecord    EquipmentCondition? @relation(fields: [conditionRecordId], references: [id])
+    inspectionId       String?
+    inspection         Inspection? @relation(fields: [inspectionId], references: [id])
+    inspectionItemId   String?
+    inspectionItem     InspectionItem? @relation(fields: [inspectionItemId], references: [id])
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -285,7 +293,7 @@ model User_sessions {
     id            String    @id @default(cuid())
     user_id       String
     session_token String?
-    refreshToken String @default("")
+    refreshToken  String    @default("")
     login_time    DateTime  @default(now())
     logout_time   DateTime?
     user          User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
@@ -294,22 +302,18 @@ model User_sessions {
 }
 
 model Idempotency_tracker {
-    id              String    @id @default(cuid())
-    key             String
-    equipment_id    String?
-    inspection_id   String?
-    equipment_ownership_id String?
-    operator_id     String?
+    id                      String    @id @default(cuid())
+    key                     String
+    equipment_id            String?
+    inspection_id           String?
+    equipment_ownership_id  String?
+    operator_id             String?
 
-    equipment Equipment?    @relation(fields: [equipment_id], references: [id], onDelete: Cascade)
-    inspection Inspection?  @relation(fields: [inspection_id], references: [id], onDelete: Cascade)
-    operator Operator?  @relation(fields: [operator_id], references: [id], onDelete: Cascade)
-
-    equipment_ownership EquipmentOwnership?  @relation(fields: [equipment_ownership_id], references: [id], onDelete: Cascade)
-
-
+    equipment          Equipment?          @relation(fields: [equipment_id], references: [id], onDelete: Cascade)
+    inspection         Inspection?         @relation(fields: [inspection_id], references: [id], onDelete: Cascade)
+    operator           Operator?           @relation(fields: [operator_id], references: [id], onDelete: Cascade)
+    equipment_ownership EquipmentOwnership? @relation(fields: [equipment_ownership_id], references: [id], onDelete: Cascade)
 
     @@index([key])
     @@map("idempotency-tracker")
-
 }

@@ -4,14 +4,13 @@ import { sanitizeInput } from "../utils/helperFunction";
 import { operatorSchema } from "../validator/authValidator";
 import { getFileUrls } from "../utils/fileHandler";
 import { prismaclient } from "../lib/prisma-connect";
+import { User } from "../generated/prisma";
 
 // =======================================================
 // GET OPERATORS WITH QUERIES AND PAGINATION
 // =======================================================
 export const getOperators = async (req: Request, res: Response) => {
   const user: any = req.user;
-  // if (user.role === "OFFICER") throw new unAuthorizedError(Unauthorized user, please login to continue);//TODO:
-
   const {
     page = "1",
     limit = "10",
@@ -111,33 +110,8 @@ export const getOperators = async (req: Request, res: Response) => {
 // CREATE OPERATOR (WITH IDEMPOTENCY) - FIXED
 // =======================================================
 export const createOperator = async (req: Request, res: Response) => {
-  const user: any = req.user;
-  if (user.role === "OFFICER") throw new unAuthorizedError("Unauthorized user");
-
+  const user = req.user as User;
   const validated = operatorSchema.parse(req.body);
-  const idempotencyKey = req.headers["idempotency-key"] as string;
-
-  // Check idempotency
-  if (idempotencyKey) {
-    const existingOperator = await prismaclient.operator.findFirst({
-      where: {
-        OR: [
-          { serviceNumber: validated.serviceNumber },
-          { idempotency_tracker: { some: { key: idempotencyKey } } }, 
-        ],
-      },
-      include: { documents: true },
-    });
-
-    if (existingOperator) {
-      return res.status(200).json({
-        success: true,
-        message: "Operator already exists",
-        data: existingOperator,
-        isNew: false,
-      });
-    }
-  }
 
   // Check for duplicates
   const existing = await prismaclient.operator.findFirst({
@@ -189,14 +163,7 @@ export const createOperator = async (req: Request, res: Response) => {
       }
     }
 
-    if (idempotencyKey) {
-      await tx.idempotency_tracker.create({
-        data: {
-          key: idempotencyKey,
-          operator_id: operator.id, 
-        },
-      });
-    }
+
 
     // Return operator with documents
     return await tx.operator.findUnique({
@@ -218,7 +185,6 @@ export const createOperator = async (req: Request, res: Response) => {
 // =======================================================
 export const updateOperator = async (req: Request, res: Response) => {
   const user: any = req.user;
-
   let { id } = req.params;
   id = sanitizeInput(id);
 
@@ -446,63 +412,6 @@ export const deleteOperator = async (req: Request, res: Response) => {
   });
 };
 
-// =======================================================
-// GET OPERATOR STATISTICS
-// =======================================================
-export const getOperatorStats = async (req: Request, res: Response) => {
-  const user: any = req.user;
-
-  const [
-    totalOperators,
-    byRank,
-    byBranch,
-    byPosition,
-    operatorsWithEquipment,
-    operatorsWithoutEquipment,
-  ] = await Promise.all([
-    prismaclient.operator.count(),
-    prismaclient.operator.groupBy({
-      by: ["rank"],
-      _count: true,
-    }),
-    prismaclient.operator.groupBy({
-      by: ["branch"],
-      _count: true,
-      where: { branch: { not: null } },
-    }),
-    prismaclient.operator.groupBy({
-      by: ["position"],
-      _count: true,
-      where: { position: { not: null } },
-    }),
-    prismaclient.operator.count({
-      where: {
-        ownerships: {
-          some: { isCurrent: true },
-        },
-      },
-    }),
-    prismaclient.operator.count({
-      where: {
-        ownerships: {
-          none: { isCurrent: true },
-        },
-      },
-    }),
-  ]);
-
-  res.status(200).json({
-    success: true,
-    stats: {
-      total: totalOperators,
-      withEquipment: operatorsWithEquipment,
-      withoutEquipment: operatorsWithoutEquipment,
-      byRank,
-      byBranch,
-      byPosition,
-    },
-  });
-};
 
 // =======================================================
 // GET OPERATOR EQUIPMENT HISTORY

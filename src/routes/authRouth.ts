@@ -15,7 +15,7 @@ import {
 } from '../controller/authController';
 
 import { authMiddleware } from '../middlewares/authMiddleware';
-import { requirePlatformAdmin } from '../middlewares/adminMiddleware';
+import { requirePlatformAdmin } from '../middlewares/rbacMiddleware';
 
 export const authRoute = express();
 

@@ -12,11 +12,12 @@ const app = express();
 // ----------------------
 //  CORS CONFIG
 // ----------------------
+const allowedOrigins = config.NODE_ENV === 'production'
+  ? config.CLIENT_URL
+  : ["https://https://divm-test.myport.com.ng", "http://localhost:3000"]
+
 const corsOptions = {
-  origin: 
-      config.NODE_ENV === "production"
-      ? config.CLIENT_URL
-      : ["https://https://divm-test.myport.com.ng", "http://localhost:3000"],
+  origin: allowedOrigins,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization', 'IdempotencyKey'],
   credentials: true,

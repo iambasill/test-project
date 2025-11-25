@@ -142,54 +142,19 @@ export const tokenSchema= sanitizeObject(z.object({
 
 // Schema for individual inspection items
 export const InspectionItemSchema = sanitizeObject(z.object({
-  templateItemId: z.string().uuid().optional().nullable(),
   category: z.string().min(1, 'Category is required'),
-  itemName: z.string().min(1, 'Item name is required'),
-  method: z.string().min(1, 'Item type is required'),
-  position: z.string().optional().nullable(),
-  
-  // Inspection data fields
-  condition: z.string().optional().nullable(),
-  pressure: z.string().optional().nullable(),
-  value: z.string().optional().nullable(),
-  booleanValue: z.boolean().optional().nullable(),
-  unit: z.string().optional().nullable(),
-  
-  // Date fields for maintenance tracking
-  stumpLastDate: z.string().optional().nullable()
-    .or(z.date().optional().nullable()),
-  oilfilterLastDate: z.string().optional().nullable()
-    .or(z.date().optional().nullable()),
-  fuelpumpLastDate: z.string().optional().nullable()
-    .or(z.date().optional().nullable()),
-  airfilterLastDate: z.string().optional().nullable()
-    .or(z.date().optional().nullable()),
-  HubLastPackedDate: z.string().optional().nullable()
-    .or(z.date().optional().nullable()),
-  lastDrainDate: z.string().optional().nullable()
-    .or(z.date().optional().nullable()),
-  
-  // Additional fields
-  odometerReading: z.string().optional().nullable(),
-  levelOfHydraulicFluid: z.string().optional().nullable(),
-  notes: z.string().optional().nullable()
-}).refine(
-  (data) => {
-    // At least one data field should be provided
-    return data.condition || data.pressure || data.value || 
-           data.booleanValue !== null || data.notes;
-  },
-  {
-    message: 'At least one inspection data field (condition, pressure, value, booleanValue, or notes) must be provided'
-  }
+  subCategory: z.string(),
+  recommendation: z.string().optional().nullable(),
+  condition: z.string(),
+  notes: z.string().optional().nullable(),
+}
+
 ));
 
 // Schema for creating an inspection
 export const CreateInspectionSchema = sanitizeObject(z.object({
   equipmentId: z.string(),
-  nextDueDate: z.string().optional().nullable()
-    .or(z.date().optional().nullable()),
-  overallNotes: z.string().optional().nullable(),
+  generalNotes: z.string().optional().nullable(),
   overallCondition: z.enum(status),
   items: z.array(InspectionItemSchema).min(1, 'At least one inspection item is required')
 }));
