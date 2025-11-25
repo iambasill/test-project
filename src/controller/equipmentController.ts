@@ -197,8 +197,9 @@ export const createEquipment = async (req: Request, res: Response) => {
     throw new BadRequestError("Equipment with this chassis number already exists");
   }
 
+
+
   const result = await prismaclient.$transaction(async (tx) => {
-    // Create the equipment
     const equipment = await tx.equipment.create({
       data: { ...data },
     });
