@@ -1,8 +1,8 @@
 import * as z from "zod";
-import {  InspectionStatus, UserRole } from "../generated/prisma";
+import {  Status, UserRole } from "../generated/prisma";
 import { sanitizeObject } from "../utils/zodHandler";
 
-const status = Object.values(InspectionStatus)
+const status = Object.values(Status)
 
 
 export const signUpSchema = sanitizeObject(z.object({
@@ -57,7 +57,7 @@ export const equipmentData = sanitizeObject(z.object({
     operationalSpecs   :     z.string().optional(),  
     requiredCertifications : z.string().optional(), 
     environmentalConditions: z.string().optional(), 
-    currentCondition:    z.enum(status).optional(),
+    currentCondition:    z.enum(status).optional().default("S"),
     lastConditionCheck: z.string().optional(),
     warrantyStartDate: z.string().optional(),
     warrantyEndDate: z.string().optional(),
@@ -156,17 +156,17 @@ export const InspectionItemSchema = sanitizeObject(z.object({
   unit: z.string().optional().nullable(),
   
   // Date fields for maintenance tracking
-  stumpLastDate: z.string().datetime().optional().nullable()
+  stumpLastDate: z.string().optional().nullable()
     .or(z.date().optional().nullable()),
-  oilfilterLastDate: z.string().datetime().optional().nullable()
+  oilfilterLastDate: z.string().optional().nullable()
     .or(z.date().optional().nullable()),
-  fuelpumpLastDate: z.string().datetime().optional().nullable()
+  fuelpumpLastDate: z.string().optional().nullable()
     .or(z.date().optional().nullable()),
-  airfilterLastDate: z.string().datetime().optional().nullable()
+  airfilterLastDate: z.string().optional().nullable()
     .or(z.date().optional().nullable()),
-  HubLastPackedDate: z.string().datetime().optional().nullable()
+  HubLastPackedDate: z.string().optional().nullable()
     .or(z.date().optional().nullable()),
-  lastDrainDate: z.string().datetime().optional().nullable()
+  lastDrainDate: z.string().optional().nullable()
     .or(z.date().optional().nullable()),
   
   // Additional fields
@@ -186,32 +186,12 @@ export const InspectionItemSchema = sanitizeObject(z.object({
 
 // Schema for creating an inspection
 export const CreateInspectionSchema = sanitizeObject(z.object({
-  equipmentId: z.string().uuid('Invalid equipment ID format'),
-  nextDueDate: z.string().datetime().optional().nullable()
+  equipmentId: z.string(),
+  nextDueDate: z.string().optional().nullable()
     .or(z.date().optional().nullable()),
   overallNotes: z.string().optional().nullable(),
   overallCondition: z.enum(status),
   items: z.array(InspectionItemSchema).min(1, 'At least one inspection item is required')
 }));
-
-// Schema for updating an inspection
-export const UpdateInspectionSchema = sanitizeObject(z.object({
-  nextDueDate: z.string().datetime().optional().nullable()
-    .or(z.date().optional().nullable()),
-  overallNotes: z.string().optional().nullable(),
-  overallCondition: z.enum(status).optional(),
-  items: z.array(InspectionItemSchema).optional()
-}).refine(
-  (data) => {
-    // At least one field should be provided for update
-    return data.nextDueDate !== undefined || 
-           data.overallNotes !== undefined || 
-           data.overallCondition !== undefined || 
-           data.items !== undefined;
-  },
-  {
-    message: 'At least one field must be provided for update'
-  }
-));
 
 

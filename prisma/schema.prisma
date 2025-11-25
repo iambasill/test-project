@@ -17,7 +17,7 @@ enum UserStatus {
     SUSPENDED
 }
 
-enum InspectionStatus {
+enum Status {
     S
     O
     A
@@ -75,7 +75,7 @@ model User {
 
 model Equipment {
     id           String @id @unique @default(uuid())
-    chasisNumber String @unique // Now using chasisNumber as primary key
+    chasisNumber String? @unique 
 
     // Section A: Equipment Identification
     equipmentName     String?
@@ -90,32 +90,10 @@ model Equipment {
     // Section B: Acquisition Details
     dateOfAcquisition   String?
     acquisitionMethod   String?
-    supplierInfo        String?
-    purchaseOrderNumber String?
-    contractReference   String?
-    costValue           String?
-    currency            String?            @default("NGN")
-    fundingSource       String?
-    warrantyStartDate String?
-    warrantyEndDate String?
-    warrantyCoverageDetails String?
 
-
-
-
-    // Section C: Technical Specifications
-    weight                  String?
-    dimensions              String?
-    powerRequirements       String?
-    fuelType                String?
-    maximumRange            String?
-    operationalSpecs        String? @db.Text
-    requiredCertifications  String? @db.Text
-    environmentalConditions String? @db.Text
 
     // Condition Tracking
-    currentCondition   String?
-    lastConditionCheck String?
+    currentCondition   String?  
     idempotency_tracker  Idempotency_tracker[]
 
 
@@ -180,8 +158,7 @@ model EquipmentOwnership {
     coEmail       String?
     coPhoneNumber String?
 
-    //TODO: remove?? Equipment condition at assignment
-    conditionAtAssignment String? @default("")
+    conditionAtAssignment String?
     notes                 String?
     documents             Document[]
     idempotency_tracker Idempotency_tracker[]
@@ -222,9 +199,6 @@ model Inspection {
   equipmentId      String
   inspectorId      String?
   datePerformed    DateTime @default(now())
-  nextDueDate      DateTime?
-  overallNotes     String?  @db.Text
-  overallCondition          InspectionStatus @default(S)
   
   // Relations
   equipment Equipment? @relation(fields: [equipmentId], references: [id])
@@ -250,35 +224,22 @@ model InspectionItem {
   inspectionId String
   
   // Item identification
-  category     String   // engine, steering, brakes, etc.
-  itemName     String
-  method     String   // condition, measurement, boolean, text
-  position     String?  // Front-L, Rear-R, etc.
-  
+  category     String   
+  subCategory  String
+ 
   // Inspection data
-  condition    String?  // S B 
-  pressure  String?  // For tires
-  value        String?  // For measurements
-  booleanValue Boolean? // For yes/no checks
-  unit         String?  // psi, mm, etc.
-  stumpLastDate DateTime? // For items that need regular replacement
-  oilfilterLastDate DateTime? // For items that need regular replacement
-  fuelpumpLastDate DateTime? // For items that need regular replacement
-  airfilterLastDate DateTime? // For items that need regular replacement
-  HubLastPackedDate DateTime? // For items that need regular replacement
-  lastDrainDate DateTime? // For items that need regular replacement
-  odometerReading String? // For vehicle inspections
-  levelOfHydraulicFluid String? // For hydraulic systems
+  condition    String?  // S O A B C
+
   notes        String?  @db.Text
+  recommendation  String?  @db.Text
   
   
   inspection Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
-    // templateItem InspectionTemplateItem? @relation(fields: [templateItemId], references: [id])  
+
   // Documents specific to this inspection item
   documents Document[]
   
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 
   @@index([inspectionId, category])
   @@map("inspection_items")
