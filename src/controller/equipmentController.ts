@@ -322,7 +322,6 @@ export const updateEquipment = async (req: Request, res: Response) => {
 export const createEquipmentOwnership = async (req: Request, res: Response) => {
   const user: any = req.user;
   const validatedData = CreateEquipmentOwnershipSchema.parse(req.body);
-  const idempotencyKey = req.headers["idempotency-key"] as string;
 
   const data = {
     ...validatedData,
@@ -331,23 +330,6 @@ export const createEquipmentOwnership = async (req: Request, res: Response) => {
     endDate: validatedData.endDate ? new Date(validatedData.endDate) : new Date(),
   };
 
-  // Check idempotency
-  if (idempotencyKey) {
-    const existingOwnership = await prismaclient.equipmentOwnership.findFirst({
-      where: {
-        equipmentId: data.equipmentId,
-        operatorId: data.operatorId,
-        idempotency_tracker: { some: { key: idempotencyKey } },
-      },
-    });
-
-    if (existingOwnership) {
-      return res.status(200).json({
-      success: true,
-      message: "Equipment ownership created successfully",
-      });
-    }
-  }
 
   const equipment = await prismaclient.equipment.findFirst({ where: { id: data.equipmentId } });
   if (!equipment) throw new BadRequestError("No equipment found");
@@ -361,7 +343,10 @@ export const createEquipmentOwnership = async (req: Request, res: Response) => {
       data: { isCurrent: false, endDate: new Date() },
     });
 
-    const ownership = await tx.equipmentOwnership.create({ data });
+    const ownership = await tx.equipmentOwnership.create({
+       ...data,
+      assignedById: user.id,
+       });
 
     // Handle any attached ownership documents
     if (req.files && Object.keys(req.files).length > 0) {
@@ -375,16 +360,6 @@ export const createEquipmentOwnership = async (req: Request, res: Response) => {
           fileType: file.fileType || "unknown",
           fileSize: file.fileSize || 0,
         })),
-      });
-    }
-
-    // Create idempotency tracker
-    if (idempotencyKey) {
-      await tx.idempotency_tracker.create({
-        data: {
-          key: idempotencyKey,
-          equipment_ownership_id: ownership.id,
-        },
       });
     }
 

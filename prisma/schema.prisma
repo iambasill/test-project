@@ -172,8 +172,8 @@ model EquipmentOwnership {
 
     createdAt  DateTime @default(now())
     updatedAt  DateTime @updatedAt
-    userId     String
-    assignedBy User     @relation(fields: [userId], references: [id])
+    assignedBy     String
+    assigned User     @relation(fields: [assignedBy], references: [id])
 
     @@index([equipmentId])
     @@index([operatorId])

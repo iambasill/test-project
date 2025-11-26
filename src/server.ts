@@ -6,6 +6,7 @@ import { morganMiddleware } from './logger/logger';
 import rateLimit from 'express-rate-limit';
 import slowDown from 'express-slow-down';
 import { config } from './config';
+import setupSwaggerDocs from './utils/swagger';
 
 const app = express();
 
@@ -93,5 +94,6 @@ app.use(errorHandler);
 // ----------------------
 app.listen(config.PORT, () => {
   console.log(`Connected to port ${config.PORT}`);
+  setupSwaggerDocs(app, 8888);
 });
 
