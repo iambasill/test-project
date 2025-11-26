@@ -38,27 +38,13 @@ async function main() {
       lastName: "Admin",
       password: hashedPassword,
       role: "PLATADMIN",
-      status: "ACTIVE",
+      status: "PENDING",
       isActive: true
     }
   });
 
   console.log(`✅ Created platform admin: ${platformAdmin.email}`);
 
-  // 2. CREATE INSPECTION CATEGORIES WITH SUBCATEGORIES
-  for (const categoryData of inspectionCategories) {
-    const category = await prismaclient.inspectionCategory.create({
-      data: {
-        title: categoryData.title,
-        subCategories: {
-          create: categoryData.subCategories.map(subTitle => ({
-            title: subTitle
-          }))
-        }
-      }
-    });
-    console.log(`✅ Created category: ${category.title} with ${categoryData.subCategories.length} subcategories`);
-  }
 
   // 3. CREATE EQUIPMENT
   const totalCount = 80;

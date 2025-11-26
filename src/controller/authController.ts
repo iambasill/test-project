@@ -241,7 +241,7 @@ export const resetPasswordController = async (req: Request, res: Response) => {
  * Change password
  */
 
-// export const changePasswordController = async (req: Request, res: Response) => {
+// export const PasswordController = async (req: Request, res: Response) => {
 
 //   const { email, newPassword } = req.body //TODO://
   
@@ -261,6 +261,8 @@ export const resetPasswordController = async (req: Request, res: Response) => {
 
 //   res.status(200).send({ success: true, message: "Password changed successful" });
 // };
+
+
 
 export const changePasswordController = async (req: Request, res: Response) => {
   const { token, newPassword } = changePasswordSchema.parse(req.body);
