@@ -91,8 +91,8 @@ model Equipment {
     // Section A: Equipment Identification
     equipmentName     String?
     model             String?
-    vehicleMake      String?
-    vehicleType      String?
+    equipmentMake      String?
+    equipmentType      String?
     yearOfManufacture String?
     color            String?
     registrationNumber String? @unique
@@ -154,7 +154,7 @@ model EquipmentOwnership {
     operator        Operator  @relation(fields: [operatorId], references: [id])
     operatorId      String
     startDate       DateTime  @default(now())
-    endDate         String?
+    endDate         DateTime
     isCurrent       Boolean   @default(true)
     primaryDuties   String?
     driverLicenseId String?

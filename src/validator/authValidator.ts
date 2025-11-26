@@ -36,8 +36,8 @@ export const changePasswordSchema= sanitizeObject(z.object({
 export const equipmentData = sanitizeObject(z.object({
     chasisNumber: z.string().optional(),
     model: z.string(),
-    vehicleMake: z.string().optional(),
-    vehicleType: z.string().optional(),
+    equipmentMake: z.string().optional(),
+    equipmentType: z.string().optional(),
     yearOfManufacture: z.string().optional(),
     color: z.string().optional(),
     registrationNumber: z.string().optional(),
@@ -55,7 +55,7 @@ export const CreateEquipmentOwnershipSchema = sanitizeObject(z.object({
   equipmentId: z.string(),
   operatorId: z.string(),
   startDate: z.string().optional(),
-  endDate: z.string().optional().nullable(),
+  endDate: z.string().optional(),
   primaryDuties: z.string().optional().nullable(),
   driverLicenseId: z.string().optional().nullable(),
   

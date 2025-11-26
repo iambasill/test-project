@@ -18,8 +18,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     unassignedEquipment,
     totalInspections,
     usersByRole,
-    equipmentByType,
-    equipmentByCategory,
+    equipmentByequipmentType,
     serviceableEquipment,
     equipmentByCondition,
     recentInspections,
@@ -58,26 +57,21 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       where: { role: { not: null } },
     }),
 
-    // Equipment grouped by type (e.g., SOABC, Vehicles, Other)
+    // Equipment grouped by equipmentType (replaced equipmentType)
     prismaclient.equipment.groupBy({
       by: ["equipmentType"],
       _count: {
         id: true,
       },
+      where: {
+        equipmentType: { not: null }
+      }
     }),
 
-    // Equipment grouped by category
-    prismaclient.equipment.groupBy({
-      by: ["equipmentCategory"],
-      _count: {
-        id: true,
-      },
-    }),
-
-    // Serviceable equipment (assuming "SERVICEABLE" is a condition value)
+    // Serviceable equipment (condition "S")
     prismaclient.equipment.count({
       where: {
-        currentCondition: "SERVICEABLE",
+        currentCondition: "S",
       },
     }),
 
@@ -126,7 +120,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       },
     }),
 
-    // User stats by role - FIXED: changed conditionRecords to recordedConditions
+    // User stats by role
     prismaclient.user.findMany({
       select: {
         id: true,
@@ -136,7 +130,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
           select: {
             inspections: true,
             EquipmentOwnership: true,
-            recordedConditions: true, // Changed from conditionRecords
+            recordedConditions: true,
           },
         },
       },
@@ -152,17 +146,17 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     return acc;
   }, {} as Record<string, number>);
 
-  // Format equipment by type
-  const equipmentByTypeFormatted = equipmentByType.map((item) => ({
+  // Format equipment by vehicle type
+  const equipmentByequipmentTypeFormatted = equipmentByequipmentType.map((item) => ({
     type: item.equipmentType,
-    count: item._count.id,
+    count: item._count?.id || 0,
   }));
 
   // Format equipment by condition
   const equipmentByConditionFormatted = equipmentByCondition.reduce(
     (acc: Record<string, number>, item) => {
       const key = item.currentCondition ?? "UNKNOWN";
-      acc[key] = item._count.id;
+      acc[key] = item._count?.id || 0;
       return acc;
     },
     {} as Record<string, number>
@@ -174,7 +168,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     ADMIN: { count: 0, active: 0, inspections: 0, assignments: 0, conditionsRecorded: 0 },
     AUDITOR: { count: 0, active: 0, inspections: 0, assignments: 0, conditionsRecorded: 0 },
     MANAGER: { count: 0, active: 0, inspections: 0, assignments: 0, conditionsRecorded: 0 },
-    PLATADMIN: { count: 0, active: 0, inspections: 0, assignments: 0, conditionsRecorded: 0 }, // Added PLATADMIN
+    PLATADMIN: { count: 0, active: 0, inspections: 0, assignments: 0, conditionsRecorded: 0 },
   };
 
   userStats.forEach((user) => {
@@ -185,7 +179,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       if (user.isActive) userStatsFormatted[role].active++;
       userStatsFormatted[role].inspections += user._count.inspections;
       userStatsFormatted[role].assignments += user._count.EquipmentOwnership;
-      userStatsFormatted[role].conditionsRecorded += user._count.recordedConditions; // Changed field name
+      userStatsFormatted[role].conditionsRecorded += user._count.recordedConditions;
     }
   });
 
@@ -203,11 +197,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       },
       breakdown: {
         usersByRole: usersByRoleFormatted,
-        equipmentByType: equipmentByTypeFormatted,
-        equipmentByCategory: equipmentByCategory.map((item) => ({
-          category: item.equipmentCategory,
-          count: item._count.id,
-        })),
+        equipmentByequipmentType: equipmentByequipmentTypeFormatted,
         equipmentByCondition: equipmentByConditionFormatted,
       },
       userStats: userStatsFormatted,

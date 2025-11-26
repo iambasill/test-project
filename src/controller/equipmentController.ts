@@ -328,7 +328,7 @@ export const createEquipmentOwnership = async (req: Request, res: Response) => {
     ...validatedData,
     userId: user.id,
     startDate: validatedData.startDate ? new Date(validatedData.startDate) : new Date(),
-    endDate: validatedData.endDate ? new Date(validatedData.endDate) : null,
+    endDate: validatedData.endDate ? new Date(validatedData.endDate) : new Date(),
   };
 
   // Check idempotency
