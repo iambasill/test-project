@@ -17,7 +17,6 @@ const allowedOrigins = config.NODE_ENV === 'production'
   : ["https://https://divm-test.myport.com.ng", "http://localhost:3000"]
 
 const corsOptions = {
-  origin: allowedOrigins,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization', 'IdempotencyKey'],
   credentials: true,
