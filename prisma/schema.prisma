@@ -34,13 +34,22 @@ enum UserRole {
 }
 
 model InspectionCategory {
-    id                    String                 @id @default(uuid())
-    title                 String
-    createdAt             DateTime               @default(now())
-    subCategories         Json?
+  id            String        @id @default(uuid())
+  title         String        @unique 
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt 
+  subCategories SubCategory[]
 }
 
-
+model SubCategory {
+  id         String              @id @default(uuid())
+  title      String
+  categoryId String
+  category   InspectionCategory  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  createdAt  DateTime            @default(now())
+  
+  @@unique([categoryId, title]) 
+}
 
 model User {
     id                    String                 @id @default(uuid())
