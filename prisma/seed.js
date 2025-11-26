@@ -1,123 +1,90 @@
 const { prismaclient } = require('../build/lib/prisma-connect');
+const bcrypt = require('bcryptjs');
+
 // --- Fake Data Arrays ---
 const conditionStatuses = ["S", "O", "A", "B", "C"];
-const acquisitionMethods = ["PURCHASE", "LEASE", "DONATION", "TRANSFER", "OTHER"];
 
-// --- Equipment Types ---
-const equipmentTypes = [
-  "Vehicle",
-  "Communication",
-  "Radar",
-  "Transport",
-  "Surveillance",
-  "Protective Gear",
-  "Office Equipment",
-  "IT Equipment",
-  "Furniture",
-  "Appliance"
+// --- Equipment Data ---
+const equipmentNames = [
+  "Patrol Vehicle Alpha", "Communication Radio Beta", "Surveillance Drone Gamma",
+  "Transport Truck Delta", "Radar System Epsilon", "Protective Vest Zeta",
+  "Office Printer Eta", "Server Rack Theta", "Conference Table Iota",
+  "Air Conditioning Unit Kappa"
 ];
 
-// --- Categories ---
-const equipmentCategories = {
-  Vehicle: ["Patrol Unit", "Terrain Vehicle", "Utility Rover", "Command Vehicle"],
-  Communication: ["Field Radio", "Signal Relay", "Comm Hub", "Secure Transmitter"],
-  Radar: ["Target Scanner", "Wide Sweep Radar", "MicroPulse Radar"],
-  Transport: ["Personnel Carrier", "Cargo Module", "Multi-Load Transport"],
-  Surveillance: ["Recon Drone", "Thermal Camera", "Silent Observer"],
-  "Protective Gear": ["Armor Vest", "Shock Helmet", "Air Filtration Mask"],
-  "Office Equipment": ["Laser Printer", "Doc Scanner", "Copy Machine", "Digital Projector"],
-  "IT Equipment": ["Workstation", "Mobile Terminal", "Rack Server", "Network Hub"],
-  Furniture: ["Ergo Chair", "Work Desk", "Filing Cabinet", "Command Table"],
-  Appliance: ["Cooling Unit", "Heat Processor", "Air Purifier", "Hydro Dispenser"]
-};
+const vehicleMakes = ["Toyota", "Ford", "Mercedes", "Nissan", "Honda"];
+const vehicleTypes = ["SUV", "Sedan", "Truck", "Van", "Patrol Car"];
+const colors = ["White", "Black", "Blue", "Silver", "Gray", "Green"];
 
-// --- FAKE Manufacturers ---
-const manufacturers = [
-  "Novatek Industries",
-  "Auron Systems",
-  "Skyforge Dynamics",
-  "Vortex Solutions",
-  "HexaTech Labs",
-  "Omnistar Machines",
-  "Coretrix Engineering",
-  "Velonix Equipment",
-  "Solara Devices",
-  "Quantara Robotics",
-  "Stratix Tools",
-  "Aerion Techworks",
-  "Lumera Products",
-  "Metronix Fabricators"
+// --- Inspection Categories ---
+const inspectionCategories = [
+  { title: "Safety Inspection", subCategories: ["Fire Safety", "Electrical Safety", "Emergency Exits"] },
+  { title: "Vehicle Inspection", subCategories: ["Engine", "Brakes", "Tires", "Lights"] },
+  { title: "Equipment Check", subCategories: ["Functionality", "Maintenance", "Calibration"] },
+  { title: "Documentation Review", subCategories: ["Permits", "Insurance", "Compliance"] }
 ];
-
-// --- FAKE Models ---
-const models = {
-  Vehicle: ["VX-7 Ranger", "HX-4 Strider", "PX-9 Cruiser", "AX-3 Sentinel"],
-  Communication: ["ComLink-X1", "EchoWave-200", "SignalPro M5", "UltraComm S9"],
-  Radar: ["RDR-450 Sentinel", "RDR-920 SkyScan", "RDR-300 TerraTrack"],
-  Transport: ["TRX-100 Carrier", "Moveron T7", "Loadmax P3"],
-  Surveillance: ["AeroCam V8", "Spectra View 300", "SilentEye X2"],
-  "Protective Gear": ["GuardPro V4", "HelioShield M3", "SafeMask-55"],
-  "Office Equipment": ["Printon L500", "Scanex M100", "CopyLite 220", "ProJet X4"],
-  "IT Equipment": ["DataCore S7", "NetBox Z9", "ComputeMax 500", "LogicOne R2"],
-  Furniture: ["FlexiChair 720", "WorkDesk Pro", "Cabinetron 40", "TableX 100"],
-  Appliance: ["CoolBreeze 900", "HeatWave M300", "PureFlow 75", "ChillBox 120"]
-};
-
-const countries = ["Nigeria", "USA", "Germany", "Japan", "China", "Israel", "Sweden", "South Korea"];
 
 // --- MAIN FUNCTION ---
 async function main() {
   console.log("🌱 Seeding database with platform admin and equipment inventory...");
 
+  // 1. CREATE PLATFORM ADMIN
+  const hashedPassword = await bcrypt.hash("Password1", 10);
+  
+  const platformAdmin = await prismaclient.user.create({
+    data: {
+      email: "platform-admin@gmail.com",
+      firstName: "Platform",
+      lastName: "Admin",
+      password: hashedPassword,
+      role: "PLATADMIN",
+      status: "ACTIVE",
+      isActive: true
+    }
+  });
 
-  const totalCount = 80; // 50 original + 30 extra
+  console.log(`✅ Created platform admin: ${platformAdmin.email}`);
 
+  // 2. CREATE INSPECTION CATEGORIES WITH SUBCATEGORIES
+  for (const categoryData of inspectionCategories) {
+    const category = await prismaclient.inspectionCategory.create({
+      data: {
+        title: categoryData.title,
+        subCategories: {
+          create: categoryData.subCategories.map(subTitle => ({
+            title: subTitle
+          }))
+        }
+      }
+    });
+    console.log(`✅ Created category: ${category.title} with ${categoryData.subCategories.length} subcategories`);
+  }
+
+  // 3. CREATE EQUIPMENT
+  const totalCount = 80;
   const allEquipments = [];
+
   for (let i = 1; i <= totalCount; i++) {
-    const type = equipmentTypes[i % equipmentTypes.length];
-    const categoryOptions = equipmentCategories[type] || ["Standard"];
-    const category = categoryOptions[i % categoryOptions.length];
-    const modelOptions = models[type] || ["Model-X"];
-    const model = modelOptions[i % modelOptions.length];
-
-    const acquisitionDate = new Date();
-    acquisitionDate.setFullYear(acquisitionDate.getFullYear() - (i % 4));
-
     const equipment = await prismaclient.equipment.create({
       data: {
         chasisNumber: `CHSS-${2023000 + i}`,
-        equipmentName: `${category} ${model}`,
-        model: model,
-        equipmentType: type,
-        equipmentCategory: category,
-        manufacturer: manufacturers[i % manufacturers.length],
-        modelNumber: `MOD-${type.substring(0, 3).toUpperCase()}-${100 + i}`,
-        yearOfManufacture: `${2019 + (i % 5)}`,
-        countryOfOrigin: countries[i % countries.length],
-        dateOfAcquisition: acquisitionDate.toISOString().split("T")[0],
-        acquisitionMethod: acquisitionMethods[i % acquisitionMethods.length],
-        supplierInfo: `${manufacturers[i % manufacturers.length]} ${i % 2 ? "Ltd" : "Corp"}`,
-        purchaseOrderNumber: `PO-${2023000 + i}`,
-        costValue: `${80000 + (i * 55000)}`,
-        currency: "NGN",
-        fundingSource: i % 2 === 0 ? "Federal Allocation" : "State Budget",
-        weight: i % 2 === 0 ? `${50 + (i * 5)}kg` : null,
-        dimensions: i % 2 === 0 ? `${50 + i}cm x ${40 + i}cm x ${30 + i}cm` : null,
-        powerRequirements: ["Office Equipment", "IT Equipment", "Appliance"].includes(type)
-          ? "220V AC"
-          : null,
-        fuelType: type === "Vehicle" ? (i % 2 === 0 ? "Petrol" : "Diesel") : null,
-        operationalSpecs: "Standard operational specifications apply",
+        equipmentName: equipmentNames[i % equipmentNames.length],
+        model: `Model-${2020 + (i % 5)}`,
+        vehicleMake: i % 2 === 0 ? vehicleMakes[i % vehicleMakes.length] : null,
+        vehicleType: i % 2 === 0 ? vehicleTypes[i % vehicleTypes.length] : null,
+        yearOfManufacture: `${2018 + (i % 7)}`,
+        color: colors[i % colors.length],
+        registrationNumber: i % 3 === 0 ? `REG-${2023000 + i}` : null,
         currentCondition: conditionStatuses[i % conditionStatuses.length],
-        lastConditionCheck: new Date().toISOString()
+        addedById: platformAdmin.id
       }
     });
 
     allEquipments.push(equipment);
   }
 
-  console.log(`✅ Created ${allEquipments.length} equipment items (all synthetic)`);
-
+  console.log(`✅ Created ${allEquipments.length} equipment items`);
+  console.log("🎉 Seeding completed successfully!");
 }
 
 main()
