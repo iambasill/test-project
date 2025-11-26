@@ -32,9 +32,9 @@ const options: swaggerJSDoc.Options = {
 
 const swaggerSpec = swaggerJSDoc(options);
 
-function setupSwaggerDocs(app: Express, port: number) {
+function setupSwaggerDocs(app: Express) {
     app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-    logger.info(`Swagger docs available at /api-docs endpoint at port https://${config.API_BASE_URL}:${port}/api-docs`);
+    logger.info(`Swagger docs available at /api-docs endpoint at port https://${config.API_BASE_URL}/api-docs`);
 
     app.get('/api-docs.json', (req: Request, res: Response) => {
         res.setHeader('Content-Type', 'application/json');

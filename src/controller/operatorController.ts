@@ -341,7 +341,6 @@ export const getOperatorById = async (req: Request, res: Response) => {
               firstName: true,
               lastName: true,
               email: true,
-
             },
           },
           documents: {

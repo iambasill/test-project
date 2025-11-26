@@ -344,8 +344,13 @@ export const createEquipmentOwnership = async (req: Request, res: Response) => {
     });
 
     const ownership = await tx.equipmentOwnership.create({
+      data: {
        ...data,
-      assignedById: user.id,
+       assignedByID: user.id,
+       createdAt: new Date(),
+       isCurrent: true,
+      }
+
        });
 
     // Handle any attached ownership documents

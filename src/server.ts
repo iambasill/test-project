@@ -94,6 +94,6 @@ app.use(errorHandler);
 // ----------------------
 app.listen(config.PORT, () => {
   console.log(`Connected to port ${config.PORT}`);
-  setupSwaggerDocs(app, 8888);
+  setupSwaggerDocs(app);
 });
 

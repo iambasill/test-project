@@ -26,4 +26,4 @@ operatorRouter.get("/:id/equipment-history", authMiddleware, getOperatorEquipmen
 // Specific operator routes
 operatorRouter.get("/:id", authMiddleware, getOperatorById);
 operatorRouter.put("/:id", authMiddleware, upload.fields(OPERATOR_FIELDS), updateOperator);
-operatorRouter.delete("/:id", authMiddleware, deleteOperator);
+// operatorRouter.delete("/:id", authMiddleware, deleteOperator);

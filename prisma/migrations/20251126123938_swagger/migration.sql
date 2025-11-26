@@ -13,7 +13,7 @@ DROP INDEX `equipment_ownerships_userId_fkey` ON `equipment_ownerships`;
 
 -- AlterTable
 ALTER TABLE `equipment_ownerships` DROP COLUMN `userId`,
-    ADD COLUMN `assignedBy` VARCHAR(191) NOT NULL;
+    ADD COLUMN `assignedByID` VARCHAR(191) NOT NULL;
 
 -- AddForeignKey
-ALTER TABLE `equipment_ownerships` ADD CONSTRAINT `equipment_ownerships_assignedBy_fkey` FOREIGN KEY (`assignedBy`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `equipment_ownerships` ADD CONSTRAINT `equipment_ownerships_assignedBy_fkey` FOREIGN KEY (`assignedByID`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
