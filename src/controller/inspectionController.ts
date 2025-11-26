@@ -454,7 +454,7 @@ export const getAllInspection = async (req: Request, res: Response) => {
   
   // Handle not found
   if (!inspections || inspections.length === 0) {
-    throw new notFoundError("No inspections found for this equipment");
+    throw new notFoundError("No inspections found ");
   }
   
   // Clean null fields in each inspection and its items
