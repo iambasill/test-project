@@ -3,7 +3,7 @@ import swaggerUi from 'swagger-ui-express';
 import swaggerJSDoc from 'swagger-jsdoc';
 import fs from 'fs';
 import path from 'path';
-import {version} from '../../package.json';
+// import version from '../../package.json';
 import logger from '../logger/logger';
 import { config } from '../config';
 
@@ -12,7 +12,7 @@ const options: swaggerJSDoc.Options = {
     openapi: '3.0.0',
     info: {
         title: 'Defence IVM API Documentation',
-        version: version,
+        version: '1.0.0',
         description: 'API documentation for the Defence IVM system.',
     },
     components: {
