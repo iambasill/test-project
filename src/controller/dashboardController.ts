@@ -8,9 +8,7 @@ import { unAuthorizedError } from "../logger/exceptions";
 // =======================================================
 export const getDashboardStats = async (req: Request, res: Response) => {
   const user = req.user as User;
-  if (user.role !== "ADMIN" && user.role !== "MANAGER" && user.role !== "AUDITOR")  
-    throw new unAuthorizedError("Access denied. Insufficient permissions.");
-    
+ 
   const [
     totalOperators,
     totalEquipment,
