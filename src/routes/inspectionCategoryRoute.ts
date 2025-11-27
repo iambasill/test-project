@@ -29,13 +29,13 @@ categoryRouter.delete('/:id/subcategories/:subCategoryId', authMiddleware, requi
 /**
  * @openapi
  * tags:
- *   name: Categories
+ *   name: Inspection Categories
  *   description: Inspection category management endpoints
  */
 
 /**
  * @openapi
- * /categories:
+ * /inspection/category:
  *   get:
  *     summary: Get all inspection categories with pagination
  *     tags: [Categories]
@@ -92,7 +92,7 @@ categoryRouter.delete('/:id/subcategories/:subCategoryId', authMiddleware, requi
 
 /**
  * @openapi
- * /categories/{id}:
+ * /inspection/category/{id}:
  *   get:
  *     summary: Get a single category by ID
  *     tags: [Categories]
@@ -125,7 +125,7 @@ categoryRouter.delete('/:id/subcategories/:subCategoryId', authMiddleware, requi
 
 /**
  * @openapi
- * /categories:
+ * /inspection/category:
  *   post:
  *     summary: Create a new inspection category
  *     tags: [Categories]
@@ -161,7 +161,7 @@ categoryRouter.delete('/:id/subcategories/:subCategoryId', authMiddleware, requi
 
 /**
  * @openapi
- * /categories/{id}:
+ * /inspection/category/{id}:
  *   put:
  *     summary: Update a category
  *     tags: [Categories]
@@ -204,7 +204,7 @@ categoryRouter.delete('/:id/subcategories/:subCategoryId', authMiddleware, requi
 
 /**
  * @openapi
- * /categories/{id}:
+ * /inspection/category/{id}:
  *   delete:
  *     summary: Delete a category
  *     tags: [Categories]
@@ -239,7 +239,7 @@ categoryRouter.delete('/:id/subcategories/:subCategoryId', authMiddleware, requi
 
 /**
  * @openapi
- * /categories/{id}/subcategories:
+ * /inspection/category/{id}/subcategories:
  *   post:
  *     summary: Add a subcategory to a category
  *     tags: [Categories]
@@ -282,7 +282,7 @@ categoryRouter.delete('/:id/subcategories/:subCategoryId', authMiddleware, requi
 
 /**
  * @openapi
- * /categories/{id}/subcategories/{subCategoryId}:
+ * /inspection/category/{id}/subcategories/{subCategoryId}:
  *   put:
  *     summary: Update a subcategory
  *     tags: [Categories]
@@ -331,7 +331,7 @@ categoryRouter.delete('/:id/subcategories/:subCategoryId', authMiddleware, requi
 
 /**
  * @openapi
- * /categories/{id}/subcategories/{subCategoryId}:
+ * /inspection/category/{id}/subcategories/{subCategoryId}:
  *   delete:
  *     summary: Delete a subcategory
  *     tags: [Categories]
@@ -370,67 +370,4 @@ categoryRouter.delete('/:id/subcategories/:subCategoryId', authMiddleware, requi
  *         description: Unauthorized
  *       403:
  *         description: Forbidden - Admin access required
- */
-
-/**
- * @openapi
- * components:
- *   schemas:
- *     InspectionCategory:
- *       type: object
- *       properties:
- *         id:
- *           type: string
- *           format: uuid
- *         title:
- *           type: string
- *         subCategories:
- *           type: array
- *           items:
- *             $ref: '#/components/schemas/SubCategory'
- *         createdAt:
- *           type: string
- *           format: date-time
- *         updatedAt:
- *           type: string
- *           format: date-time
- *
- *     SubCategory:
- *       type: object
- *       properties:
- *         id:
- *           type: string
- *         title:
- *           type: string
- *         categoryId:
- *           type: string
- *         createdAt:
- *           type: string
- *           format: date-time
- *
- *     CreateCategory:
- *       type: object
- *       required:
- *         - title
- *       properties:
- *         title:
- *           type: string
- *           minLength: 1
- *           maxLength: 100
- *           description: Category title
- *
- *     CreateSubCategory:
- *       type: object
- *       required:
- *         - categoryId
- *         - title
- *       properties:
- *         categoryId:
- *           type: string
- *           description: ID of the parent category
- *         title:
- *           type: string
- *           minLength: 1
- *           maxLength: 100
- *           description: Subcategory title
  */

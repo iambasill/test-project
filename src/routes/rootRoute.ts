@@ -6,7 +6,7 @@ import { operatorRouter } from "./operatorRoute";
 import { inspectionRouter } from "./inspectionRoute";
 import { attachmentController } from "../controller/attachmentController";
 import { getApkController } from "../controller/authController";
-import { categoryRouter } from "./categoryRoute";
+import { categoryRouter } from "./inspectionCategoryRoute";
 import { dashboardRouter } from "./dashboardRoute";
 
 
@@ -17,7 +17,6 @@ rootRoute.use('/api/auth/users',userRoute)
 rootRoute.use('/api/equipment',equipmentRouter)
 rootRoute.use('/api/operator',operatorRouter)
 rootRoute.use('/api/inspection',inspectionRouter)
-rootRoute.use('/api/category',categoryRouter)
 rootRoute.use('/api/dashboard',dashboardRouter)
 
 

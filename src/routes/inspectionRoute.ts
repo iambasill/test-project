@@ -5,9 +5,11 @@ import { authMiddleware } from "../middlewares/authMiddleware";
 import { INSPECTION_FIELDS } from "../schema/uploadsSchema";
 import { requireIdempotencyKey } from "../middlewares/idempotencyKeyMiddleware";
 import { requireManagers } from "../middlewares/rbacMiddleware";
+import { categoryRouter } from "./inspectionCategoryRoute";
 
 export const inspectionRouter = express.Router();
 
+inspectionRouter.use('/category', categoryRouter)
 inspectionRouter.get('/equipment/:id', authMiddleware, getAllInspectionByEquipmentId);
 inspectionRouter.get('/', authMiddleware, requireManagers, getAllInspection);
 inspectionRouter.post('/', authMiddleware, requireIdempotencyKey,  upload.fields(INSPECTION_FIELDS), createInspection);

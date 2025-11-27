@@ -56,9 +56,67 @@ export const CreateInspectionSchema = sanitizeObject(z.object({
   items: z.array(InspectionItemSchema).min(1, 'At least one inspection item is required')
 }));
 
-// Export types for TypeScript
-export type InspectionCategoryInput = z.infer<typeof inspectionCategorySchema>;
-export type SubCategoryInput = z.infer<typeof subCategoryInspectionSchema>;
-export type GetCategoriesQuery = z.infer<typeof getCategoriesQuerySchema>;
-export type InspectionItemInput = z.infer<typeof InspectionItemSchema>;
-export type CreateInspectionInput = z.infer<typeof CreateInspectionSchema>;
+
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     InspectionCategory:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *         title:
+ *           type: string
+ *         subCategories:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/SubCategory'
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *
+ *     SubCategory:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *         title:
+ *           type: string
+ *         categoryId:
+ *           type: string
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *
+ *     CreateCategory:
+ *       type: object
+ *       required:
+ *         - title
+ *       properties:
+ *         title:
+ *           type: string
+ *           minLength: 1
+ *           maxLength: 100
+ *           description: Category title
+ *
+ *     CreateSubCategory:
+ *       type: object
+ *       required:
+ *         - categoryId
+ *         - title
+ *       properties:
+ *         categoryId:
+ *           type: string
+ *           description: ID of the parent category
+ *         title:
+ *           type: string
+ *           minLength: 1
+ *           maxLength: 100
+ *           description: Subcategory title
+ */
