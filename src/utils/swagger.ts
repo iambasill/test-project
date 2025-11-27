@@ -28,7 +28,10 @@ const options: swaggerJSDoc.Options = {
   },
  apis: [
       path.resolve(__dirname, '../routes/*.{ts,js}'),
-      path.resolve(__dirname, '../controller/*.{ts,js}')
+      path.resolve(__dirname, '../controller/*.{ts,js}'),
+      path.resolve(__dirname, '../schema/*.{ts,js}')
+
+      
     ]
 };
 
