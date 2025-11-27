@@ -1,11 +1,9 @@
+
 import * as z from "zod";
-import {  Status, UserRole } from "../generated/prisma";
+import { Status, UserRole } from "../generated/prisma";
 import { sanitizeObject } from "../utils/zodHandler";
 
 const status = Object.values(Status)
-
-
-
 
 // Schema for individual inspection items
 export const InspectionItemSchema = sanitizeObject(z.object({
@@ -14,9 +12,7 @@ export const InspectionItemSchema = sanitizeObject(z.object({
   recommendation: z.string().optional().nullable(),
   condition: z.string(),
   notes: z.string().optional().nullable(),
-}
-
-));
+}));
 
 // Schema for creating an inspection
 export const CreateInspectionSchema = sanitizeObject(z.object({
@@ -26,13 +22,10 @@ export const CreateInspectionSchema = sanitizeObject(z.object({
   items: z.array(InspectionItemSchema).min(1, 'At least one inspection item is required')
 }));
 
-
 export const inspectionCategorySchema = sanitizeObject(z.object({
   title: z.string(),
   subcategories: z.json()
-
 }));
-
 
 /**
  * @openapi
@@ -42,8 +35,12 @@ export const inspectionCategorySchema = sanitizeObject(z.object({
  *       type: object
  *       required:
  *         - category
+ *         - subCategory
  *         - condition
  *       properties:
+ *         id:
+ *           type: string
+ *           description: Unique identifier for the inspection item
  *         category:
  *           type: string
  *           description: Category of the inspection item
@@ -63,10 +60,40 @@ export const inspectionCategorySchema = sanitizeObject(z.object({
  *           description: Optional notes about the item
  *         images:
  *           type: array
- *           description: Images for this inspection item (max 4 files)
+ *           description: URLs of images for this inspection item
  *           items:
  *             type: string
- *             format: binary
+ *
+ *     Inspection:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           description: Unique identifier for the inspection
+ *         equipmentId:
+ *           type: string
+ *           description: ID of the equipment being inspected
+ *         generalNotes:
+ *           type: string
+ *           nullable: true
+ *           description: General notes for the inspection
+ *         overallCondition:
+ *           type: string
+ *           description: Overall condition of the equipment
+ *           enum: ["S","O","A","B","C"]
+ *         items:
+ *           type: array
+ *           description: List of individual inspection items
+ *           items:
+ *             $ref: '#/components/schemas/InspectionItem'
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *           description: Timestamp when the inspection was created
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *           description: Timestamp when the inspection was last updated
  *
  *     CreateInspection:
  *       type: object
@@ -87,9 +114,7 @@ export const inspectionCategorySchema = sanitizeObject(z.object({
  *           description: Overall condition of the equipment
  *           enum: ["S","O","A","B","C"]
  *         items:
- *           type: array
- *           description: List of individual inspection items
- *           minItems: 1
- *           items:
- *             $ref: '#/components/schemas/InspectionItem'
+ *           type: string
+ *           description: JSON stringified array of inspection items
+ *           example: '[{"category":"Engine","subCategory":"Oil Filter","condition":"Good"}]'
  */
