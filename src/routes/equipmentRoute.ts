@@ -10,6 +10,7 @@ import {
   updateEquipment,
   getEquipmentOwnerships,
   updateEquipmentOwnerships,
+  getEquipmentCategories,
 } from "../controller/equipmentController";
 import e from "express";
 
@@ -24,8 +25,10 @@ equipmentRouter.post("/", authMiddleware, upload.fields(UPLOAD_FIELDS), createEq
 
 // Ownership routes
 equipmentRouter.get("/ownership/:id", authMiddleware, getEquipmentOwnerships);
+equipmentRouter.get("/category", authMiddleware, getEquipmentCategories);
 equipmentRouter.post("/create-ownership", authMiddleware, upload.any(UPLOAD_FIELDS), createEquipmentOwnership);
 equipmentRouter.put("/ownership/:ownershipId", authMiddleware, upload.any(UPLOAD_FIELDS), updateEquipmentOwnerships);
+e
 
 // Specific equipment routes (must be after other routes with /stats and /ownership to avoid :id conflicts)
 equipmentRouter.get("/:id", authMiddleware, getEquipmentById);

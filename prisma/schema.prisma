@@ -87,15 +87,30 @@ model User {
 model Equipment {
     id           String @id @unique @default(uuid())
     chasisNumber String? @unique 
+    vehicleRegistrationNumber String? @unique
+    engineNumber String? @unique
+    itemName     String?
 
     // Section A: Equipment Identification
     equipmentName     String?
     model             String?
-    equipmentMake      String?
+    vehicleType      String?
+    vehicleMake      String?
+    furnitureType    String?
+    materialType     String?
+    brand            String?
+    propertyType     String?
+    propertyAddress  String?
+    propertySize     String?
+    noOfRooms       String?
+    equipmentCategory String?
+    noOfBathrooms    String?
+    serialNumber     String? @unique
     equipmentType      String?
     yearOfManufacture String?
     color            String?
     registrationNumber String? @unique
+    dateAcquired    String?
 
     // Condition Tracking
     currentCondition   String 
@@ -117,6 +132,16 @@ model Equipment {
 
     @@map("equipments")
 }
+
+model equipmentCategory {
+    id        String   @id @default(uuid())
+    name      String   @unique
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@map("equipment_categories")
+}
+
 
 model Operator {
     id                    String  @id @default(uuid())

@@ -163,7 +163,7 @@ export const getEquipmentById = async (req: Request, res: Response) => {
 };
 
 // =======================================================
-// CREATE NEW EQUIPMENT (WITH IDEMPOTENCY)
+// CREATE NEW EQUIPMENT 
 // =======================================================
 export const createEquipment = async (req: Request, res: Response) => {
   const user = req.user as User;
@@ -201,6 +201,15 @@ export const createEquipment = async (req: Request, res: Response) => {
 
 
   const result = await prismaclient.$transaction(async (tx) => {
+    const equipmentCategory = await tx.equipmentCategory.findUnique({
+      where: { name: data.equipmentCategory?.toLowerCase() },
+    });
+    if (!equipmentCategory && data.equipmentCategory) {
+      await tx.equipmentCategory.create({
+        data: { name: data.equipmentCategory?.toLowerCase() },
+      });
+    }
+
     const equipment = await tx.equipment.create({
       data: { ...data,
         addedById: user.id,
@@ -243,6 +252,17 @@ export const createEquipment = async (req: Request, res: Response) => {
     message: "Equipment created successfully",
   });
 };
+
+
+export const getEquipmentCategories = async (req: Request, res: Response) => {
+  const categories = await prismaclient.equipmentCategory.findMany({
+    orderBy: { name: "asc" },
+  }); 
+  res.status(200).json({
+    success: true,
+    data: categories,
+  });
+}
 
 // =======================================================
 // UPDATE EQUIPMENT
@@ -317,7 +337,7 @@ export const updateEquipment = async (req: Request, res: Response) => {
 // };
 
 // =======================================================
-// CREATE EQUIPMENT OWNERSHIP (WITH IDEMPOTENCY)
+// CREATE EQUIPMENT OWNERSHIP 
 // =======================================================
 export const createEquipmentOwnership = async (req: Request, res: Response) => {
   const user: any = req.user;

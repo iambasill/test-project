@@ -17,10 +17,10 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     totalInspections,
     usersByRole,
     equipmentByequipmentType,
-    serviceableEquipment,
+    serviceableEquipment, //to be removed
     equipmentByCondition,
     recentInspections,
-    pendingInspections,
+    pendingInspections, // to be reomved
     userStats,
   ] = await Promise.all([
     // Total operators count

@@ -33,21 +33,32 @@ export const changePasswordSchema= sanitizeObject(z.object({
    
 
 
+
 export const equipmentData = sanitizeObject(z.object({
-    chasisNumber: z.string().optional(),
-    model: z.string(),
-    equipmentMake: z.string().optional(),
-    equipmentType: z.string().optional(),
-    yearOfManufacture: z.string().optional(),
-    color: z.string().optional(),
-    registrationNumber: z.string().optional(),
-
-
-
-
-
-
-    currentCondition:    z.enum(status).optional().default("S"),
+    chasisNumber: z.string().min(1),
+    vehicleRegistrationNumber: z.string().optional().nullable(),
+    engineNumber: z.string().optional().nullable(),
+    itemName: z.string().optional().nullable(),
+    equipmentName: z.string().min(1),
+    model: z.string().optional().nullable(),
+    vehicleType: z.string().optional().nullable(),
+    vehicleMake: z.string().optional().nullable(),
+    furnitureType: z.string().optional().nullable(),
+    materialType: z.string().optional().nullable(),
+    brand: z.string().optional().nullable(),
+    propertyType: z.string().optional().nullable(),
+    propertyAddress: z.string().optional().nullable(),
+    propertySize: z.string().optional().nullable(),
+    noOfRooms: z.string().optional().nullable(),
+    equipmentCategory: z.string(),
+    noOfBathrooms: z.string().optional().nullable(),
+    serialNumber: z.string().optional().nullable(),
+    equipmentType: z.string().optional().nullable(),
+    yearOfManufacture: z.string().optional().nullable(),
+    color: z.string().optional().nullable(),
+    registrationNumber: z.string().optional().nullable(),
+    dateAcquired: z.string().optional().nullable(),
+    currentCondition: z.enum(status).default("S"),
 }))
 
 
