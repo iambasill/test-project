@@ -188,7 +188,6 @@ export const inspectionRouter = express.Router();
  */
 inspectionRouter.get('/equipment/:id', authMiddleware, getAllInspectionByEquipmentId);
 inspectionRouter.get('/', authMiddleware, requireManagers, getAllInspection);
-inspectionRouter.post('/', authMiddleware, requireIdempotencyKey,  upload.fields(INSPECTION_FIELDS), createInspection);
 
 // inspectionRouter.delete('/:id',authMiddleware,requirePlatformAdmin,deleteInspection)
 
