@@ -38,7 +38,7 @@ export const inspectionRouter = express.Router();
  *  description: Forbidden
  *  500:
  *  description: Internal server error
- * /
+ ** /
  * @openapi
  * /inspections/equipment/{id}:
  *  get:
