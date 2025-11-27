@@ -325,7 +325,6 @@ export const createEquipmentOwnership = async (req: Request, res: Response) => {
 
   const data = {
     ...validatedData,
-    userId: user.id,
     startDate: validatedData.startDate ? new Date(validatedData.startDate) : new Date(),
     endDate: validatedData.endDate ? new Date(validatedData.endDate) : new Date(),
   };
