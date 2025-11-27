@@ -238,8 +238,6 @@ export type GetOwnershipQuery = z.infer<typeof getOwnershipQuerySchema>;
  *     CreateEquipment:
  *       type: object
  *       required:
- *         - chasisNumber
- *         - equipmentName
  *         - equipmentCategory
  *         - currentCondition
  *       properties:

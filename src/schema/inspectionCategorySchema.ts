@@ -67,7 +67,6 @@ export const CreateInspectionSchema = sanitizeObject(z.object({
  *       properties:
  *         id:
  *           type: string
- *           format: uuid
  *         title:
  *           type: string
  *         subCategories:

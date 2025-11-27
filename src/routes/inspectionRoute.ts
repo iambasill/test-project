@@ -97,6 +97,8 @@ inspectionRouter.post('/', authMiddleware, requireIdempotencyKey, upload.fields(
  *     tags: [Inspections]
  *     security:
  *       - BearerAuth: []
+ *     requestHeader:
+ *       required : IdempotencyKey
  *     requestBody:
  *       required: true
  *       content:
