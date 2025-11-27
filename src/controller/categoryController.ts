@@ -1,373 +1,359 @@
-// import { Request, Response } from 'express';
-// import { BadRequestError } from '../logger/exceptions';
-// import { sanitizeInput } from '../utils/helperFunction';
-// import { prismaclient } from '../lib/prisma-connect';
-// import { z } from 'zod';
+import { Request, Response } from 'express';
+import { BadRequestError } from '../logger/exceptions';
+import { sanitizeInput } from '../utils/helperFunction';
+import { prismaclient } from '../lib/prisma-connect';
+import { getCategoriesQuerySchema, inspectionCategorySchema, subCategoryInspectionSchema } from '../schema/inspectionCategorySchema';
 
-// // ==================== ZOD SCHEMAS ====================
+// ==================== CATEGORY CONTROLLERS ====================
 
-// // Schema for creating a category
-// export const createCategorySchema = z.object({
-//   title: z.string().min(1, 'Title is required').max(100, 'Title too long'),
-//   subCategories: z
-//     .array(
-//       z.object({
-//         title: z.string().min(1, 'Subcategory title is required').max(100)
-//       })
-//     )
-//     .optional()
-//     .default([])
-// });
+/**
+ * Get all categories with pagination and search
+ */
+export const getAllCategory = async (req: Request, res: Response) => {
+  const { page, limit, search } = getCategoriesQuerySchema.parse(req.query);
 
-// // Schema for updating a category
-// export const updateCategorySchema = z.object({
-//   title: z.string().min(1, 'Title is required').max(100, 'Title too long').optional(),
-//   subCategories: z
-//     .array(
-//       z.object({
-//         title: z.string().min(1, 'Subcategory title is required').max(100)
-//       })
-//     )
-//     .optional()
-// });
+  const skip = (Number(page) - 1) * Number(limit);
+  const take = Number(limit);
 
-// // Schema for creating/updating a subcategory
-// export const subCategorySchema = z.object({
-//   title: z.string().min(1, 'Title is required').max(100, 'Title too long')
-// });
+  const where = search
+    ? {
+        title: {
+          contains: search,
+          mode: 'insensitive' as const
+        }
+      }
+    : {};
 
-// // Schema for query parameters
-// export const getCategoriesQuerySchema = z.object({
-//   page: z.string().optional().default('1'),
-//   limit: z.string().optional().default('10'),
-//   search: z.string().optional()
-// });
+  const [categories, total] = await Promise.all([
+    prismaclient.inspectionCategory.findMany({
+      where,
+      skip,
+      take,
+      include: {
+        subCategories: true
+      },
+      orderBy: { createdAt: 'desc' }
+    }),
+    prismaclient.inspectionCategory.count({ where })
+  ]);
 
-// // ==================== CATEGORY CONTROLLERS ====================
+  res.status(200).json({
+    success: true,
+    data: categories,
+    pagination: {
+      total,
+      page: Number(page),
+      limit: Number(limit),
+      totalPages: Math.ceil(total / Number(limit))
+    }
+  });
+};
 
-// /**
-//  * Get all categories with pagination and search
-//  */
-// export const getAllCategory = async (req: Request, res: Response) => {
-//   const { page, limit, search } = getCategoriesQuerySchema.parse(req.query);
+/**
+ * Get a single category by ID
+ */
+export const getCategoryById = async (req: Request, res: Response) => {
+  let { id } = req.params;
+  id = sanitizeInput(id);
 
-//   const skip = (Number(page) - 1) * Number(limit);
-//   const take = Number(limit);
+  const category = await prismaclient.inspectionCategory.findUnique({
+    where: { id },
+    include: {
+      subCategories: true
+    }
+  });
 
-//   const where = search
-//     ? {
-//         title: {
-//           contains: search,
-//           mode: 'insensitive' as const
-//         }
-//       }
-//     : {};
+  if (!category) {
+    throw new BadRequestError('Category not found');
+  }
 
-//   const [categories, total] = await Promise.all([
-//     prismaclient.inspectionCategory.findMany({
-//       where,
-//       skip,
-//       take,
-//       orderBy: { createdAt: 'desc' }
-//     }),
-//     prismaclient.inspectionCategory.count({ where })
-//   ]);
+  res.status(200).json({
+    success: true,
+    data: category
+  });
+};
 
-//   res.status(200).json({
-//     success: true,
-//     data: categories,
-//     pagination: {
-//       total,
-//       page: Number(page),
-//       limit: Number(limit),
-//       totalPages: Math.ceil(total / Number(limit))
-//     }
-//   });
-// };
+/**
+ * Create a new category 
+ */
+export const createCategory = async (req: Request, res: Response) => {
+  const data = inspectionCategorySchema.parse(req.body);
 
-// /**
-//  * Get a single category by ID
-//  */
-// export const getCategoryById = async (req: Request, res: Response) => {
-//   let { id } = req.params;
-//   id = sanitizeInput(id);
+  // Check if category already exists (case-insensitive)
+  const existingCategory = await prismaclient.inspectionCategory.findFirst({
+    where: {
+      title: data.title.toLowerCase()
+    }
+  });
 
-//   const category = await prismaclient.inspectionCategory.findUnique({
-//     where: { id }
-//   });
+  if (existingCategory) {
+    throw new BadRequestError('Category already exists');
+  }
 
-//   if (!category) {
-//     throw new BadRequestError('Category not found');
-//   }
+  const category = await prismaclient.inspectionCategory.create({
+    data: {
+      title: data.title.toLowerCase()
+    },
+    include: {
+      subCategories: true
+    }
+  });
 
-//   res.status(200).json({
-//     success: true,
-//     data: category
-//   });
-// };
+  res.status(201).json({
+    success: true,
+    message: 'Category created successfully',
+    data: category
+  });
+};
 
-// /**
-//  * Create a new category with optional subcategories
-//  */
-// export const createCategory = async (req: Request, res: Response) => {
-//   const data = createCategorySchema.parse(req.body);
+/**
+ * Update a category
+ */
+export const updateCategory = async (req: Request, res: Response) => {
+  const data = inspectionCategorySchema.parse(req.body);
+  let { id } = req.params;
+  id = sanitizeInput(id);
 
-//   // Check if category already exists (case-insensitive)
-//   const existingCategory = await prismaclient.inspectionCategory.findFirst({
-//     where: {
-//       title: {
-//         equals: data.title,
-//         mode: 'insensitive'
-//       }
-//     }
-//   });
+  // Check if category exists
+  const category = await prismaclient.inspectionCategory.findUnique({
+    where: { id }
+  });
 
-//   if (existingCategory) {
-//     throw new BadRequestError('Category already exists');
-//   }
+  if (!category) {
+    throw new BadRequestError('Category does not exist');
+  }
 
-//   // Create category with subcategories as JSON
-//   const category = await prismaclient.inspectionCategory.create({
-//     data: {
-//       title: data.title,
-//       subCategories: data.subCategories.length > 0 ? data.subCategories : null
-//     }
-//   });
+  // Check if new title conflicts with another category
+  if (data.title.toLowerCase() !== category.title.toLowerCase()) {
+    const titleConflict = await prismaclient.inspectionCategory.findFirst({
+      where: {
+        title: data.title.toLowerCase(),
+        id: { not: id }
+      }
+    });
 
-//   res.status(201).json({
-//     success: true,
-//     message: 'Category created successfully',
-//     data: category
-//   });
-// };
+    if (titleConflict) {
+      throw new BadRequestError('A category with this title already exists');
+    }
+  }
 
-// /**
-//  * Update a category
-//  */
-// export const updateCategory = async (req: Request, res: Response) => {
-//   const data = updateCategorySchema.parse(req.body);
-//   let { id } = req.params;
-//   id = sanitizeInput(id);
+  // Update category
+  const updatedCategory = await prismaclient.inspectionCategory.update({
+    where: { id },
+    data: {
+      title: data.title.toLowerCase()
+    },
+    include: {
+      subCategories: true
+    }
+  });
 
-//   // Check if category exists
-//   const category = await prismaclient.inspectionCategory.findUnique({
-//     where: { id }
-//   });
+  res.status(200).json({
+    success: true,
+    message: 'Category updated successfully',
+    data: updatedCategory
+  });
+};
 
-//   if (!category) {
-//     throw new BadRequestError('Category does not exist');
-//   }
+/**
+ * Delete a category
+ */
+export const deleteCategory = async (req: Request, res: Response) => {
+  let { id } = req.params;
+  id = sanitizeInput(id);
 
-//   // If updating title, check for duplicates
-//   if (data.title) {
-//     const existingCategory = await prismaclient.inspectionCategory.findFirst({
-//       where: {
-//         title: {
-//           equals: data.title,
-//           mode: 'insensitive'
-//         },
-//         NOT: { id }
-//       }
-//     });
+  const category = await prismaclient.inspectionCategory.findUnique({
+    where: { id }
+  });
 
-//     if (existingCategory) {
-//       throw new BadRequestError('A category with this title already exists');
-//     }
-//   }
+  if (!category) {
+    throw new BadRequestError('Category not found');
+  }
 
-//   // Update category
-//   const updatedCategory = await prismaclient.inspectionCategory.update({
-//     where: { id },
-//     data: {
-//       ...(data.title && { title: data.title }),
-//       ...(data.subCategories !== undefined && {
-//         subCategories: data.subCategories.length > 0 ? data.subCategories : null
-//       })
-//     }
-//   });
+  try {
+    // SubCategories will be cascade deleted due to onDelete: Cascade in schema
+    await prismaclient.inspectionCategory.delete({
+      where: { id }
+    });
 
-//   res.status(200).json({
-//     success: true,
-//     message: 'Category updated successfully',
-//     data: updatedCategory
-//   });
-// };
+    res.status(200).json({
+      success: true,
+      message: 'Category deleted successfully'
+    });
+  } catch (error) {
+    throw new BadRequestError(
+      'Cannot delete category. It may be referenced by other records.'
+    );
+  }
+};
 
-// /**
-//  * Delete a category
-//  */
-// export const deleteCategory = async (req: Request, res: Response) => {
-//   let { id } = req.params;
-//   id = sanitizeInput(id);
+// ==================== SUBCATEGORY CONTROLLERS ====================
 
-//   const category = await prismaclient.inspectionCategory.findUnique({
-//     where: { id }
-//   });
+/**
+ * Add a subcategory to an existing category
+ */
+export const addSubCategory = async (req: Request, res: Response) => {
+  const data = subCategoryInspectionSchema.parse(req.body);
+  let { id } = req.params;
+  id = sanitizeInput(id);
 
-//   if (!category) {
-//     throw new BadRequestError('Category not found');
-//   }
+  // Verify the categoryId matches the route param
+  if (data.categoryId !== id) {
+    throw new BadRequestError('Category ID mismatch');
+  }
 
-//   try {
-//     await prismaclient.inspectionCategory.delete({
-//       where: { id }
-//     });
+  // Check if category exists
+  const category = await prismaclient.inspectionCategory.findUnique({
+    where: { id }
+  });
 
-//     res.status(200).json({
-//       success: true,
-//       message: 'Category deleted successfully'
-//     });
-//   } catch (error) {
-//     throw new BadRequestError(
-//       'Cannot delete category. It may be referenced by other records.'
-//     );
-//   }
-// };
+  if (!category) {
+    throw new BadRequestError('Category not found');
+  }
 
-// // ==================== SUBCATEGORY CONTROLLERS ====================
+  // Check if subcategory with same title already exists for this category
+  // The schema has @@unique([categoryId, title])
+  const existingSubCategory = await prismaclient.subCategory.findFirst({
+    where: {
+      categoryId: id,
+      title: data.title
+    }
+  });
 
-// /**
-//  * Add a subcategory to an existing category
-//  */
-// export const addSubCategory = async (req: Request, res: Response) => {
-//   const data = subCategorySchema.parse(req.body);
-//   let { id } = req.params;
-//   id = sanitizeInput(id);
+  if (existingSubCategory) {
+    throw new BadRequestError('A subcategory with this title already exists in this category');
+  }
 
-//   // Get existing category
-//   const category = await prismaclient.inspectionCategory.findUnique({
-//     where: { id }
-//   });
+  // Create the subcategory
+  const subCategory = await prismaclient.subCategory.create({
+    data: {
+      title: data.title,
+      categoryId: id
+    }
+  });
 
-//   if (!category) {
-//     throw new BadRequestError('Category not found');
-//   }
+  // Return updated category with subcategories
+  const updatedCategory = await prismaclient.inspectionCategory.findUnique({
+    where: { id },
+    include: {
+      subCategories: true
+    }
+  });
 
-//   // Get existing subcategories
-//   const existingSubCategories = (category.subCategories as any[]) || [];
+  res.status(201).json({
+    success: true,
+    message: 'Subcategory added successfully',
+    data: updatedCategory
+  });
+};
 
-//   // Check if subcategory already exists
-//   const subCategoryExists = existingSubCategories.some(
-//     (sub: any) => sub.title.toLowerCase() === data.title.toLowerCase()
-//   );
+/**
+ * Update a subcategory
+ */
+export const updateSubCategory = async (req: Request, res: Response) => {
+  const data = subCategoryInspectionSchema.parse(req.body);
+  let { id, subCategoryId } = req.params;
+  id = sanitizeInput(id);
+  const sanitizedSubCategoryId = sanitizeInput(subCategoryId);
 
-//   if (subCategoryExists) {
-//     throw new BadRequestError('Subcategory already exists in this category');
-//   }
+  // Verify the categoryId matches the route param
+  if (data.categoryId !== id) {
+    throw new BadRequestError('Category ID mismatch');
+  }
 
-//   // Add new subcategory
-//   const updatedSubCategories = [...existingSubCategories, data];
+  // Check if subcategory exists and belongs to the category
+  const subCategory = await prismaclient.subCategory.findUnique({
+    where: { id: sanitizedSubCategoryId }
+  });
 
-//   const updatedCategory = await prismaclient.inspectionCategory.update({
-//     where: { id },
-//     data: {
-//       subCategories: updatedSubCategories
-//     }
-//   });
+  if (!subCategory) {
+    throw new BadRequestError('Subcategory not found');
+  }
 
-//   res.status(201).json({
-//     success: true,
-//     message: 'Subcategory added successfully',
-//     data: updatedCategory
-//   });
-// };
+  if (subCategory.categoryId !== id) {
+    throw new BadRequestError('Subcategory does not belong to this category');
+  }
 
-// /**
-//  * Update a subcategory by index
-//  */
-// export const updateSubCategory = async (req: Request, res: Response) => {
-//   const data = subCategorySchema.parse(req.body);
-//   let { id, index } = req.params;
-//   id = sanitizeInput(id);
-//   const subCategoryIndex = parseInt(index);
+  // Check if new title conflicts with other subcategories in same category
+  if (subCategory.title !== data.title) {
+    const titleConflict = await prismaclient.subCategory.findFirst({
+      where: {
+        categoryId: id,
+        title: data.title,
+        id: { not: sanitizedSubCategoryId }
+      }
+    });
 
-//   if (isNaN(subCategoryIndex) || subCategoryIndex < 0) {
-//     throw new BadRequestError('Invalid subcategory index');
-//   }
+    if (titleConflict) {
+      throw new BadRequestError('A subcategory with this title already exists in this category');
+    }
+  }
 
-//   // Get existing category
-//   const category = await prismaclient.inspectionCategory.findUnique({
-//     where: { id }
-//   });
+  // Update subcategory
+  await prismaclient.subCategory.update({
+    where: { id: sanitizedSubCategoryId },
+    data: {
+      title: data.title
+    }
+  });
 
-//   if (!category) {
-//     throw new BadRequestError('Category not found');
-//   }
+  // Return updated category with subcategories
+  const updatedCategory = await prismaclient.inspectionCategory.findUnique({
+    where: { id },
+    include: {
+      subCategories: true
+    }
+  });
 
-//   const existingSubCategories = (category.subCategories as any[]) || [];
+  res.status(200).json({
+    success: true,
+    message: 'Subcategory updated successfully',
+    data: updatedCategory
+  });
+};
 
-//   if (subCategoryIndex >= existingSubCategories.length) {
-//     throw new BadRequestError('Subcategory not found');
-//   }
+/**
+ * Delete a subcategory
+ */
+export const deleteSubCategory = async (req: Request, res: Response) => {
+  let { id, subCategoryId } = req.params;
+  id = sanitizeInput(id);
+  const sanitizedSubCategoryId = sanitizeInput(subCategoryId);
 
-//   // Check if new title conflicts with other subcategories
-//   const titleConflict = existingSubCategories.some(
-//     (sub: any, idx: number) =>
-//       idx !== subCategoryIndex &&
-//       sub.title.toLowerCase() === data.title.toLowerCase()
-//   );
+  // Check if subcategory exists and belongs to the category
+  const subCategory = await prismaclient.subCategory.findUnique({
+    where: { id: sanitizedSubCategoryId }
+  });
 
-//   if (titleConflict) {
-//     throw new BadRequestError('A subcategory with this title already exists');
-//   }
+  if (!subCategory) {
+    throw new BadRequestError('Subcategory not found');
+  }
 
-//   // Update subcategory
-//   existingSubCategories[subCategoryIndex] = data;
+  if (subCategory.categoryId !== id) {
+    throw new BadRequestError('Subcategory does not belong to this category');
+  }
 
-//   const updatedCategory = await prismaclient.inspectionCategory.update({
-//     where: { id },
-//     data: {
-//       subCategories: existingSubCategories
-//     }
-//   });
+  try {
+    await prismaclient.subCategory.delete({
+      where: { id: sanitizedSubCategoryId }
+    });
 
-//   res.status(200).json({
-//     success: true,
-//     message: 'Subcategory updated successfully',
-//     data: updatedCategory
-//   });
-// };
+    // Return updated category with subcategories
+    const updatedCategory = await prismaclient.inspectionCategory.findUnique({
+      where: { id },
+      include: {
+        subCategories: true
+      }
+    });
 
-// /**
-//  * Delete a subcategory by index
-//  */
-// export const deleteSubCategory = async (req: Request, res: Response) => {
-//   let { id, index } = req.params;
-//   id = sanitizeInput(id);
-//   const subCategoryIndex = parseInt(index);
-
-//   if (isNaN(subCategoryIndex) || subCategoryIndex < 0) {
-//     throw new BadRequestError('Invalid subcategory index');
-//   }
-
-//   // Get existing category
-//   const category = await prismaclient.inspectionCategory.findUnique({
-//     where: { id }
-//   });
-
-//   if (!category) {
-//     throw new BadRequestError('Category not found');
-//   }
-
-//   const existingSubCategories = (category.subCategories as any[]) || [];
-
-//   if (subCategoryIndex >= existingSubCategories.length) {
-//     throw new BadRequestError('Subcategory not found');
-//   }
-
-//   // Remove subcategory
-//   existingSubCategories.splice(subCategoryIndex, 1);
-
-//   const updatedCategory = await prismaclient.inspectionCategory.update({
-//     where: { id },
-//     data: {
-//       subCategories: existingSubCategories.length > 0 ? existingSubCategories : null
-//     }
-//   });
-
-//   res.status(200).json({
-//     success: true,
-//     message: 'Subcategory deleted successfully',
-//     data: updatedCategory
-//   });
-// };
+    res.status(200).json({
+      success: true,
+      message: 'Subcategory deleted successfully',
+      data: updatedCategory
+    });
+  } catch (error) {
+    throw new BadRequestError(
+      'Cannot delete subcategory. It may be referenced by other records.'
+    );
+  }
+};

@@ -1,7 +1,7 @@
 import express from "express";
 import { authMiddleware } from "../middlewares/authMiddleware";
 import upload from "../services/multerService";
-import { OPERATOR_FIELDS } from "../validator/uploadsValidator";
+import { OPERATOR_FIELDS } from "../schema/uploadsSchema";
 import {
   createOperator,
   deleteOperator,

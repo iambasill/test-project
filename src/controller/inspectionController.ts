@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
 import { BadRequestError, notFoundError } from "../logger/exceptions";
-import { CreateInspectionSchema } from "../validator/authValidator";
 import { prismaclient } from "../lib/prisma-connect";
 import { sanitizeInput } from "../utils/helperFunction";
 import { User, InspectionItem } from "../generated/prisma";
 import { getFileUrls } from "../utils/fileHandler";
+import { CreateInspectionSchema } from "../schema/inspectionSchema";
 
 /**
  * Create an inspection (with idempotency)

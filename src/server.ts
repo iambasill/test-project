@@ -47,7 +47,7 @@ const limiter = rateLimit({
   skip: (req) => req.method === "OPTIONS"
 });
 
-app.use('/api', limiter);
+// app.use('/api', limiter);
 
 // ----------------------
 //  SPEED THROTTLE PER USER/IP
@@ -66,7 +66,7 @@ const throttle = slowDown({
   skip: (req) => req.method === "OPTIONS"
 });
 
-app.use('/api', throttle);
+// app.use('/api', throttle);
 
 // ----------------------
 // Logger

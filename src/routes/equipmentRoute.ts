@@ -1,7 +1,7 @@
 import express from "express";
 import upload from "../services/multerService";
 import { authMiddleware } from "../middlewares/authMiddleware";
-import { UPLOAD_FIELDS } from "../validator/uploadsValidator";
+import { UPLOAD_FIELDS } from "../schema/uploadsSchema";
 import {
   createEquipment,
   createEquipmentOwnership,

@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { BadRequestError, unAuthorizedError } from "../logger/exceptions";
-import { CreateEquipmentOwnershipSchema, equipmentData, UpdateEquipmentOwnershipSchema } from "../validator/authValidator";
+import { CreateEquipmentOwnershipSchema,equipmentData, UpdateEquipmentOwnershipSchema } from "../schema/euipmentSchema";
 import { sanitizeInput } from "../utils/helperFunction";
 import { getFileUrls } from "../utils/fileHandler";
 import { prismaclient } from "../lib/prisma-connect";

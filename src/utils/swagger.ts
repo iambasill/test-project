@@ -26,11 +26,16 @@ const options: swaggerJSDoc.Options = {
     },
     security: [{ BearerAuth: [] }],
   },
-  apis: [path.join(__dirname, '../routes/*.ts'), path.join(__dirname, '../controller/*.ts')],
-
+ apis: [
+      path.resolve(__dirname, '../routes/*.{ts,js}'),
+      path.resolve(__dirname, '../controller/*.{ts,js}')
+    ]
 };
 
 const swaggerSpec = swaggerJSDoc(options);
+
+console.log('Swagger paths:', (swaggerSpec as any).paths);
+
 
 function setupSwaggerDocs(app: Express) {
     app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
@@ -41,4 +46,7 @@ function setupSwaggerDocs(app: Express) {
         res.send(swaggerSpec);
     });
 }
+
 export default setupSwaggerDocs;
+
+

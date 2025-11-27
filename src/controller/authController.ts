@@ -1,6 +1,6 @@
 import express, { Request, Response, NextFunction } from "express";
 import { BadRequestError, unAuthorizedError } from "../logger/exceptions";
-import { signUpSchema, loginSchema, emailSchema, changePasswordSchema, userIdSchema, tokenSchema } from "../validator/authValidator";
+import { signUpSchema, loginSchema, emailSchema, changePasswordSchema, userIdSchema, tokenSchema } from "../schema/authSchema";
 import bcrypt from 'bcrypt';
 import { checkUser, generateLoginToken, generateToken, generateUserSession, genrateRandomPassword, manageAdminSession, verifyToken } from "../utils/helperFunction";
 import { sendVerificationEmail } from "../services/emailService";
