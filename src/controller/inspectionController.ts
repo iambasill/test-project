@@ -257,8 +257,8 @@ export const getAllInspectionByEquipmentId = async (req: Request, res: Response)
         select: {
           id: true,
           equipmentName: true,
-          equipmentType: true,
-          equipmentMake: true,
+          vehicleMake: true,
+          vehicleType: true,
           chasisNumber: true,
           model: true,
           yearOfManufacture: true,
@@ -396,8 +396,8 @@ export const getAllInspection = async (req: Request, res: Response) => {
         select: {
           id: true,
           equipmentName: true,
-          equipmentType: true,
-          equipmentMake: true,
+          vehicleType: true,
+          vehicleMake: true,
           chasisNumber: true,
           model: true,
           yearOfManufacture: true,
