@@ -19,6 +19,7 @@ export const CreateInspectionSchema = sanitizeObject(z.object({
   equipmentId: z.string(),
   generalNotes: z.string().optional().nullable(),
   overallCondition: z.enum(status),
+  nextDueDate: z.string().optional(),
   items: z.array(InspectionItemSchema).min(1, 'At least one inspection item is required')
 }));
 
@@ -81,6 +82,8 @@ export const inspectionCategorySchema = sanitizeObject(z.object({
  *           type: string
  *           description: Overall condition of the equipment
  *           enum: ["S","O","A","B","C"]
+ *          nextDueDate:
+ *           type:string
  *         items:
  *           type: array
  *           description: List of individual inspection items

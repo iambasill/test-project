@@ -233,6 +233,7 @@ model Inspection {
   datePerformed    DateTime @default(now())
   overallCondition String   // S O A B C
   generalNotes     String?  @db.Text
+  nextDueDate      String?
   
   // Relations
   equipment Equipment? @relation(fields: [equipmentId], references: [id])

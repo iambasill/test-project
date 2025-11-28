@@ -39,22 +39,7 @@ export const QuerySchema = sanitizeObject(z.object({
   isCurrent: z.string().transform(val => val === 'true').pipe(z.boolean()).optional(),
 }));
 
-export const operatorSchema = sanitizeObject(z.object({
-    email: z.string(),         
-    firstName: z.string(),            
-    lastName: z.string(),             
-    serviceNumber: z.string(),         
-    rank: z.string(),                  
-    branch: z.string().optional(),            
-    position: z.string().optional(),              
-    identificationType: z.string().optional(), 
-    officialEmailAddress : z.string().optional(),  
-    phoneNumber : z.string().optional(),        
-    alternatePhoneNumber1: z.string().optional(),  
-    alternatePhoneNumber2 : z.string().optional(), 
-    alternatePhoneNumber3: z.string().optional(),
 
-}));
 
 export const tokenSchema= sanitizeObject(z.object({
     refreshToken:z.string()

@@ -26,7 +26,7 @@ export const createInspection = async (req: Request, res: Response) => {
   }
 
 
-  const { equipmentId, generalNotes, overallCondition, items } =
+  const { equipmentId, generalNotes, overallCondition, items, nextDueDate } =
     CreateInspectionSchema.parse(rawData);
 
   // Check idempotency
@@ -62,6 +62,7 @@ export const createInspection = async (req: Request, res: Response) => {
         inspector: { connect: { id: user.id } },
         generalNotes,
         overallCondition,
+        nextDueDate
       },
     });
 

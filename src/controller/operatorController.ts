@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { BadRequestError, unAuthorizedError } from "../logger/exceptions";
 import { sanitizeInput } from "../utils/helperFunction";
-import { operatorSchema } from "../schema/authSchema";
+import { operatorSchema } from "../schema/operatorSchema";
 import { getFileUrls } from "../utils/fileHandler";
 import { prismaclient } from "../lib/prisma-connect";
 import { User } from "../generated/prisma";
