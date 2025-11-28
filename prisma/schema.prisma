@@ -148,8 +148,8 @@ model Operator {
     email                 String @unique
     firstName             String
     lastName              String
-    serviceNumber         String @unique
-    rank                  String
+    serviceNumber         String? @unique
+    rank                  String?
     branch                String?
     position              String?
     identificationType    String?

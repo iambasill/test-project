@@ -8,8 +8,8 @@ export const operatorSchema = sanitizeObject(z.object({
     email: z.string(),         
     firstName: z.string(),            
     lastName: z.string(),             
-    serviceNumber: z.string(),         
-    rank: z.string(),                  
+    serviceNumber: z.string().optional(),         
+    rank: z.string().optional(),                  
     branch: z.string().optional(),            
     position: z.string().optional(),              
     identificationType: z.string().optional(), 
@@ -30,8 +30,8 @@ export const operatorSchema = sanitizeObject(z.object({
  *         - email
  *         - firstName
  *         - lastName
- *         - serviceNumber
- *         - rank
+ *         
+ *         
  *       properties:
  *         id:
  *           type: string
@@ -67,7 +67,7 @@ export const operatorSchema = sanitizeObject(z.object({
  *         officialEmailAddress:
  *           type: string
  *           format: email
- *           nullable: true
+ *           
  *           description: Official email address
  *         phoneNumber:
  *           type: string
