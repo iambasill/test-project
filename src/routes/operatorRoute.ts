@@ -141,8 +141,6 @@ operatorRouter.put("/:id", authMiddleware, upload.fields(OPERATOR_FIELDS), updat
  *               - email
  *               - firstName
  *               - lastName
- *               - serviceNumber
- *               - rank
  *             properties:
  *               email:
  *                 type: string
@@ -313,8 +311,6 @@ operatorRouter.put("/:id", authMiddleware, upload.fields(OPERATOR_FIELDS), updat
  *               - email
  *               - firstName
  *               - lastName
- *               - serviceNumber
- *               - rank
  *             properties:
  *               email:
  *                 type: string
