@@ -471,7 +471,7 @@ equipmentRouter.put("/:id", authMiddleware, upload.fields(UPLOAD_FIELDS), update
  *         description: Invalid input
  *       401:
  *         description: Unauthorized
-        404:
+*      404:
  *         description: Not found
  *       500:
  *         description: Internal Server Error
