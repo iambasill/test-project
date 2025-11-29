@@ -9,22 +9,22 @@ import {
   updateSubCategory,
   deleteSubCategory
 } from '../controller/categoryController';
-import { requireAdmins } from '../middlewares/rbacMiddleware';
+import { requireAdmins, requireOfficers } from '../middlewares/rbacMiddleware';
 import { authMiddleware } from '../middlewares/authMiddleware';
 
 export const categoryRouter = express.Router();
-
+requireOfficers
 // Category routes
-categoryRouter.get('/', authMiddleware, requireAdmins, getAllCategory);
-categoryRouter.get('/:id', authMiddleware, requireAdmins, getCategoryById);
-categoryRouter.post('/', authMiddleware, requireAdmins, createCategory);
-categoryRouter.put('/:id', authMiddleware, requireAdmins, updateCategory);
-categoryRouter.delete('/:id', authMiddleware, requireAdmins, deleteCategory);
+categoryRouter.get('/', authMiddleware,requireOfficers, getAllCategory);
+categoryRouter.get('/:id', authMiddleware, requireOfficers, getCategoryById);
+categoryRouter.post('/', authMiddleware, requireOfficers, createCategory);
+categoryRouter.put('/:id', authMiddleware, requireOfficers, updateCategory);
+categoryRouter.delete('/:id', authMiddleware, requireOfficers, deleteCategory);
 
 // Subcategory routes
-categoryRouter.post('/:id/subcategories', authMiddleware, requireAdmins, addSubCategory);
-categoryRouter.put('/:id/subcategories/:subCategoryId', authMiddleware, requireAdmins, updateSubCategory);
-categoryRouter.delete('/:id/subcategories/:subCategoryId', authMiddleware, requireAdmins, deleteSubCategory);
+categoryRouter.post('/:id/subcategories', authMiddleware, requireOfficers, addSubCategory);
+categoryRouter.put('/:id/subcategories/:subCategoryId', authMiddleware, requireOfficers, updateSubCategory);
+categoryRouter.delete('/:id/subcategories/:subCategoryId', authMiddleware, requireOfficers, deleteSubCategory);
 
 
 

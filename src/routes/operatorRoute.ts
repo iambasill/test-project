@@ -10,19 +10,20 @@ import {
   updateOperator,
   getOperatorEquipmentHistory,
 } from "../controller/operatorController";
+import { requireManagers } from "../middlewares/rbacMiddleware";
 
 export const operatorRouter = express.Router();
 
 // Base routes - GET with queries/pagination
-operatorRouter.get("/", authMiddleware, getOperators);
-operatorRouter.post("/", authMiddleware, upload.fields(OPERATOR_FIELDS), createOperator);
+operatorRouter.get("/", authMiddleware, requireManagers, getOperators);
+operatorRouter.post("/", authMiddleware, requireManagers, upload.fields(OPERATOR_FIELDS), createOperator);
 
 // Equipment history for specific operator (must be before /:id to avoid route conflicts)
-operatorRouter.get("/:id/equipment-history", authMiddleware, getOperatorEquipmentHistory);
+operatorRouter.get("/:id/equipment-history", requireManagers, authMiddleware, getOperatorEquipmentHistory);
 
 // Specific operator routes
-operatorRouter.get("/:id", authMiddleware, getOperatorById);
-operatorRouter.put("/:id", authMiddleware, upload.fields(OPERATOR_FIELDS), updateOperator);
+operatorRouter.get("/:id", authMiddleware,requireManagers, getOperatorById);
+operatorRouter.put("/:id", authMiddleware, requireManagers,upload.fields(OPERATOR_FIELDS), updateOperator);
 // operatorRouter.delete("/:id", authMiddleware, deleteOperator);
 
 /**

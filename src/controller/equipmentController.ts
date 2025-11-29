@@ -168,15 +168,16 @@ export const getEquipmentById = async (req: Request, res: Response) => {
 export const createEquipment = async (req: Request, res: Response) => {
   const user = req.user as User;
   const data = equipmentData.parse(req.body);
-  const idempotencyKey = req.headers["idempotency-key"] as string;
+  const IdempotencyKey = req.IdempotencyKey as string;
+  
 
   // If idempotency key is provided, check for existing equipment
-  if (idempotencyKey) {
+  if (IdempotencyKey) {
     const existingEquipment = await prismaclient.equipment.findFirst({
       where: {
         OR: [
           { chasisNumber: data.chasisNumber },
-          { idempotency_tracker: { some: { key: idempotencyKey } } }, 
+          { idempotency_tracker: { some: { key: IdempotencyKey } } }, 
         ],
       },
     });
@@ -235,10 +236,10 @@ export const createEquipment = async (req: Request, res: Response) => {
     }
 
     // Create idempotency tracker if key provided
-    if (idempotencyKey) {
+    if (IdempotencyKey) {
       await tx.idempotency_tracker.create({
         data: {
-          key: idempotencyKey,
+          key: IdempotencyKey,
           equipment_id: equipment.id
         },
       });

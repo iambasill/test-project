@@ -27,6 +27,7 @@ export const requireRoles = (allowedRoles: string[]) => {
  */
 export const requirePlatformAdmin = requireRoles(['PLATADMIN']);
 export const requireAdmins = requireRoles(['PLATADMIN', 'ADMIN']);
-export const requireAuditors = requireRoles(['PLATADMIN', 'AUDITOR', 'ADMIN']);
-export const requireManagers = requireRoles(['PLATADMIN', 'MANAGER','AUDITOR', 'ADMIN']);
-export const requireOperators = requireRoles(['PLATADMIN', 'ADMIN', 'MANAGER', 'OPERATOR']);
+export const requireAuditors = requireRoles(['PLATADMIN',  'ADMIN',  'AUDITOR', ]);
+export const requireManagers = requireRoles(['PLATADMIN', 'ADMIN','AUDITOR', 'MANAGER']);
+export const requireOfficers = requireRoles(['PLATADMIN', 'ADMIN', 'AUDITOR', 'OFFICER']);
+

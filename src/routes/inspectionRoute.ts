@@ -4,15 +4,15 @@ import { createInspection, getAllInspection, getAllInspectionByEquipmentId } fro
 import { authMiddleware } from "../middlewares/authMiddleware";
 import { INSPECTION_FIELDS } from "../schema/uploadsSchema";
 import { requireIdempotencyKey } from "../middlewares/idempotencyKeyMiddleware";
-import { requireManagers } from "../middlewares/rbacMiddleware";
+import { requireManagers, requireOfficers } from "../middlewares/rbacMiddleware";
 import { categoryRouter } from "./inspectionCategoryRoute";
 
 export const inspectionRouter = express.Router();
 
 inspectionRouter.use('/category', categoryRouter)
-inspectionRouter.get('/equipment/:id', authMiddleware, getAllInspectionByEquipmentId);
-inspectionRouter.get('/', authMiddleware, requireManagers, getAllInspection);
-inspectionRouter.post('/', authMiddleware, requireIdempotencyKey, upload.fields(INSPECTION_FIELDS), createInspection);
+inspectionRouter.get('/equipment/:id', authMiddleware, requireOfficers, getAllInspectionByEquipmentId);
+inspectionRouter.get('/', authMiddleware, requireManagers,requireOfficers, getAllInspection);
+inspectionRouter.post('/', authMiddleware, requireOfficers, requireIdempotencyKey, upload.fields(INSPECTION_FIELDS), createInspection);
 // inspectionRouter.delete('/:id',authMiddleware,requirePlatformAdmin,deleteInspection)
 
 /**

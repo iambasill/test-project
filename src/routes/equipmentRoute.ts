@@ -13,25 +13,27 @@ import {
   getEquipmentCategories,
   unassignEquipmentOwnership,
 } from "../controller/equipmentController";
+import {  requireManagers } from "../middlewares/rbacMiddleware";
+import { requireIdempotencyKey } from "../middlewares/idempotencyKeyMiddleware";
 
 export const equipmentRouter = express.Router();
 
 // Category route (before :id to avoid conflicts)
-equipmentRouter.get("/category", authMiddleware, getEquipmentCategories);
+equipmentRouter.get("/category",authMiddleware, requireManagers, getEquipmentCategories);
 
 // Base equipment routes
 equipmentRouter.get("/", authMiddleware, getEquipmentController);
-equipmentRouter.post("/", authMiddleware, upload.fields(UPLOAD_FIELDS), createEquipment);
+equipmentRouter.post("/",authMiddleware, requireManagers, requireIdempotencyKey, upload.fields(UPLOAD_FIELDS), createEquipment);
 
 // Ownership routes
-equipmentRouter.get("/ownership/:id", authMiddleware, getEquipmentOwnerships);
-equipmentRouter.post("/ownership", authMiddleware, upload.any(UPLOAD_FIELDS), createEquipmentOwnership);
-equipmentRouter.delete("/:equipmentId/unassign/:operatorId", authMiddleware, unassignEquipmentOwnership);
-equipmentRouter.put("/ownership/:ownershipId", authMiddleware, upload.any(UPLOAD_FIELDS), updateEquipmentOwnerships);
+equipmentRouter.get("/ownership/:id",authMiddleware, requireManagers, getEquipmentOwnerships);
+equipmentRouter.post("/ownership",authMiddleware, requireManagers, upload.any(UPLOAD_FIELDS), createEquipmentOwnership);
+equipmentRouter.delete("/:equipmentId/unassign/:operatorId",authMiddleware, requireManagers, unassignEquipmentOwnership);
+equipmentRouter.put("/ownership/:ownershipId", authMiddleware,requireManagers, upload.any(UPLOAD_FIELDS), updateEquipmentOwnerships);
 
-// Specific equipment routes (must be last to avoid conflicts with /category and /ownership)
+
 equipmentRouter.get("/:id", authMiddleware, getEquipmentById);
-equipmentRouter.put("/:id", authMiddleware, upload.fields(UPLOAD_FIELDS), updateEquipment);
+equipmentRouter.put("/:id",authMiddleware, requireManagers, upload.fields(UPLOAD_FIELDS), updateEquipment);
 
 /**
  * @openapi
@@ -156,6 +158,8 @@ equipmentRouter.put("/:id", authMiddleware, upload.fields(UPLOAD_FIELDS), update
  *     tags: [Equipment]
  *     security:
  *       - BearerAuth: []
+ *     requestHeader:
+ *     IdempotencyKey: required
  *     requestBody:
  *       required: true
  *       content:
