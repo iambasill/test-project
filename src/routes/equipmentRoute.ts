@@ -441,20 +441,27 @@ equipmentRouter.put("/:id", authMiddleware, upload.fields(UPLOAD_FIELDS), update
  *         description: Internal Server Error
  */
 
-
 /**
  * @openapi
- * /equipment/{equipmentId}/unassign/{operatorID}:
- *   DELETE:
+ * /equipment/{equipmentId}/unassign/{operatorId}:
+ *   delete:
  *     summary: Unassign equipment ownership
+ *     tags: [Equipment]
  *     security:
  *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: equipmentId
  *         required: true
+ *         schema:
+ *           type: string
+ *         description: Equipment ID
+ *       - in: path
  *         name: operatorId
  *         required: true
+ *         schema:
+ *           type: string
+ *         description: Operator ID
  *     responses:
  *       200:
  *         description: Ownership removed successfully
@@ -471,9 +478,8 @@ equipmentRouter.put("/:id", authMiddleware, upload.fields(UPLOAD_FIELDS), update
  *         description: Invalid input
  *       401:
  *         description: Unauthorized
-*      404:
+ *       404:
  *         description: Not found
  *       500:
  *         description: Internal Server Error
  */
-
