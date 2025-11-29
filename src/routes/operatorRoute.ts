@@ -19,11 +19,11 @@ operatorRouter.get("/", authMiddleware, requireManagers, getOperators);
 operatorRouter.post("/", authMiddleware, requireManagers, upload.fields(OPERATOR_FIELDS), createOperator);
 
 // Equipment history for specific operator (must be before /:id to avoid route conflicts)
-operatorRouter.get("/:id/equipment-history", requireManagers, authMiddleware, getOperatorEquipmentHistory);
+operatorRouter.get("/:id/equipment-history", authMiddleware, requireManagers, getOperatorEquipmentHistory);
 
 // Specific operator routes
-operatorRouter.get("/:id", authMiddleware,requireManagers, getOperatorById);
-operatorRouter.put("/:id", authMiddleware, requireManagers,upload.fields(OPERATOR_FIELDS), updateOperator);
+operatorRouter.get("/:id", authMiddleware, requireManagers, getOperatorById);
+operatorRouter.put("/:id", authMiddleware, requireManagers, upload.fields(OPERATOR_FIELDS), updateOperator);
 // operatorRouter.delete("/:id", authMiddleware, deleteOperator);
 
 /**
@@ -38,6 +38,10 @@ operatorRouter.put("/:id", authMiddleware, requireManagers,upload.fields(OPERATO
  * /operators:
  *   get:
  *     summary: Get all operators with filtering and pagination
+ *     description: |
+ *       Retrieves a paginated list of operators with advanced filtering and sorting options.
+ *       
+ *       **Required Roles:** PLATADMIN, ADMIN, AUDITOR, MANAGER
  *     tags: [Operators]
  *     security:
  *       - BearerAuth: []
@@ -120,6 +124,8 @@ operatorRouter.put("/:id", authMiddleware, requireManagers,upload.fields(OPERATO
  *                       type: integer
  *       401:
  *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Requires PLATADMIN, ADMIN, AUDITOR, or MANAGER role
  *       500:
  *         description: Internal Server Error
  */
@@ -129,6 +135,10 @@ operatorRouter.put("/:id", authMiddleware, requireManagers,upload.fields(OPERATO
  * /operators:
  *   post:
  *     summary: Create a new operator
+ *     description: |
+ *       Creates a new operator record with optional document uploads.
+ *       
+ *       **Required Roles:** PLATADMIN, ADMIN, AUDITOR, MANAGER
  *     tags: [Operators]
  *     security:
  *       - BearerAuth: []
@@ -147,39 +157,49 @@ operatorRouter.put("/:id", authMiddleware, requireManagers,upload.fields(OPERATO
  *                 type: string
  *                 format: email
  *                 description: Operator's email address
+ *                 example: operator@example.com
  *               firstName:
  *                 type: string
  *                 description: Operator's first name
+ *                 example: John
  *               lastName:
  *                 type: string
  *                 description: Operator's last name
+ *                 example: Doe
  *               serviceNumber:
  *                 type: string
  *                 description: Unique service number
+ *                 example: SN123456
  *               rank:
  *                 type: string
  *                 description: Military rank
+ *                 example: Captain
  *               branch:
  *                 type: string
  *                 nullable: true
  *                 description: Military branch
+ *                 example: Army
  *               position:
  *                 type: string
  *                 nullable: true
  *                 description: Current position
+ *                 example: Unit Commander
  *               identificationType:
  *                 type: string
  *                 nullable: true
  *                 description: Type of identification
+ *                 example: Military ID
  *               officialEmailAddress:
  *                 type: string
  *                 format: email
  *                 nullable: true
  *                 description: Official email address
+ *                 example: john.doe@military.gov
  *               phoneNumber:
  *                 type: string
  *                 nullable: true
  *                 description: Primary phone number
+ *                 example: "+1234567890"
  *               alternatePhoneNumber1:
  *                 type: string
  *                 nullable: true
@@ -248,6 +268,8 @@ operatorRouter.put("/:id", authMiddleware, requireManagers,upload.fields(OPERATO
  *         description: Bad Request - Duplicate service number or email
  *       401:
  *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Requires PLATADMIN, ADMIN, AUDITOR, or MANAGER role
  *       500:
  *         description: Internal Server Error
  */
@@ -257,6 +279,10 @@ operatorRouter.put("/:id", authMiddleware, requireManagers,upload.fields(OPERATO
  * /operators/{id}:
  *   get:
  *     summary: Get operator by ID
+ *     description: |
+ *       Retrieves detailed information about a specific operator including their current equipment assignments.
+ *       
+ *       **Required Roles:** PLATADMIN, ADMIN, AUDITOR, MANAGER
  *     tags: [Operators]
  *     security:
  *       - BearerAuth: []
@@ -266,7 +292,9 @@ operatorRouter.put("/:id", authMiddleware, requireManagers,upload.fields(OPERATO
  *         required: true
  *         schema:
  *           type: string
+ *           format: uuid
  *         description: Operator ID
+ *         example: 550e8400-e29b-41d4-a716-446655440000
  *     responses:
  *       200:
  *         description: Operator details
@@ -283,6 +311,10 @@ operatorRouter.put("/:id", authMiddleware, requireManagers,upload.fields(OPERATO
  *         description: Operator not found
  *       401:
  *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Requires PLATADMIN, ADMIN, AUDITOR, or MANAGER role
+ *       404:
+ *         description: Operator not found
  *       500:
  *         description: Internal Server Error
  */
@@ -292,6 +324,10 @@ operatorRouter.put("/:id", authMiddleware, requireManagers,upload.fields(OPERATO
  * /operators/{id}:
  *   put:
  *     summary: Update operator
+ *     description: |
+ *       Updates an existing operator record. Can update personal information and documents.
+ *       
+ *       **Required Roles:** PLATADMIN, ADMIN, AUDITOR, MANAGER
  *     tags: [Operators]
  *     security:
  *       - BearerAuth: []
@@ -301,7 +337,9 @@ operatorRouter.put("/:id", authMiddleware, requireManagers,upload.fields(OPERATO
  *         required: true
  *         schema:
  *           type: string
+ *           format: uuid
  *         description: Operator ID
+ *         example: 550e8400-e29b-41d4-a716-446655440000
  *     requestBody:
  *       required: true
  *       content:
@@ -316,30 +354,40 @@ operatorRouter.put("/:id", authMiddleware, requireManagers,upload.fields(OPERATO
  *               email:
  *                 type: string
  *                 format: email
+ *                 example: operator@example.com
  *               firstName:
  *                 type: string
+ *                 example: John
  *               lastName:
  *                 type: string
+ *                 example: Doe
  *               serviceNumber:
  *                 type: string
+ *                 example: SN123456
  *               rank:
  *                 type: string
+ *                 example: Captain
  *               branch:
  *                 type: string
  *                 nullable: true
+ *                 example: Army
  *               position:
  *                 type: string
  *                 nullable: true
+ *                 example: Unit Commander
  *               identificationType:
  *                 type: string
  *                 nullable: true
+ *                 example: Military ID
  *               officialEmailAddress:
  *                 type: string
  *                 format: email
  *                 nullable: true
+ *                 example: john.doe@military.gov
  *               phoneNumber:
  *                 type: string
  *                 nullable: true
+ *                 example: "+1234567890"
  *               alternatePhoneNumber1:
  *                 type: string
  *                 nullable: true
@@ -397,6 +445,10 @@ operatorRouter.put("/:id", authMiddleware, requireManagers,upload.fields(OPERATO
  *         description: Bad Request - Operator not found or duplicate data
  *       401:
  *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Requires PLATADMIN, ADMIN, AUDITOR, or MANAGER role
+ *       404:
+ *         description: Operator not found
  *       500:
  *         description: Internal Server Error
  */
@@ -406,6 +458,10 @@ operatorRouter.put("/:id", authMiddleware, requireManagers,upload.fields(OPERATO
  * /operators/{id}/equipment-history:
  *   get:
  *     summary: Get equipment history for an operator
+ *     description: |
+ *       Retrieves the complete equipment assignment history for a specific operator, including current and past assignments.
+ *       
+ *       **Required Roles:** PLATADMIN, ADMIN, AUDITOR, MANAGER
  *     tags: [Operators]
  *     security:
  *       - BearerAuth: []
@@ -415,7 +471,27 @@ operatorRouter.put("/:id", authMiddleware, requireManagers,upload.fields(OPERATO
  *         required: true
  *         schema:
  *           type: string
+ *           format: uuid
  *         description: Operator ID
+ *         example: 550e8400-e29b-41d4-a716-446655440000
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Number of items per page
+ *       - in: query
+ *         name: isCurrent
+ *         schema:
+ *           type: string
+ *           enum: ["true", "false"]
+ *         description: Filter by current ownership status
  *     responses:
  *       200:
  *         description: Equipment assignment history
@@ -430,10 +506,25 @@ operatorRouter.put("/:id", authMiddleware, requireManagers,upload.fields(OPERATO
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/EquipmentOwnership'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *                     total:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
  *       400:
  *         description: Operator not found
  *       401:
  *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Requires PLATADMIN, ADMIN, AUDITOR, or MANAGER role
+ *       404:
+ *         description: Operator not found
  *       500:
  *         description: Internal Server Error
  */

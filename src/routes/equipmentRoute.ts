@@ -13,27 +13,26 @@ import {
   getEquipmentCategories,
   unassignEquipmentOwnership,
 } from "../controller/equipmentController";
-import {  requireManagers } from "../middlewares/rbacMiddleware";
+import { requireManagers } from "../middlewares/rbacMiddleware";
 import { requireIdempotencyKey } from "../middlewares/idempotencyKeyMiddleware";
 
 export const equipmentRouter = express.Router();
 
 // Category route (before :id to avoid conflicts)
-equipmentRouter.get("/category",authMiddleware, requireManagers, getEquipmentCategories);
+equipmentRouter.get("/category", authMiddleware, requireManagers, getEquipmentCategories);
 
 // Base equipment routes
 equipmentRouter.get("/", authMiddleware, getEquipmentController);
-equipmentRouter.post("/",authMiddleware, requireManagers, requireIdempotencyKey, upload.fields(UPLOAD_FIELDS), createEquipment);
+equipmentRouter.post("/", authMiddleware, requireManagers, requireIdempotencyKey, upload.fields(UPLOAD_FIELDS), createEquipment);
 
 // Ownership routes
-equipmentRouter.get("/ownership/:id",authMiddleware, requireManagers, getEquipmentOwnerships);
-equipmentRouter.post("/ownership",authMiddleware, requireManagers, upload.any(UPLOAD_FIELDS), createEquipmentOwnership);
-equipmentRouter.delete("/:equipmentId/unassign/:operatorId",authMiddleware, requireManagers, unassignEquipmentOwnership);
-equipmentRouter.put("/ownership/:ownershipId", authMiddleware,requireManagers, upload.any(UPLOAD_FIELDS), updateEquipmentOwnerships);
-
+equipmentRouter.get("/ownership/:id", authMiddleware, requireManagers, getEquipmentOwnerships);
+equipmentRouter.post("/ownership", authMiddleware, requireManagers, upload.any(UPLOAD_FIELDS), createEquipmentOwnership);
+equipmentRouter.delete("/:equipmentId/unassign/:operatorId", authMiddleware, requireManagers, unassignEquipmentOwnership);
+equipmentRouter.put("/ownership/:ownershipId", authMiddleware, requireManagers, upload.any(UPLOAD_FIELDS), updateEquipmentOwnerships);
 
 equipmentRouter.get("/:id", authMiddleware, getEquipmentById);
-equipmentRouter.put("/:id",authMiddleware, requireManagers, upload.fields(UPLOAD_FIELDS), updateEquipment);
+equipmentRouter.put("/:id", authMiddleware, requireManagers, upload.fields(UPLOAD_FIELDS), updateEquipment);
 
 /**
  * @openapi
@@ -47,6 +46,7 @@ equipmentRouter.put("/:id",authMiddleware, requireManagers, upload.fields(UPLOAD
  * /equipment:
  *   get:
  *     summary: Get all equipment with pagination and filters
+ *     description: Retrieves a paginated list of equipment with optional filtering. Accessible to all authenticated users.
  *     tags: [Equipment]
  *     security:
  *       - BearerAuth: []
@@ -120,6 +120,7 @@ equipmentRouter.put("/:id",authMiddleware, requireManagers, upload.fields(UPLOAD
  * /equipment/{id}:
  *   get:
  *     summary: Get equipment by ID
+ *     description: Retrieves detailed information about a specific equipment. Accessible to all authenticated users.
  *     tags: [Equipment]
  *     security:
  *       - BearerAuth: []
@@ -155,11 +156,24 @@ equipmentRouter.put("/:id",authMiddleware, requireManagers, upload.fields(UPLOAD
  * /equipment:
  *   post:
  *     summary: Create new equipment
+ *     description: |
+ *       Creates a new equipment record. 
+ *       
+ *       **Required Roles:** PLATADMIN, ADMIN, AUDITOR, MANAGER
+ *       
+ *       **Note:** This endpoint requires an Idempotency-Key header to prevent duplicate submissions.
  *     tags: [Equipment]
  *     security:
  *       - BearerAuth: []
- *     requestHeader:
- *     IdempotencyKey: required
+ *     parameters:
+ *       - in: header
+ *         name: Idempotency-Key
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Unique identifier to prevent duplicate requests
+ *         example: 550e8400-e29b-41d4-a716-446655440000
  *     requestBody:
  *       required: true
  *       content:
@@ -184,6 +198,8 @@ equipmentRouter.put("/:id",authMiddleware, requireManagers, upload.fields(UPLOAD
  *         description: Invalid input or duplicate equipment
  *       401:
  *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Requires PLATADMIN, ADMIN, AUDITOR, or MANAGER role
  *       500:
  *         description: Internal Server Error
  */
@@ -193,6 +209,10 @@ equipmentRouter.put("/:id",authMiddleware, requireManagers, upload.fields(UPLOAD
  * /equipment/{id}:
  *   put:
  *     summary: Update equipment
+ *     description: |
+ *       Updates an existing equipment record.
+ *       
+ *       **Required Roles:** PLATADMIN, ADMIN, AUDITOR, MANAGER
  *     tags: [Equipment]
  *     security:
  *       - BearerAuth: []
@@ -227,6 +247,8 @@ equipmentRouter.put("/:id",authMiddleware, requireManagers, upload.fields(UPLOAD
  *         description: Invalid input
  *       401:
  *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Requires PLATADMIN, ADMIN, AUDITOR, or MANAGER role
  *       404:
  *         description: Equipment not found
  *       500:
@@ -238,6 +260,10 @@ equipmentRouter.put("/:id",authMiddleware, requireManagers, upload.fields(UPLOAD
  * /equipment/category:
  *   get:
  *     summary: Get all equipment categories
+ *     description: |
+ *       Retrieves a list of all equipment categories.
+ *       
+ *       **Required Roles:** PLATADMIN, ADMIN, AUDITOR, MANAGER
  *     tags: [Equipment]
  *     security:
  *       - BearerAuth: []
@@ -262,6 +288,8 @@ equipmentRouter.put("/:id",authMiddleware, requireManagers, upload.fields(UPLOAD
  *                         type: string
  *       401:
  *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Requires PLATADMIN, ADMIN, AUDITOR, or MANAGER role
  *       500:
  *         description: Internal Server Error
  */
@@ -271,6 +299,10 @@ equipmentRouter.put("/:id",authMiddleware, requireManagers, upload.fields(UPLOAD
  * /equipment/ownership/{id}:
  *   get:
  *     summary: Get ownership history for equipment
+ *     description: |
+ *       Retrieves the ownership history for a specific equipment.
+ *       
+ *       **Required Roles:** PLATADMIN, ADMIN, AUDITOR, MANAGER
  *     tags: [Equipment]
  *     security:
  *       - BearerAuth: []
@@ -324,6 +356,8 @@ equipmentRouter.put("/:id",authMiddleware, requireManagers, upload.fields(UPLOAD
  *                       type: number
  *       401:
  *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Requires PLATADMIN, ADMIN, AUDITOR, or MANAGER role
  *       404:
  *         description: Equipment not found
  *       500:
@@ -335,6 +369,10 @@ equipmentRouter.put("/:id",authMiddleware, requireManagers, upload.fields(UPLOAD
  * /equipment/ownership:
  *   post:
  *     summary: Create equipment ownership assignment
+ *     description: |
+ *       Assigns equipment to an operator.
+ *       
+ *       **Required Roles:** PLATADMIN, ADMIN, AUDITOR, MANAGER
  *     tags: [Equipment]
  *     security:
  *       - BearerAuth: []
@@ -362,6 +400,8 @@ equipmentRouter.put("/:id",authMiddleware, requireManagers, upload.fields(UPLOAD
  *         description: Invalid input or equipment already assigned
  *       401:
  *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Requires PLATADMIN, ADMIN, AUDITOR, or MANAGER role
  *       404:
  *         description: Equipment or operator not found
  *       500:
@@ -373,6 +413,10 @@ equipmentRouter.put("/:id",authMiddleware, requireManagers, upload.fields(UPLOAD
  * /equipment/ownership/{ownershipId}:
  *   put:
  *     summary: Update equipment ownership
+ *     description: |
+ *       Updates an existing equipment ownership record.
+ *       
+ *       **Required Roles:** PLATADMIN, ADMIN, AUDITOR, MANAGER
  *     tags: [Equipment]
  *     security:
  *       - BearerAuth: []
@@ -388,39 +432,7 @@ equipmentRouter.put("/:id",authMiddleware, requireManagers, upload.fields(UPLOAD
  *       content:
  *         multipart/form-data:
  *           schema:
- *             type: object
- *             properties:
- *               startDate:
- *                 type: string
- *                 format: date-time
- *               endDate:
- *                 type: string
- *                 format: date-time
- *               isCurrent:
- *                 type: boolean
- *               primaryDuties:
- *                 type: string
- *               driverLicenseId:
- *                 type: string
- *               coFirstName:
- *                 type: string
- *               coLastName:
- *                 type: string
- *               coEmail:
- *                 type: string
- *                 format: email
- *               coPhoneNumber:
- *                 type: string
- *               conditionAtAssignment:
- *                 type: string
- *                 enum: ["S", "O", "A", "B", "C"]
- *               notes:
- *                 type: string
- *               documents:
- *                 type: array
- *                 items:
- *                   type: string
- *                   format: binary
+ *             $ref: '#/components/schemas/UpdateEquipmentOwnership'
  *     responses:
  *       200:
  *         description: Ownership updated successfully
@@ -439,6 +451,8 @@ equipmentRouter.put("/:id",authMiddleware, requireManagers, upload.fields(UPLOAD
  *         description: Invalid input
  *       401:
  *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Requires PLATADMIN, ADMIN, AUDITOR, or MANAGER role
  *       404:
  *         description: Ownership record not found
  *       500:
@@ -450,6 +464,10 @@ equipmentRouter.put("/:id",authMiddleware, requireManagers, upload.fields(UPLOAD
  * /equipment/{equipmentId}/unassign/{operatorId}:
  *   delete:
  *     summary: Unassign equipment ownership
+ *     description: |
+ *       Removes the ownership assignment between equipment and operator.
+ *       
+ *       **Required Roles:** PLATADMIN, ADMIN, AUDITOR, MANAGER
  *     tags: [Equipment]
  *     security:
  *       - BearerAuth: []
@@ -482,6 +500,8 @@ equipmentRouter.put("/:id",authMiddleware, requireManagers, upload.fields(UPLOAD
  *         description: Invalid input
  *       401:
  *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Requires PLATADMIN, ADMIN, AUDITOR, or MANAGER role
  *       404:
  *         description: Not found
  *       500:
