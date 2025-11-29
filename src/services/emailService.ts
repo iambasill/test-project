@@ -1,11 +1,15 @@
-import sgMail from '@sendgrid/mail'
-import {config}  from '../config';
+// services/email-service.ts (or wherever your code is)
+import sgMail from '@sendgrid/mail';
+import { config } from '../config';
+// import { createNotificationConsumer } from '../events/consumers/consumer';
 
+sgMail.setApiKey(config.SENDGRID_API_KEY);
 
-sgMail.setApiKey(config.SENDGRID_API_KEY)
-
-
-export const registerVerificationEmailHtml = (verificationLink: string, userName?: string) => {
+// Keep your HTML templates (they're good!)
+export const registerVerificationEmailHtml = (
+  verificationLink: string, 
+  userName?: string
+) => {
   return `
     <!DOCTYPE html>
     <html>
@@ -37,7 +41,10 @@ export const registerVerificationEmailHtml = (verificationLink: string, userName
     </html>`;
 };
 
-export const resetVerificationEmailHtml = (verificationLink:string, userName?:string) => {
+export const resetVerificationEmailHtml = (
+  verificationLink: string, 
+  userName?: string
+) => {
   return `
     <!DOCTYPE html>
     <html>
@@ -54,7 +61,7 @@ export const resetVerificationEmailHtml = (verificationLink:string, userName?:st
           <div style="text-align: center; margin: 30px 0;">
             <a href="${verificationLink}" 
                style="background-color: #007bff; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
-              verify your email
+              Verify Your Email
             </a>
           </div>
           <p style="color: #666; font-size: 14px;">
@@ -69,19 +76,64 @@ export const resetVerificationEmailHtml = (verificationLink:string, userName?:st
     </html>`;
 };
 
-export const sendVerificationEmail = async (to: string, verificationLink: string, userName?: string,type?:string) => {
-  let html = ""
-  if (type === "register" ) html = registerVerificationEmailHtml(verificationLink, userName) 
-  if (type === "reset") html = resetVerificationEmailHtml(verificationLink,userName)
+export const sendVerificationEmail = async (
+  to: string, 
+  verificationLink: string, 
+  userName?: string,
+  type?: string
+) => {
+  let html = "";
+  let subject = "Verify Your Email Address";
+  
+  if (type === "register") {
+    html = registerVerificationEmailHtml(verificationLink, userName);
+    subject = "Welcome! Verify Your Email";
+  }
+  
+  if (type === "reset") {
+    html = resetVerificationEmailHtml(verificationLink, userName);
+    subject = "Reset Your Password";
+  }
   
   const verificationMsg = {
     to,
     from: config.MAIL_FROM,
-    subject: "Verify Your Email Address",
+    subject,
     text: `Welcome${userName ? ` ${userName}` : ''}! Please verify your email by visiting: ${verificationLink}`,
     html
+  };
+  
+  try {
+    await sgMail.send(verificationMsg);
+    console.log(` Email sent successfully to ${to}`);
+  } catch (error) {
+    console.error(' Failed to send email:', error);
+    throw error;
+  }
+};
+
+const handleEmailMessage = async (payload: any) => {
+  
+  const { to, verificationLink, userName, type } = payload;
+  
+  if (!to || !verificationLink) {
+    throw new Error('Missing required fields: to, verificationLink'); //TODO REMOVE
   }
   
-    await sgMail.send(verificationMsg)    
+  // Send the email
+  await sendVerificationEmail(to, verificationLink, userName, type);
+};
 
-}
+// const runEmailService = async () => {
+//   const consumer = createNotificationConsumer();
+//   await consumer.connect();
+//   await consumer.consumeEmail(handleEmailMessage);
+
+//   process.on('SIGINT', async () => {
+//     console.log('\nShutting down email service...');
+//     await consumer.close();
+//     process.exit(0);
+//   });
+// };
+
+// runEmailService().catch(console.error);

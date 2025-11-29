@@ -340,7 +340,7 @@ export const updateEquipment = async (req: Request, res: Response) => {
 // CREATE EQUIPMENT OWNERSHIP 
 // =======================================================
 export const createEquipmentOwnership = async (req: Request, res: Response) => {
-  const user: any = req.user;
+  const user = req.user as User;
   const validatedData = CreateEquipmentOwnershipSchema.parse(req.body);
 
   const data = {
@@ -395,6 +395,35 @@ export const createEquipmentOwnership = async (req: Request, res: Response) => {
     message: "Equipment ownership created successfully",
   });
 };
+
+export const unassignEquipmentOwnership = async (req: Request, res: Response) => {
+    const user = req.user as User;
+    
+  const validatedData = UpdateEquipmentOwnershipSchema.parse(req.params)
+
+
+  const equipment = await prismaclient.equipment.findFirst({ where: { id: validatedData.equipmentId } });
+  if (!equipment) throw new BadRequestError("No equipment found");
+
+  const operator = await prismaclient.operator.findFirst({ where: { id: validatedData.operatorId } });
+  if (!operator) throw new BadRequestError("No operator found");
+
+    await prismaclient.equipmentOwnership.updateMany({
+      where: { 
+        equipmentId: equipment.id,
+        isCurrent: true,
+        operatorId: validatedData.operatorId
+      },
+      data: { isCurrent: false, endDate: new Date() },
+    });
+
+    res.status(201).json({
+    success: true,
+    message: "Equipment ownership created successfully",
+  });
+
+
+}
 
 // =======================================================
 // GET EQUIPMENT OWNERSHIPS

@@ -128,6 +128,13 @@ export const UpdateEquipmentOwnershipSchema = sanitizeObject(z.object({
   notes: z.string().optional().nullable(),
 }));
 
+
+export const unassignEquipmentOwnership = sanitizeObject(z.object({
+  equipmentId: z.string(),
+  operatorId: z.string()
+}));
+
+
 /**
  * Schema for ownership query parameters
  */
@@ -139,13 +146,6 @@ export const getOwnershipQuerySchema = z.object({
   operatorId: z.string().optional(),
 });
 
-// Export types for TypeScript
-export type EquipmentInput = z.infer<typeof equipmentData>;
-export type UpdateEquipmentInput = z.infer<typeof updateEquipmentSchema>;
-export type GetEquipmentQuery = z.infer<typeof getEquipmentQuerySchema>;
-export type CreateOwnershipInput = z.infer<typeof CreateEquipmentOwnershipSchema>;
-export type UpdateOwnershipInput = z.infer<typeof UpdateEquipmentOwnershipSchema>;
-export type GetOwnershipQuery = z.infer<typeof getOwnershipQuerySchema>;
 
 /**
  * @openapi

@@ -53,7 +53,7 @@ if (config.STORAGE_ENV === "cloud") {
       },
     }),
     fileFilter,
-    limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
+    limits: { fileSize: 10 * 1024 * 1024 }, 
   });
 }
 
@@ -81,8 +81,7 @@ else {
   upload = multer({
     storage,
     fileFilter,
-    // limits: { fileSize: 5 * 1024 * 1024 }, //TODO:
-  });
+    limits: { fileSize: 10 * 1024 * 1024 }, });
 }
 
 

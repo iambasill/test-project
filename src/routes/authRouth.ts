@@ -25,7 +25,7 @@ authRoute.post('/signup', registerController);
 authRoute.post('/verify-user', verifyUserController);
 authRoute.post('/check-user', verifyUserController);
 authRoute.post('/reset-password', resetPasswordController);
-authRoute.post('/change-password', changePasswordController);
+authRoute.post('/change-password', resetPasswordController);
 authRoute.post('/forgot-password', forgotPasswordController);
 authRoute.post('/resend-verification', resendVerficationController);
 authRoute.post('/refresh-token',authMiddleware, refreshToken);

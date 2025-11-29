@@ -171,7 +171,7 @@ model Operator {
     
     @@map("operators")
 }
-
+//TODO: follow the original schema then parse the varible to individual type
 model EquipmentOwnership {
     id              String    @id @default(uuid())
     equipment       Equipment @relation(fields: [equipmentId], references: [id])
@@ -179,7 +179,7 @@ model EquipmentOwnership {
     operator        Operator  @relation(fields: [operatorId], references: [id])
     operatorId      String
     startDate       DateTime  @default(now())
-    endDate         DateTime
+    endDate         DateTime?
     isCurrent       Boolean   @default(true)
     primaryDuties   String?
     driverLicenseId String?

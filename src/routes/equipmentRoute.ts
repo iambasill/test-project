@@ -11,6 +11,7 @@ import {
   getEquipmentOwnerships,
   updateEquipmentOwnerships,
   getEquipmentCategories,
+  unassignEquipmentOwnership,
 } from "../controller/equipmentController";
 
 export const equipmentRouter = express.Router();
@@ -24,8 +25,9 @@ equipmentRouter.post("/", authMiddleware, upload.fields(UPLOAD_FIELDS), createEq
 
 // Ownership routes
 equipmentRouter.get("/ownership/:id", authMiddleware, getEquipmentOwnerships);
-equipmentRouter.post("/ownership", authMiddleware, upload.any(), createEquipmentOwnership);
-equipmentRouter.put("/ownership/:ownershipId", authMiddleware, upload.any(), updateEquipmentOwnerships);
+equipmentRouter.post("/ownership", authMiddleware, upload.any(UPLOAD_FIELDS), createEquipmentOwnership);
+equipmentRouter.delete("/:equipmentId/unassign/:operatorId", authMiddleware, unassignEquipmentOwnership);
+equipmentRouter.put("/ownership/:ownershipId", authMiddleware, upload.any(UPLOAD_FIELDS), updateEquipmentOwnerships);
 
 // Specific equipment routes (must be last to avoid conflicts with /category and /ownership)
 equipmentRouter.get("/:id", authMiddleware, getEquipmentById);
@@ -438,3 +440,40 @@ equipmentRouter.put("/:id", authMiddleware, upload.fields(UPLOAD_FIELDS), update
  *       500:
  *         description: Internal Server Error
  */
+
+
+/**
+ * @openapi
+ * /equipment/{equipmentId}/unassign/{operatorID}:
+ *   DELETE:
+ *     summary: Unassign equipment ownership
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: equipmentId
+ *         required: true
+ *         name: operatorId
+ *         required: true
+ *     responses:
+ *       200:
+ *         description: Ownership removed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Invalid input
+ *       401:
+ *         description: Unauthorized
+        404:
+ *         description: Not found
+ *       500:
+ *         description: Internal Server Error
+ */
+

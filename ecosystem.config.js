@@ -1,8 +1,18 @@
 module.exports = {
-  apps : [{
-    script: 'index.js',
-    watch: '.'
-  }, {
+  apps : [
+    {
+      script: './build/server.js',
+      instances: 2,  
+      exec_mode: 'cluster',
+      watch: '.'
+  }, 
+    {
+      name: 'email-worker',
+      script: './build/services/email-service.js',
+      instances: 1, 
+      exec_mode: 'fork'
+    },
+  {
     script: './service-worker/',
     watch: ['./service-worker']
   }],
@@ -20,3 +30,4 @@ module.exports = {
     }
   }
 };
+
