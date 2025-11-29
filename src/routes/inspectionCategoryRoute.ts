@@ -26,12 +26,7 @@ categoryRouter.post('/:id/subcategories', authMiddleware, requireAdmins, addSubC
 categoryRouter.put('/:id/subcategories/:subCategoryId', authMiddleware, requireAdmins, updateSubCategory);
 categoryRouter.delete('/:id/subcategories/:subCategoryId', authMiddleware, requireAdmins, deleteSubCategory);
 
-/**
- * @openapi
- * tags:
- *   name: Inspection Categories
- *   description: Inspection category management endpoints
- */
+
 
 /**
  * @openapi
