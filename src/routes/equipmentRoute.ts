@@ -161,13 +161,13 @@ equipmentRouter.put("/:id", authMiddleware, requireManagers, upload.fields(UPLOA
  *       
  *       **Required Roles:** PLATADMIN, ADMIN, AUDITOR, MANAGER
  *       
- *       **Note:** This endpoint requires an Idempotency-Key header to prevent duplicate submissions.
+ *       **Note:** This endpoint requires an IdempotencyKey header to prevent duplicate submissions.
  *     tags: [Equipment]
  *     security:
  *       - BearerAuth: []
  *     parameters:
  *       - in: header
- *         name: Idempotency-Key
+ *         name: IdempotencyKey
  *         required: true
  *         schema:
  *           type: string

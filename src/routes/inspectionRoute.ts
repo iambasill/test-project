@@ -197,13 +197,13 @@ inspectionRouter.post('/', authMiddleware, requireOfficers, requireIdempotencyKe
  *       
  *       **Required Roles:** PLATADMIN, ADMIN, AUDITOR, OFFICER
  *       
- *       **Note:** This endpoint requires an Idempotency-Key header to prevent duplicate submissions.
+ *       **Note:** This endpoint requires an IdempotencyKey header to prevent duplicate submissions.
  *     tags: [Inspections]
  *     security:
  *       - BearerAuth: []
  *     parameters:
  *       - in: header
- *         name: Idempotency-Key
+ *         name: IdempotencyKey
  *         required: true
  *         schema:
  *           type: string
